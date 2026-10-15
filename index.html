@@ -9,6 +9,9 @@
     />
     <title>극한 체험! 이상한 키오스크 월드</title>
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./hard-alien.css" />
+    <link rel="stylesheet" href="./hard-payment.css" />
+    <link rel="stylesheet" href="./chromebook.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -18,11 +21,14 @@
             <p class="eyebrow">극한 체험</p>
             <h1>이상한 키오스크 월드</h1>
           </div>
-          <div class="progress-box" aria-label="체험 진행률">
-            <span id="progressText">0 / 3 완료</span>
-            <div class="progress-track">
-              <span id="progressBar"></span>
+          <div class="topbar-tools">
+            <div class="progress-box" aria-label="체험 진행률">
+              <span id="progressText">0 / 3 완료</span>
+              <div class="progress-track">
+                <span id="progressBar"></span>
+              </div>
             </div>
+            <button id="chromebookToggle" class="chromebook-toggle" type="button" aria-pressed="false">크롬북 모드</button>
           </div>
         </header>
 
@@ -79,6 +85,7 @@
           </div>
         </section>
       </main>
+      <aside id="sideRail" class="side-rail" aria-label="크롬북 모드 사이드바"></aside>
     </div>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>

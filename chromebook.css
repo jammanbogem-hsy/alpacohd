@@ -1,0 +1,232 @@
+/* 크롬북 모드: 상단 헤더·돌아가기·발견 기록을 오른쪽 사이드바로 옮기고 체험 화면을 위로 올림 */
+
+.chromebook-toggle {
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.chromebook-toggle[aria-pressed="true"] {
+  background: var(--ink);
+  color: #ffffff;
+}
+
+.topbar-tools {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.side-rail {
+  display: none;
+}
+
+body.chromebook-mode {
+  --shadow: none;
+}
+
+body.chromebook-mode .app-shell {
+  grid-template-columns: minmax(0, 1fr) 260px;
+  align-items: start;
+}
+
+body.chromebook-mode .main-stage {
+  padding: 10px 12px;
+}
+
+body.chromebook-mode .side-rail {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100vh;
+  height: 100dvh;
+  padding: 10px 10px 10px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 사이드바 안의 헤더 */
+body.chromebook-mode .side-rail .topbar {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin: 0;
+  padding: 12px;
+}
+
+body.chromebook-mode .side-rail .topbar h1 {
+  font-size: 1.3rem;
+}
+
+body.chromebook-mode .side-rail .topbar-tools {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+body.chromebook-mode .side-rail .progress-box {
+  min-width: 0;
+}
+
+/* 사이드바 안의 돌아가기·발견 기록은 체험 화면에서만 보임 */
+body.chromebook-mode:not([data-view="station"]) .side-rail .station-back-button,
+body.chromebook-mode:not([data-view="station"]) .side-rail .reflection-panel {
+  display: none;
+}
+
+body.chromebook-mode .side-rail .station-back-button {
+  position: static;
+  width: 100%;
+  margin: 0;
+}
+
+body.chromebook-mode .side-rail .reflection-panel {
+  padding: 12px;
+}
+
+body.chromebook-mode .side-rail .reflection-panel h3 {
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+}
+
+body.chromebook-mode .side-rail .insight-box {
+  padding: 10px;
+  font-size: 0.92rem;
+}
+
+/* 체험 화면을 위로 */
+body.chromebook-mode .station-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+body.chromebook-mode .station-header {
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 10px 14px;
+}
+
+body.chromebook-mode .station-header h2 {
+  font-size: 1.3rem;
+}
+
+body.chromebook-mode .station-header .mission-text {
+  margin-top: 4px;
+  font-size: 0.92rem;
+}
+
+body.chromebook-mode .mode-switch {
+  width: 230px;
+}
+
+body.chromebook-mode .mode-button {
+  min-height: 38px;
+  padding: 4px 8px;
+}
+
+body.chromebook-mode .kiosk-frame {
+  min-height: 0;
+}
+
+/* 시작 화면을 한 화면에 들어오게 압축 */
+body.chromebook-mode:not(.kiosk-focus-mode) .kiosk-stage {
+  min-height: 0;
+  padding: 8px;
+}
+
+body.chromebook-mode .start-hardware {
+  gap: 8px;
+  padding: 12px 12px 14px;
+}
+
+body.chromebook-mode .start-device-screen {
+  min-height: 0;
+  grid-template-rows: auto auto auto;
+}
+
+body.chromebook-mode .start-hero {
+  grid-template-columns: minmax(0, 1fr) 84px;
+  gap: 14px;
+  padding: 14px 20px;
+}
+
+body.chromebook-mode .start-copy h3 {
+  font-size: clamp(1.8rem, 3.4vw, 2.4rem);
+}
+
+/* 미션 문장은 아래 패널에도 있으므로 상단 배너에서는 생략 */
+body.chromebook-mode .start-copy span {
+  display: none;
+}
+
+body.chromebook-mode .start-art .hero-product-image {
+  width: 76px;
+  height: 76px;
+}
+
+body.chromebook-mode .start-device-screen .kiosk-homebar {
+  min-height: 40px;
+}
+
+body.chromebook-mode .start-panel {
+  gap: 8px;
+  padding: 14px 20px;
+}
+
+body.chromebook-mode .start-password-form input {
+  min-height: 44px;
+}
+
+body.chromebook-mode .kiosk-start-button {
+  min-height: 52px;
+  margin-top: 2px;
+  font-size: 1.15rem;
+}
+
+/* 홈 화면 */
+body.chromebook-mode .home-band,
+body.chromebook-mode .summary-band {
+  padding: 16px 20px;
+}
+
+/* 키오스크 조작 중(집중 모드): 사이드바에는 돌아가기만 남기고 화면 높이를 최대한 사용 */
+body.chromebook-mode.kiosk-focus-mode .app-shell {
+  grid-template-columns: minmax(0, 1fr) 132px;
+}
+
+body.chromebook-mode.kiosk-focus-mode .main-stage {
+  padding: 8px 8px 8px 10px;
+}
+
+body.chromebook-mode.kiosk-focus-mode .side-rail {
+  padding: 8px 8px 8px 0;
+}
+
+body.chromebook-mode.kiosk-focus-mode .side-rail .station-back-button {
+  position: static;
+  font-size: 0.95rem;
+}
+
+body.chromebook-mode.kiosk-focus-mode .kiosk-frame {
+  height: calc(100vh - 16px);
+  height: calc(100dvh - 16px);
+}
+
+@media (max-width: 720px) {
+  body.chromebook-mode .app-shell,
+  body.chromebook-mode.kiosk-focus-mode .app-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.chromebook-mode .side-rail {
+    position: static;
+    height: auto;
+    padding: 0 12px 12px;
+  }
+}

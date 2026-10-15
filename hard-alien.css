@@ -1,0 +1,28 @@
+/* 외계어 메뉴 키오스크 - 더 어려운 모드 전용 스타일 */
+
+.alien-hard-kiosk [lang="ar"] {
+  font-family: "Geeza Pro", "Noto Naskh Arabic", "Noto Sans Arabic", "Segoe UI", sans-serif;
+}
+
+.alien-hard-kiosk [lang="hi"] {
+  font-family: "Kohinoor Devanagari", "Noto Sans Devanagari", "Nirmala UI", sans-serif;
+}
+
+.alien-hard-kiosk .alien-active-section[lang="ar"] .product-copy b,
+.alien-hard-kiosk .alien-active-section[lang="hi"] .product-copy b {
+  font-size: 1.15em;
+  line-height: 1.5;
+}
+
+.alien-hard-kiosk .product-copy small {
+  overflow-wrap: anywhere;
+}
+
+.alien-hard-kiosk .category-tab {
+  unicode-bidi: isolate;
+}
+
+.alien-hard-kiosk[dir="rtl"] .product-card,
+.alien-hard-kiosk[dir="rtl"] .alien-active-section h4 {
+  text-align: right;
+}

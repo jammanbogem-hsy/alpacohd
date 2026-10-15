@@ -1,3 +1,5 @@
+const HARD_TIMER_SECONDS = 2;
+
 const stations = [
   {
     id: "timer",
@@ -9,7 +11,9 @@ const stations = [
     insight: "충분한 시간, 멈춤 버튼, 이전 단계로 돌아가기 버튼이 있어야 합니다.",
     principle: "시간을 넉넉하게",
     summary: "화면 제한 시간을 늘리고, 연장 버튼과 뒤로 가기 버튼을 함께 둡니다.",
-    closing: "사용자가 늦은 것이 아니라, 충분히 생각할 시간을 주는 화면이 필요합니다."
+    closing: "사용자가 늦은 것이 아니라, 충분히 생각할 시간을 주는 화면이 필요합니다.",
+    hardTitle: `${HARD_TIMER_SECONDS}초 뒤 사라지는 주문 키오스크`,
+    hardMission: "더블패티버거, 버팔로윙, 제로환타(L), 얼음 많이, 모바일 상품권 결제까지 완료해 보세요."
   },
   {
     id: "alien",
@@ -21,7 +25,9 @@ const stations = [
     insight: "쉬운 말, 그림, 예시가 있으면 처음 쓰는 사람도 이해하기 쉽습니다.",
     principle: "쉬운 말로",
     summary: "외래어와 줄임말을 줄이고, 쉬운 설명과 그림 단서를 제공합니다.",
-    closing: "낯선 말은 주문을 막을 수 있으므로 쉬운 말과 그림 단서가 함께 있어야 합니다."
+    closing: "낯선 말은 주문을 막을 수 있으므로 쉬운 말과 그림 단서가 함께 있어야 합니다.",
+    hardTitle: "읽는 방향까지 낯선 외계어 키오스크",
+    hardMission: "차가운 유자차, 포장, 설탕 없음, 리유저블 컵까지 골라 보세요."
   },
   {
     id: "tiny",
@@ -33,7 +39,9 @@ const stations = [
     insight: "결제 전 단계가 많고 안내가 흩어져 있으면 어디를 눌러야 하는지 헷갈립니다.",
     principle: "결제 흐름을 단순하게",
     summary: "할인, 적립, 결제, 카드 투입, 영수증 수령을 단계별로 명확하게 안내합니다.",
-    closing: "할인, 적립, 결제, 수령은 실제 행동 순서대로 하나씩 안내해야 합니다."
+    closing: "할인, 적립, 결제, 수령은 실제 행동 순서대로 하나씩 안내해야 합니다.",
+    hardTitle: "함정이 숨은 결제 키오스크",
+    hardMission: "추가 주문은 모두 거절하고, 모바일 상품권으로 결제한 뒤 모자란 금액은 카드로 내세요. 카드 비밀번호는 1234입니다."
   }
 ];
 
@@ -74,7 +82,11 @@ const els = {
   insightText: document.querySelector("#insightText"),
   barrierLog: document.querySelector("#barrierLog"),
   summaryList: document.querySelector("#summaryList"),
-  toast: document.querySelector("#toast")
+  toast: document.querySelector("#toast"),
+  topbar: document.querySelector(".topbar"),
+  reflectionPanel: document.querySelector(".reflection-panel"),
+  sideRail: document.querySelector("#sideRail"),
+  chromebookToggle: document.querySelector("#chromebookToggle")
 };
 
 function getStation(id) {
@@ -110,6 +122,7 @@ function showView(viewName) {
     renderSummary();
     els.summaryView.classList.add("is-active");
   }
+  document.body.dataset.view = viewName;
   syncFocusMode();
 }
 
@@ -117,6 +130,40 @@ function syncFocusMode() {
   const focused = state.kioskStarted && els.stationView.classList.contains("is-active");
   document.body.classList.toggle("kiosk-focus-mode", focused);
   els.stationView.classList.toggle("is-focus", focused);
+}
+
+const CHROMEBOOK_STORAGE_KEY = "alpaco-chromebook-mode";
+const chromebookMovables = [els.topbar, els.stationBackButton, els.reflectionPanel].map((element) => ({
+  element,
+  parent: element.parentNode,
+  next: element.nextSibling
+}));
+
+function readChromebookPreference() {
+  try {
+    return window.localStorage.getItem(CHROMEBOOK_STORAGE_KEY) === "on";
+  } catch {
+    return false;
+  }
+}
+
+function setChromebookMode(enabled) {
+  document.body.classList.toggle("chromebook-mode", enabled);
+  els.chromebookToggle.setAttribute("aria-pressed", String(enabled));
+  els.chromebookToggle.textContent = enabled ? "크롬북 모드 끄기" : "크롬북 모드";
+  // 같은 DOM 노드를 옮겨서 기존 이벤트와 els 참조를 그대로 유지합니다.
+  chromebookMovables.forEach(({ element, parent, next }) => {
+    if (enabled) {
+      els.sideRail.appendChild(element);
+    } else {
+      parent.insertBefore(element, next);
+    }
+  });
+  try {
+    window.localStorage.setItem(CHROMEBOOK_STORAGE_KEY, enabled ? "on" : "off");
+  } catch {
+    // 저장소를 쓸 수 없는 환경에서도 현재 화면에는 적용됩니다.
+  }
 }
 
 function renderProgress() {
@@ -174,12 +221,9 @@ function renderStation() {
   if (!station) return;
 
   els.stationKicker.textContent = station.kicker;
-  els.stationTitle.textContent =
-    station.id === "timer" && state.mode === "hard" ? "2.2초 뒤 사라지는 주문 키오스크" : station.title;
-  els.stationMission.textContent =
-    station.id === "timer" && state.mode === "hard"
-      ? "새우버거, 콘샐러드, 레몬에이드(M), 얼음 중간, 쿠폰만 사용까지 완료해 보세요."
-      : station.mission;
+  const isHardStation = state.mode === "hard" && Boolean(station.hardTitle);
+  els.stationTitle.textContent = isHardStation ? station.hardTitle : station.title;
+  els.stationMission.textContent = isHardStation ? station.hardMission : station.mission;
   els.insightText.textContent = station.insight;
   els.challengeMode.classList.toggle("is-active", state.mode === "challenge" || state.mode === "hard");
   els.kindMode.classList.toggle("is-active", state.mode === "kind");
@@ -255,7 +299,7 @@ function showCompletion(root, message, options = {}) {
   const stationRecords = state.barriers
     .filter((entry) => entry.stationId === station.id && !entry.success)
     .slice(0, 3);
-  const canTryHarder = station.id === "timer" && state.mode === "challenge" && !options.autoReturn;
+  const canTryHarder = Boolean(station.hardTitle) && state.mode === "challenge" && !options.autoReturn;
   const completionRecord = stationRecords.length
     ? `
       <div class="completion-record">
@@ -271,7 +315,7 @@ function showCompletion(root, message, options = {}) {
           <button class="next-button" type="button" data-return-home="true">키오스크 선택으로</button>
           ${
             canTryHarder
-              ? `<button class="next-button harder-button" type="button" data-timer-hard="true">더 어려운 모드</button>`
+              ? `<button class="next-button harder-button" type="button" data-try-hard="true">더 어려운 모드</button>`
               : ""
           }
         </div>
@@ -293,7 +337,7 @@ function showCompletion(root, message, options = {}) {
     </div>
   `;
   root.querySelector("[data-return-home]")?.addEventListener("click", returnHome);
-  root.querySelector("[data-timer-hard]")?.addEventListener("click", () => {
+  root.querySelector("[data-try-hard]")?.addEventListener("click", () => {
     state.mode = "hard";
     state.kioskStarted = true;
     renderStation();
@@ -359,6 +403,36 @@ const productImages = {
   "ice-less": "assets/menu/ice-less.png",
   "ice-normal": "assets/menu/ice-normal.png",
   "ice-more": "assets/menu/ice-more.png",
+  "double-patty": "assets/menu/double-patty-burger.png",
+  bacon: "assets/menu/bacon-burger.png",
+  "chicken-burger": "assets/menu/chicken-burger.png",
+  teriyaki: "assets/menu/teriyaki-burger.png",
+  hanwoo: "assets/menu/hanwoo-burger.png",
+  jalapeno: "assets/menu/jalapeno-burger.png",
+  mushroom: "assets/menu/mushroom-burger.png",
+  "truffle-mushroom": "assets/menu/truffle-mushroom-burger.png",
+  "rice-burger": "assets/menu/rice-burger.png",
+  "buffalo-wing": "assets/menu/buffalo-wing.png",
+  "yangnyeom-potato": "assets/menu/yangnyeom-potato.png",
+  dakgangjeong: "assets/menu/dakgangjeong.png",
+  "onion-ring": "assets/menu/onion-ring.png",
+  nugget: "assets/menu/chicken-nugget.png",
+  "hash-brown": "assets/menu/hash-brown.png",
+  fanta: "assets/menu/fanta.png",
+  "zero-fanta": "assets/menu/zero-fanta.png",
+  "zero-cider": "assets/menu/zero-cider.png",
+  "iced-tea": "assets/menu/iced-tea.png",
+  "cup-small": "assets/menu/cup-small.png",
+  "cup-medium": "assets/menu/cup-medium.png",
+  "cup-large": "assets/menu/cup-large.png",
+  "pay-card": "assets/menu/pay-card.png",
+  "pay-cash": "assets/menu/pay-cash.png",
+  "pay-gift": "assets/menu/pay-gift.png",
+  "pay-cocoa": "assets/menu/pay-cocoa.png",
+  "pay-naeildo": "assets/menu/pay-naeildo.png",
+  "pay-saseong": "assets/menu/pay-saseong.png",
+  "pay-coupon": "assets/menu/pay-coupon.png",
+  "pay-point": "assets/menu/pay-point.png",
   "barley-hot": "assets/menu/barley-tea.png",
   "alpaco-vip": "assets/menu/alpaco-vip.png",
   jammanbo: "assets/menu/jammanbo-membership.png",
@@ -678,19 +752,21 @@ function renderKioskStart(root, station, mode) {
 function renderTimerStation(root, mode) {
   const isKind = mode === "kind";
   const isHard = mode === "hard";
-  const timeLimit = isHard ? 2.2 : 3;
+  const timeLimit = isHard ? HARD_TIMER_SECONDS : 3;
   const target = isHard
     ? {
-        menu: "shrimp",
-        side: "corn",
-        drink: "ade",
-        ice: "ice-normal",
-        payment: "coupon",
-        menuLabel: "새우버거",
-        sideLabel: "콘샐러드",
-        drinkLabel: "레몬에이드(M)",
-        iceLabel: "얼음 중간",
-        paymentLabel: "쿠폰만 사용"
+        menu: "double-patty",
+        side: "buffalo-wing",
+        drink: "zero-fanta",
+        size: "cup-large",
+        ice: "ice-more",
+        payment: "pay-gift",
+        menuLabel: "더블패티버거",
+        sideLabel: "버팔로윙",
+        drinkLabel: "제로환타",
+        sizeLabel: "L",
+        iceLabel: "얼음 많이",
+        paymentLabel: "모바일 상품권 결제"
       }
     : {
         menu: "cheese-set",
@@ -704,75 +780,167 @@ function renderTimerStation(root, mode) {
         iceLabel: "얼음 적게",
         paymentLabel: "카드 결제"
       };
-  const targetSummary = `${target.menuLabel}, ${target.sideLabel}, ${target.drinkLabel}, ${target.iceLabel}, ${target.paymentLabel}`;
-  const timeLabel = isHard ? "2.2초" : "3초";
-  const steps = [
-    {
-      label: "메뉴",
-      key: "menu",
-      title: "메뉴를 골라 주세요",
-      subtitle: `${target.menuLabel}를 선택하면 다음 단계로 이동합니다.`,
-      correct: target.menu,
-      items: [
-        { id: "bulgogi", label: "불고기버거", desc: "달콤한 간장 소스", price: 5200, visual: "burger" },
-        { id: "cheese-set", label: "치즈버거", desc: "기본 버거", price: 5200, visual: "burger" },
-        { id: "shrimp", label: "새우버거", desc: "바삭한 새우 패티", price: 6100, visual: "burger" },
-        { id: "wrap", label: "치킨랩", desc: "또띠아와 치킨", price: 5400, visual: "wrap" }
+  const drinkSummary = target.sizeLabel ? `${target.drinkLabel}(${target.sizeLabel})` : target.drinkLabel;
+  const targetSummary = `${target.menuLabel}, ${target.sideLabel}, ${drinkSummary}, ${target.iceLabel}, ${target.paymentLabel}`;
+  const timeLabel = isHard ? `${HARD_TIMER_SECONDS}초` : "3초";
+  const iceStep = {
+    label: "얼음",
+    key: "ice",
+    title: "얼음 양을 선택해 주세요",
+    subtitle: `${drinkSummary}에 넣을 ${target.iceLabel}을 고릅니다.`,
+    correct: target.ice,
+    items: [
+      { id: "ice-none", label: "얼음 없음", desc: "얼음을 넣지 않음", price: 0, mark: "없" },
+      { id: "ice-less", label: "얼음 적게", desc: "조금만 넣기", price: 0, mark: "적" },
+      { id: "ice-normal", label: "얼음 중간", desc: "기본 양", price: 0, mark: "중" },
+      { id: "ice-more", label: "얼음 많이", desc: "가득 넣기", price: 0, mark: "많" }
+    ]
+  };
+  const steps = isHard
+    ? [
+        {
+          label: "메뉴",
+          key: "menu",
+          title: "버거를 골라 주세요",
+          subtitle: `${target.menuLabel}를 선택하면 다음 단계로 이동합니다.`,
+          correct: target.menu,
+          items: [
+            { id: "bulgogi", label: "불고기버거", desc: "달콤한 간장 소스", price: 5200 },
+            { id: "cheese-set", label: "치즈버거", desc: "기본 버거", price: 5200 },
+            { id: "shrimp", label: "새우버거", desc: "바삭한 새우 패티", price: 6100 },
+            { id: "bacon", label: "베이컨버거", desc: "훈제 베이컨", price: 6300 },
+            { id: "double-patty", label: "더블패티버거", desc: "패티 두 장", price: 7400 },
+            { id: "chicken-burger", label: "치킨버거", desc: "통가슴살 튀김", price: 5900 },
+            { id: "teriyaki", label: "데리버거", desc: "데리야끼 소스", price: 4300 },
+            { id: "hanwoo", label: "한우버거", desc: "한우 패티", price: 8900 },
+            { id: "jalapeno", label: "할라피뇨버거", desc: "매콤한 고추", price: 6500 },
+            { id: "mushroom", label: "머쉬룸버거", desc: "버섯 소스", price: 6400 },
+            { id: "truffle-mushroom", label: "트러플 머쉬룸버거", desc: "트러플 버섯 소스", price: 7900 },
+            { id: "rice-burger", label: "라이스버거", desc: "밥으로 만든 번", price: 6000 }
+          ]
+        },
+        {
+          label: "사이드",
+          key: "side",
+          title: "사이드를 선택해 주세요",
+          subtitle: `세트에 포함할 ${target.sideLabel}을 고릅니다.`,
+          correct: target.side,
+          items: [
+            { id: "fries", label: "감자튀김", desc: "기본 사이드", price: 0 },
+            { id: "yangnyeom-potato", label: "양념감자", desc: "시즈닝 감자", price: 500 },
+            { id: "stick", label: "치즈스틱", desc: "추가 800원", price: 800 },
+            { id: "buffalo-wing", label: "버팔로윙", desc: "매콤한 날개", price: 1500 },
+            { id: "dakgangjeong", label: "닭강정", desc: "달콤한 양념", price: 1500 },
+            { id: "onion-ring", label: "어니언링", desc: "바삭한 양파", price: 700 },
+            { id: "nugget", label: "치킨너겟", desc: "한입 너겟", price: 900 },
+            { id: "hash-brown", label: "해시브라운", desc: "감자 패티", price: 600 },
+            { id: "corn", label: "콘샐러드", desc: "달콤한 옥수수", price: 0 },
+            { id: "salad", label: "샐러드", desc: "상큼한 채소", price: 0 }
+          ]
+        },
+        {
+          label: "음료",
+          key: "drink",
+          title: "음료를 선택해 주세요",
+          subtitle: `세트에 포함할 ${target.drinkLabel}를 고릅니다.`,
+          correct: target.drink,
+          items: [
+            { id: "cola", label: "콜라", desc: "기본 탄산음료", price: 0 },
+            { id: "zero-cola", label: "제로콜라", desc: "당류 0g", price: 0 },
+            { id: "cider", label: "사이다", desc: "레몬향 탄산", price: 0 },
+            { id: "zero-cider", label: "제로사이다", desc: "당류 0g", price: 0 },
+            { id: "fanta", label: "환타", desc: "오렌지 탄산", price: 0 },
+            { id: "zero-fanta", label: "제로환타", desc: "당류 0g", price: 0 },
+            { id: "ade", label: "레몬에이드", desc: "추가 700원", price: 700 },
+            { id: "iced-tea", label: "아이스티", desc: "복숭아 홍차", price: 300 }
+          ]
+        },
+        {
+          label: "사이즈",
+          key: "size",
+          title: "음료 사이즈를 선택해 주세요",
+          subtitle: `${target.drinkLabel} ${target.sizeLabel} 사이즈를 고릅니다.`,
+          correct: target.size,
+          items: [
+            { id: "cup-small", label: "S 사이즈", desc: "작은 컵", price: 0, mark: "S" },
+            { id: "cup-medium", label: "M 사이즈", desc: "보통 컵", price: 0, mark: "M" },
+            { id: "cup-large", label: "L 사이즈", desc: "추가 500원", price: 500, mark: "L" }
+          ]
+        },
+        iceStep,
+        {
+          label: "결제",
+          key: "payment",
+          title: "결제 방법을 선택해 주세요",
+          subtitle: `${target.paymentLabel}을 선택하면 주문이 완료됩니다.`,
+          correct: target.payment,
+          items: [
+            { id: "pay-card", label: "카드 결제", desc: "카드 투입구 사용", price: 0, mark: "카" },
+            { id: "pay-cash", label: "현금 결제", desc: "직원 호출 필요", price: 0, mark: "현" },
+            { id: "pay-cocoa", label: "코코아페이", desc: "간편 결제", price: 0, mark: "코" },
+            { id: "pay-naeildo", label: "내일도페이", desc: "간편 결제", price: 0, mark: "내" },
+            { id: "pay-saseong", label: "사성페이", desc: "휴대폰 터치 결제", price: 0, mark: "사" },
+            { id: "pay-gift", label: "모바일 상품권", desc: "바코드 스캔", price: 0, mark: "상" },
+            { id: "pay-coupon", label: "쿠폰 사용", desc: "쿠폰 번호 필요", price: 0, mark: "쿠" },
+            { id: "pay-point", label: "포인트 결제", desc: "적립 포인트 사용", price: 0, mark: "포" }
+          ]
+        }
       ]
-    },
-    {
-      label: "사이드",
-      key: "side",
-      title: "사이드를 선택해 주세요",
-      subtitle: `세트에 포함할 ${target.sideLabel}를 고릅니다.`,
-      correct: target.side,
-      items: [
-        { id: "salad", label: "샐러드", desc: "상큼한 채소", price: 0, visual: "salad" },
-        { id: "corn", label: "콘샐러드", desc: "달콤한 옥수수", price: 0, visual: "salad" },
-        { id: "stick", label: "치즈스틱", desc: "추가 800원", price: 800, visual: "stick" },
-        { id: "fries", label: "감자튀김", desc: "기본 사이드", price: 0, visual: "fries" }
-      ]
-    },
-    {
-      label: "음료",
-      key: "drink",
-      title: "음료를 선택해 주세요",
-      subtitle: `세트에 포함할 ${target.drinkLabel}를 고릅니다.`,
-      correct: target.drink,
-      items: [
-        { id: "cola", label: "콜라(M)", desc: "기본 탄산음료", price: 0, visual: "cup" },
-        { id: "zero-cola", label: "제로콜라(M)", desc: "당류 0g", price: 0, visual: "cup" },
-        { id: "cider", label: "사이다(M)", desc: "레몬향 탄산", price: 0, visual: "cup" },
-        { id: "ade", label: "레몬에이드(M)", desc: "추가 700원", price: 700, visual: "cup" }
-      ]
-    },
-    {
-      label: "얼음",
-      key: "ice",
-      title: "얼음 양을 선택해 주세요",
-      subtitle: `${target.drinkLabel}에 넣을 ${target.iceLabel}을 고릅니다.`,
-      correct: target.ice,
-      items: [
-        { id: "ice-none", label: "얼음 없음", desc: "얼음을 넣지 않음", price: 0, mark: "없" },
-        { id: "ice-less", label: "얼음 적게", desc: "조금만 넣기", price: 0, mark: "적" },
-        { id: "ice-normal", label: "얼음 중간", desc: "기본 양", price: 0, mark: "중" },
-        { id: "ice-more", label: "얼음 많이", desc: "가득 넣기", price: 0, mark: "많" }
-      ]
-    },
-    {
-      label: "결제",
-      key: "payment",
-      title: "결제 방법을 선택해 주세요",
-      subtitle: `${target.paymentLabel}을 선택하면 주문이 완료됩니다.`,
-      correct: target.payment,
-      items: [
-        { id: "cash", label: "현금 결제", desc: "직원 호출 필요", price: 0, mark: "현" },
-        { id: "card", label: "카드 결제", desc: "카드 투입구 사용", price: 0, mark: "카" },
-        { id: "coupon", label: "쿠폰만 사용", desc: "쿠폰 번호 필요", price: 0, mark: "쿠" },
-        { id: "cancel", label: "처음으로", desc: "주문 취소", price: 0, mark: "취" }
-      ]
-    }
-  ];
+    : [
+        {
+          label: "메뉴",
+          key: "menu",
+          title: "메뉴를 골라 주세요",
+          subtitle: `${target.menuLabel}를 선택하면 다음 단계로 이동합니다.`,
+          correct: target.menu,
+          items: [
+            { id: "bulgogi", label: "불고기버거", desc: "달콤한 간장 소스", price: 5200, visual: "burger" },
+            { id: "cheese-set", label: "치즈버거", desc: "기본 버거", price: 5200, visual: "burger" },
+            { id: "shrimp", label: "새우버거", desc: "바삭한 새우 패티", price: 6100, visual: "burger" },
+            { id: "wrap", label: "치킨랩", desc: "또띠아와 치킨", price: 5400, visual: "wrap" }
+          ]
+        },
+        {
+          label: "사이드",
+          key: "side",
+          title: "사이드를 선택해 주세요",
+          subtitle: `세트에 포함할 ${target.sideLabel}를 고릅니다.`,
+          correct: target.side,
+          items: [
+            { id: "salad", label: "샐러드", desc: "상큼한 채소", price: 0, visual: "salad" },
+            { id: "corn", label: "콘샐러드", desc: "달콤한 옥수수", price: 0, visual: "salad" },
+            { id: "stick", label: "치즈스틱", desc: "추가 800원", price: 800, visual: "stick" },
+            { id: "fries", label: "감자튀김", desc: "기본 사이드", price: 0, visual: "fries" }
+          ]
+        },
+        {
+          label: "음료",
+          key: "drink",
+          title: "음료를 선택해 주세요",
+          subtitle: `세트에 포함할 ${target.drinkLabel}를 고릅니다.`,
+          correct: target.drink,
+          items: [
+            { id: "cola", label: "콜라(M)", desc: "기본 탄산음료", price: 0, visual: "cup" },
+            { id: "zero-cola", label: "제로콜라(M)", desc: "당류 0g", price: 0, visual: "cup" },
+            { id: "cider", label: "사이다(M)", desc: "레몬향 탄산", price: 0, visual: "cup" },
+            { id: "ade", label: "레몬에이드(M)", desc: "추가 700원", price: 700, visual: "cup" }
+          ]
+        },
+        iceStep,
+        {
+          label: "결제",
+          key: "payment",
+          title: "결제 방법을 선택해 주세요",
+          subtitle: `${target.paymentLabel}을 선택하면 주문이 완료됩니다.`,
+          correct: target.payment,
+          items: [
+            { id: "cash", label: "현금 결제", desc: "직원 호출 필요", price: 0, mark: "현" },
+            { id: "card", label: "카드 결제", desc: "카드 투입구 사용", price: 0, mark: "카" },
+            { id: "coupon", label: "쿠폰만 사용", desc: "쿠폰 번호 필요", price: 0, mark: "쿠" },
+            { id: "cancel", label: "처음으로", desc: "주문 취소", price: 0, mark: "취" }
+          ]
+        }
+      ];
 
   const order = {};
   let step = 0;
@@ -792,7 +960,7 @@ function renderTimerStation(root, mode) {
       title: current.title,
       subtitle: current.subtitle,
       mode,
-      status: isKind ? "천천히 주문" : isHard ? "2.2초 자동 초기화" : "자동 초기화",
+      status: isKind ? "천천히 주문" : isHard ? `${timeLabel} 자동 초기화` : "자동 초기화",
       timer: isKind ? "" : `${timeLeft.toFixed(1)}초`,
       steps: steps.map((item) => item.label),
       activeStep: step,
@@ -807,7 +975,7 @@ function renderTimerStation(root, mode) {
           <span class="category-tab">추천</span>
           <span class="category-tab">할인</span>
         </div>
-        <div class="product-grid">
+        <div class="product-grid${isHard ? " mega-products" : ""}">
           ${current.items.map((item) => productCard(item, `data-product="${item.id}"`, isKind ? "comfortable" : "pressure-card")).join("")}
         </div>
       `
@@ -826,8 +994,8 @@ function renderTimerStation(root, mode) {
         window.clearInterval(timer);
         if (step === steps.length - 1) {
           if (isHard) {
-            completeStation("더 어려운 2.2초 미션까지 완료했습니다.");
-            showCompletion(root, "2.2초 안에 더 복잡한 주문 조건까지 완료했습니다. 잠시 뒤 키오스크 선택 화면으로 돌아갑니다.", {
+            completeStation(`더 어려운 ${timeLabel} 미션까지 완료했습니다.`);
+            showCompletion(root, `${timeLabel} 안에 더 복잡한 주문 조건까지 완료했습니다. 잠시 뒤 키오스크 선택 화면으로 돌아갑니다.`, {
               autoReturn: true,
               kicker: "최종 미션 해결",
               title: "더 어려운 모드 완료"
@@ -873,9 +1041,60 @@ function renderTimerStation(root, mode) {
   if (!isKind) startClock();
 }
 
+const HARD_GIFT_BALANCE = 5300;
+const HARD_CARD_PIN = "1234";
+const hardUpsellOffers = [
+  {
+    title: "세트로 바꾸시겠어요?",
+    desc: "지금 바꾸면 감자튀김과 음료가 커져요! 오늘만 이 가격!",
+    imageKey: "fries",
+    yes: "예, 세트로 바꿀게요 (+2,000원)",
+    no: "아니요",
+    layout: "below",
+    barrier: "큰 버튼을 눌러 원하지 않은 세트 업그레이드(+2,000원)가 추가되었습니다. 추가 주문 안내가 처음부터 다시 나옵니다."
+  },
+  {
+    title: "디저트를 함께 드릴까요?",
+    desc: "버거와 찰떡궁합! 치즈스틱을 1,500원에 추가하세요.",
+    imageKey: "stick",
+    yes: "예, 디저트 추가할게요",
+    no: "괜찮아요",
+    layout: "above",
+    barrier: "눈에 띄는 버튼을 눌러 원하지 않은 치즈스틱이 추가되었습니다. 추가 주문 안내가 처음부터 다시 나옵니다."
+  },
+  {
+    title: "회원가입하고 500원 할인받기",
+    desc: "휴대폰 번호만 입력하면 바로 500원 할인! 지금 가입하세요.",
+    imageKey: "",
+    yes: "예, 가입하고 할인받을게요",
+    no: "다음에",
+    layout: "corner",
+    barrier: "할인이라는 말에 원하지 않은 회원가입 화면으로 넘어갔습니다. 추가 주문 안내가 처음부터 다시 나옵니다."
+  }
+];
+
+function shuffledPinKeys() {
+  const keys = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+  for (let index = keys.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [keys[index], keys[swapIndex]] = [keys[swapIndex], keys[index]];
+  }
+  return keys;
+}
+
 function renderTinyStation(root, mode) {
   const isKind = mode === "kind";
+  const isHard = mode === "hard";
   const picks = {};
+  const hardPay = {
+    upsellIndex: -1,
+    giftStage: "none",
+    remainder: null,
+    pinValue: "",
+    pinDone: false,
+    pinKeys: shuffledPinKeys()
+  };
+  let flowModalNote = "";
   const hardware = {
     card: false,
     receipt: false
@@ -967,16 +1186,16 @@ function renderTinyStation(root, mode) {
         {
           key: "payment",
           title: "STEP 3 결제수단",
-          correct: "card",
+          correct: isHard ? "gift-card" : "card",
           items: [
-            { id: "n-pay", label: "J pay", desc: "앱 결제", price: 0, noArt: true },
+            { id: "n-pay", label: "내일도페이", desc: "앱 결제", price: 0, noArt: true },
             { id: "app-card", label: "앱카드", desc: "QR/바코드", price: 0, noArt: true },
-            { id: "kakao-pay", label: "카**페이", desc: "앱 결제", price: 0, noArt: true },
-            { id: "payco", label: "PAYCONG", desc: "간편결제", price: 0, noArt: true },
+            { id: "kakao-pay", label: "코코아페이", desc: "앱 결제", price: 0, noArt: true },
+            { id: "payco", label: "콩콩페이", desc: "간편결제", price: 0, noArt: true },
             { id: "card", label: "카드 결제", desc: "IC페이", price: 0, noArt: true },
-            { id: "zero-pay", label: "zero pay", desc: "간편결제", price: 0, noArt: true },
+            { id: "zero-pay", label: "동네페이", desc: "간편결제", price: 0, noArt: true },
             { id: "apple-pay", label: "Orange Pay", desc: "휴대폰 태그", price: 0, noArt: true },
-            { id: "kb-pay", label: "K* Pay", desc: "앱 결제", price: 0, noArt: true },
+            { id: "kb-pay", label: "별별페이", desc: "앱 결제", price: 0, noArt: true },
             { id: "coupon-pay", label: "쿠폰사용", desc: "쿠폰 번호", price: 0, noArt: true },
             { id: "gift-card", label: "모바일 상품권", desc: "바코드 스캔", price: 0, noArt: true }
           ]
@@ -1165,7 +1384,7 @@ function renderTinyStation(root, mode) {
   }
 
   function paymentHardwarePanel(optionReady) {
-    const barcodeActive = affiliatePhone.stage === "scan" && !affiliatePhone.done;
+    const barcodeActive = (affiliatePhone.stage === "scan" && !affiliatePhone.done) || (isHard && hardPay.giftStage === "scan");
     const cardDragActive = optionReady && !barcodeActive && !hardware.card;
     const hint = barcodeActive
       ? "바코드가 생성된 스마트폰을 바코드 인식하는 곳으로 끌어다 놓으세요."
@@ -1242,6 +1461,127 @@ function renderTinyStation(root, mode) {
         </section>
       </div>
     `;
+  }
+
+  function upsellPanel() {
+    const offer = hardUpsellOffers[hardPay.upsellIndex];
+    const yesButton = `<button class="upsell-yes-button" type="button" data-upsell-answer="yes">${offer.yes}</button>`;
+    const noButton = `<button class="upsell-no-button" type="button" data-upsell-answer="no">${offer.no}</button>`;
+    return `
+      <div class="upsell-focus-flow">
+        <section class="upsell-popup is-${offer.layout}" role="dialog" aria-modal="true" aria-label="${offer.title}">
+          ${offer.layout === "corner" ? `<div class="upsell-corner-row">${noButton}</div>` : ""}
+          <span class="upsell-badge">오늘만 특가</span>
+          ${offer.imageKey ? productImageMarkup(productImages[offer.imageKey], "upsell-image") : `<span class="upsell-coin" aria-hidden="true">500</span>`}
+          <h4>${offer.title}</h4>
+          <p>${offer.desc}</p>
+          <div class="upsell-actions">
+            ${offer.layout === "above" ? noButton : ""}
+            ${yesButton}
+            ${offer.layout === "below" ? noButton : ""}
+          </div>
+          <small class="upsell-progress">${hardPay.upsellIndex + 1} / ${hardUpsellOffers.length}</small>
+        </section>
+      </div>
+    `;
+  }
+
+  function giftScanPanel() {
+    return `
+      <div class="payment-flow scan-payment-flow">
+        <section class="dense-section payment-section scan-payment-section">
+          <h4>모바일 상품권 바코드 인식</h4>
+          <p class="scan-payment-hint">모바일 상품권이 열린 스마트폰을 아래 키오스크 앞면의 바코드 인식하는 곳으로 끌어다 대세요.</p>
+          <div class="scan-payment-layout">
+            <div class="phone-mock scan-phone-mock gift-phone-mock" aria-label="드래그 가능한 모바일 상품권 스마트폰" data-draggable-barcode="gift">
+              <div class="phone-speaker" aria-hidden="true"></div>
+              <div class="phone-screen">
+                <span class="phone-title">모바일 상품권</span>
+                <div class="membership-card gift-card-ticket">
+                  <b>모두버거 금액권</b>
+                  <small>이 스마트폰을 바코드 인식하는 곳으로 끌어다 대세요.</small>
+                  <span class="barcode-visual" aria-label="모바일 상품권 바코드"></span>
+                  <strong>GIFT-0918-5300</strong>
+                </div>
+              </div>
+            </div>
+            ${paymentHardwarePanel(false)}
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  function remainderPanel() {
+    const paymentGroup = groups.find((item) => item.key === "payment");
+    const remainderItems = paymentGroup.items.filter((item) => item.id !== "gift-card");
+    return `
+      <div class="payment-flow">
+        <section class="dense-section payment-section remainder-section" data-payment-group="remainder">
+          <h4>STEP 4 남은 금액 결제수단</h4>
+          <p class="remainder-note">상품권 사용 후 결제할 금액이 남아 있습니다. 남은 금액: ${formatWon(remainderAmount())}</p>
+          <div class="product-grid payment-options">
+            ${remainderItems
+              .map((item) =>
+                productCard(item, `data-remainder-id="${item.id}"`, hardPay.remainder?.id === item.id ? "is-picked" : "")
+              )
+              .join("")}
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  function pinPadPanel() {
+    const dots = Array.from({ length: 4 }, (_, index) => `<span class="${index < hardPay.pinValue.length ? "is-filled" : ""}"></span>`).join("");
+    const digitButtons = hardPay.pinKeys
+      .map((key) => `<button class="pin-key" type="button" data-pin-key="${key}">${key}</button>`)
+      .join("");
+    return `
+      <div class="pin-focus-flow">
+        <section class="pin-pad-panel" aria-label="카드 비밀번호 보안 키패드">
+          <div class="pin-pad-head">
+            ${productImageMarkup(productImages["hardware-card-slot"], "pin-card-image")}
+            <span>
+              <h4>카드 비밀번호 4자리</h4>
+              <small>보안을 위해 숫자 위치가 누를 때마다 바뀝니다.</small>
+            </span>
+          </div>
+          <div class="pin-dots" aria-label="입력한 자릿수 ${hardPay.pinValue.length}">${dots}</div>
+          <div class="pin-grid">
+            ${digitButtons}
+            <button class="pin-key pin-key-sub" type="button" data-pin-action="clear">지우기</button>
+            <button class="pin-key pin-key-ok" type="button" data-pin-action="submit">확인</button>
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  function noteModal(message, note) {
+    return `
+      <div class="flow-modal-backdrop" role="dialog" aria-modal="true" aria-label="${message}">
+        <div class="flow-modal hard-note-modal">
+          <h4>${message}</h4>
+          <p>${note}</p>
+          <button class="phone-primary-button" type="button" data-flow-modal-close="true">확인</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function remainderAmount() {
+    const discount = picks.discount?.price || 0;
+    return baseOrder.reduce((sum, item) => sum + item.price, 0) + discount - HARD_GIFT_BALANCE;
+  }
+
+  function applyGiftCard() {
+    hardPay.giftStage = "short";
+    flowModalMessage = "상품권 잔액이 부족합니다";
+    flowModalNote = "부족한 금액은 다른 결제수단으로 이어서 결제해 주세요.";
+    focusGroupAfterModal = "";
+    modalAnchorGroup = "";
+    draw();
   }
 
   function applyAffiliateDiscount() {
@@ -1332,6 +1672,10 @@ function renderTinyStation(root, mode) {
           recordBarrier("카드 투입구나 영수증 출력구가 아니라 바코드 인식하는 곳에 대야 합니다.");
           return;
         }
+        if (barcode.dataset.draggableBarcode === "gift") {
+          applyGiftCard();
+          return;
+        }
         applyAffiliateDiscount();
       };
 
@@ -1409,6 +1753,12 @@ function renderTinyStation(root, mode) {
         }
 
         hardware.card = true;
+        if (isHard) {
+          hardPay.pinValue = "";
+          hardPay.pinKeys = shuffledPinKeys();
+          draw();
+          return;
+        }
         flowModalMessage = "영수증을 챙겨주세요";
         focusGroupAfterModal = "";
         modalAnchorGroup = "";
@@ -1425,20 +1775,36 @@ function renderTinyStation(root, mode) {
   function draw(options = {}) {
     const scrollState = options.preserveScroll ? captureKioskScroll(root) : null;
     const selectedOptions = selectedCartItems(picks);
-    const cartItems = [...baseOrder, ...selectedOptions];
+    const giftUsed = isHard && ["short", "done"].includes(hardPay.giftStage);
+    const hardCartItems = [
+      giftUsed ? { label: "모바일 상품권 사용", price: -HARD_GIFT_BALANCE } : null,
+      hardPay.remainder ? { label: `남은 금액 ${hardPay.remainder.label}`, price: 0 } : null
+    ].filter(Boolean);
+    const cartItems = [...baseOrder, ...selectedOptions, ...hardCartItems];
     const optionReady = selectedOptions.length === groups.length;
-    const doneCount = selectedOptions.length + (hardware.card ? 1 : 0) + (hardware.receipt ? 1 : 0);
+    const readyForCard = optionReady && (!isHard || hardPay.giftStage === "done");
+    const doneCount = isHard
+      ? (picks.discount ? 1 : 0) + (picks.reward ? 1 : 0) + (giftUsed ? 1 : 0) + (hardware.card ? 1 : 0) + (hardPay.pinDone ? 1 : 0) + (hardware.receipt ? 1 : 0)
+      : selectedOptions.length + (hardware.card ? 1 : 0) + (hardware.receipt ? 1 : 0);
+    const paymentSteps = isHard ? ["할인", "적립", "상품권", "카드", "비밀번호", "영수증"] : ["할인", "적립", "결제", "카드", "영수증"];
     const modalNextGroupIndex = flowModalMessage ? groups.findIndex((group) => group.key === focusGroupAfterModal) : -1;
-    const activePaymentStep = modalNextGroupIndex > 0 ? modalNextGroupIndex - 1 : Math.min(doneCount, 4);
+    const activePaymentStep = modalNextGroupIndex > 0 ? modalNextGroupIndex - 1 : Math.min(doneCount, paymentSteps.length - 1);
     const affiliatePhoneFocus = affiliatePhone.open && !affiliatePhone.done && ["locked", "apps", "barcode"].includes(affiliatePhone.stage);
     const affiliateScanFocus = affiliatePhone.open && !affiliatePhone.done && affiliatePhone.stage === "scan";
     const rewardPhoneFocus = rewardPhone.open && !rewardPhone.done && ["locked", "apps", "student"].includes(rewardPhone.stage);
-    const hardwareFocus = picks.payment?.id === "card" && optionReady;
+    const upsellFocus = isHard && hardPay.upsellIndex >= 0;
+    const giftScanFocus = isHard && optionReady && hardPay.giftStage === "scan";
+    const remainderFocus = isHard && optionReady && hardPay.giftStage === "short";
+    const pinFocus = isHard && hardware.card && !hardPay.pinDone;
+    const hardwareFocus = isHard ? readyForCard && !pinFocus : picks.payment?.id === "card" && optionReady;
     const kioskClassName = [
       isKind ? "friendly-kiosk payment-kiosk" : "busy-payment-kiosk payment-kiosk",
+      isHard ? "hard-payment-kiosk" : "",
       affiliatePhoneFocus || rewardPhoneFocus ? "phone-focus-kiosk" : "",
-      affiliateScanFocus ? "barcode-scan-kiosk" : "",
-      hardwareFocus ? "hardware-focus-kiosk" : ""
+      affiliateScanFocus || giftScanFocus ? "barcode-scan-kiosk" : "",
+      hardwareFocus ? "hardware-focus-kiosk" : "",
+      upsellFocus ? "upsell-focus-kiosk" : "",
+      pinFocus ? "pin-focus-kiosk" : ""
     ].filter(Boolean).join(" ");
     const paymentBodyContent = affiliatePhoneFocus
       ? `<div class="phone-focus-flow">${affiliatePhonePanel()}</div>`
@@ -1446,8 +1812,16 @@ function renderTinyStation(root, mode) {
         ? affiliateScanPanel(optionReady)
         : rewardPhoneFocus
           ? `<div class="phone-focus-flow">${rewardPhonePanel()}</div>`
+          : upsellFocus
+            ? upsellPanel()
+          : giftScanFocus
+            ? giftScanPanel()
+          : remainderFocus
+            ? remainderPanel()
+          : pinFocus
+            ? pinPadPanel()
           : hardwareFocus
-            ? `<div class="hardware-focus-flow">${paymentHardwarePanel(optionReady)}</div>`
+            ? `<div class="hardware-focus-flow">${paymentHardwarePanel(readyForCard)}</div>`
           : `
           <div class="payment-flow ${isKind ? "is-friendly" : ""}">
             ${groups
@@ -1474,18 +1848,21 @@ function renderTinyStation(root, mode) {
           </div>
         `;
     const modalInsideSection = flowModalMessage && modalAnchorGroup && !affiliatePhoneFocus && !affiliateScanFocus && !rewardPhoneFocus && !hardwareFocus;
-    const paymentBody = `${paymentBodyContent}${flowModalMessage && !modalInsideSection ? flowModal(flowModalMessage) : ""}`;
+    const pageModal = flowModalNote ? noteModal(flowModalMessage, flowModalNote) : flowModal(flowModalMessage);
+    const paymentBody = `${paymentBodyContent}${flowModalMessage && !modalInsideSection ? pageModal : ""}`;
     root.innerHTML = kioskShell({
       brand: "모두페이",
-      title: isKind ? "차근차근 결제하기" : "복잡한 결제 화면",
+      title: isKind ? "차근차근 결제하기" : isHard ? "함정이 숨은 결제 화면" : "복잡한 결제 화면",
       subtitle: "",
       mode,
-      status: `${doneCount} / 5 완료`,
-      steps: ["할인", "적립", "결제", "카드", "영수증"],
+      status: `${doneCount} / ${paymentSteps.length} 완료`,
+      steps: paymentSteps,
       activeStep: activePaymentStep,
       guide: isKind
         ? "필요한 선택지만 단계별로 보여 주고, 기기에서 해야 할 일도 함께 안내합니다."
-        : "ALPACO VIP 인증, SNU 클래스 적립, 카드 결제, 영수증 수령을 차례로 진행합니다.",
+        : isHard
+          ? "ALPACO VIP 인증, SNU 클래스 적립 뒤 결제수단을 고르세요. 결제 전에 안내 창이 나올 수 있습니다."
+          : "ALPACO VIP 인증, SNU 클래스 적립, 카드 결제, 영수증 수령을 차례로 진행합니다.",
       cartItems,
       className: kioskClassName,
       body: paymentBody
@@ -1507,6 +1884,7 @@ function renderTinyStation(root, mode) {
       modalClose.addEventListener("click", () => {
         const nextFocus = focusGroupAfterModal;
         flowModalMessage = "";
+        flowModalNote = "";
         focusGroupAfterModal = "";
         modalAnchorGroup = "";
         if (nextFocus) {
@@ -1522,8 +1900,21 @@ function renderTinyStation(root, mode) {
         const group = groups.find((item) => item.key === button.dataset.optionKey);
         const selected = group.items.find((item) => item.id === button.dataset.optionId);
         if (!selected) return;
+        if (isHard && group.key === "payment" && selected.id === "card") {
+          recordBarrier("모바일 상품권으로 먼저 결제한 뒤, 모자란 금액만 카드로 내야 합니다.");
+          return;
+        }
         if (selected.id !== group.correct) {
           recordBarrier(isKind ? "목표와 다른 선택입니다. 안내를 다시 확인해 보세요." : "선택지가 너무 많아 필요한 결제 절차를 찾기 어렵습니다.");
+          return;
+        }
+        if (isHard && group.key === "payment" && !picks.payment) {
+          if (!picks.discount || !picks.reward) {
+            recordBarrier("제휴할인과 적립을 먼저 마쳐야 결제수단을 고를 수 있습니다.");
+            return;
+          }
+          hardPay.upsellIndex = 0;
+          draw();
           return;
         }
         if (group.key === "discount" && selected.id === "alpaco-vip" && !affiliatePhone.done) {
@@ -1570,8 +1961,80 @@ function renderTinyStation(root, mode) {
 
     root.querySelectorAll("[data-barcode-target]").forEach((button) => {
       button.addEventListener("click", () => {
-        if (affiliatePhone.stage !== "scan" || affiliatePhone.done) return;
+        const giftScanning = isHard && hardPay.giftStage === "scan";
+        if ((affiliatePhone.stage !== "scan" || affiliatePhone.done) && !giftScanning) return;
         recordBarrier("바코드는 버튼처럼 누르는 것이 아니라, 스마트폰 화면을 인식부에 가져다대야 합니다.");
+      });
+    });
+
+    root.querySelectorAll("[data-upsell-answer]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const offer = hardUpsellOffers[hardPay.upsellIndex];
+        if (!offer) return;
+        if (button.dataset.upsellAnswer === "yes") {
+          recordBarrier(offer.barrier);
+          hardPay.upsellIndex = 0;
+          draw();
+          return;
+        }
+        if (hardPay.upsellIndex < hardUpsellOffers.length - 1) {
+          hardPay.upsellIndex += 1;
+          draw();
+          return;
+        }
+        const paymentGroup = groups.find((item) => item.key === "payment");
+        picks.payment = paymentGroup.items.find((item) => item.id === "gift-card");
+        hardPay.upsellIndex = -1;
+        hardPay.giftStage = "scan";
+        draw();
+      });
+    });
+
+    root.querySelectorAll("[data-remainder-id]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const paymentGroup = groups.find((item) => item.key === "payment");
+        const selected = paymentGroup.items.find((item) => item.id === button.dataset.remainderId);
+        if (!selected) return;
+        if (selected.id !== "card") {
+          recordBarrier("모자란 금액은 미션에 나온 대로 카드로 결제해야 합니다.");
+          return;
+        }
+        hardPay.remainder = selected;
+        hardPay.giftStage = "done";
+        draw();
+      });
+    });
+
+    root.querySelectorAll("[data-pin-key]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (hardPay.pinValue.length < 4) {
+          hardPay.pinValue += button.dataset.pinKey;
+        }
+        hardPay.pinKeys = shuffledPinKeys();
+        draw();
+      });
+    });
+
+    root.querySelectorAll("[data-pin-action]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.dataset.pinAction === "clear") {
+          hardPay.pinValue = "";
+          hardPay.pinKeys = shuffledPinKeys();
+          draw();
+          return;
+        }
+        if (hardPay.pinValue !== HARD_CARD_PIN) {
+          recordBarrier("카드 비밀번호가 맞지 않습니다. 숫자 위치가 계속 바뀌어 같은 자리를 누르면 틀리기 쉽습니다.");
+          hardPay.pinValue = "";
+          hardPay.pinKeys = shuffledPinKeys();
+          draw();
+          return;
+        }
+        hardPay.pinDone = true;
+        flowModalMessage = "영수증을 챙겨주세요";
+        focusGroupAfterModal = "";
+        modalAnchorGroup = "";
+        draw();
       });
     });
 
@@ -1629,10 +2092,10 @@ function renderTinyStation(root, mode) {
 
     root.querySelectorAll("[data-hardware]").forEach((button) => {
       button.addEventListener("click", () => {
-        if (affiliatePhone.stage === "scan" && !affiliatePhone.done) {
+        if ((affiliatePhone.stage === "scan" && !affiliatePhone.done) || (isHard && hardPay.giftStage === "scan")) {
           return;
         }
-        if (!optionReady) {
+        if (!readyForCard) {
           recordBarrier("할인, 적립, 결제수단을 먼저 통과해야 기기 조작을 할 수 있습니다.");
           return;
         }
@@ -1647,14 +2110,23 @@ function renderTinyStation(root, mode) {
           return;
         }
         hardware.receipt = true;
+        if (isHard) {
+          completeStation("추가 주문 거절, 상품권 잔액 부족, 바뀌는 보안 키패드까지 결제 절차를 끝까지 해냈습니다.");
+          showCompletion(root, "원하지 않는 추가 주문 유도와 나눠 내기, 보안 키패드까지 모두 통과했습니다. 잠시 뒤 키오스크 선택 화면으로 돌아갑니다.", {
+            autoReturn: true,
+            kicker: "최종 미션 해결",
+            title: "더 어려운 모드 완료"
+          });
+          return;
+        }
         completeStation("결제 단계가 많고 기기 조작 위치가 흩어져 있으면 마지막까지 놓치기 쉽습니다.");
         showCompletion(root, "결제 화면은 할인, 적립, 결제, 카드 투입, 영수증 수령을 한 단계씩 명확하게 안내해야 합니다.");
       });
     });
 
     root.querySelector("[data-cart-action]").addEventListener("click", () => {
-      if (!optionReady) {
-        recordBarrier("제휴할인, 적립 방법, 결제수단을 모두 선택해야 합니다.");
+      if (!readyForCard) {
+        recordBarrier(isHard ? "제휴할인, 적립, 모바일 상품권, 남은 금액 결제수단을 차례로 마쳐야 합니다." : "제휴할인, 적립 방법, 결제수단을 모두 선택해야 합니다.");
         return;
       }
       if (!hardware.card) {
@@ -1662,7 +2134,11 @@ function renderTinyStation(root, mode) {
         root.querySelector("[data-draggable-card]")?.scrollIntoView({ block: "center", behavior: "smooth" });
         return;
       }
-      root.querySelector("[data-hardware='receipt']").click();
+      if (isHard && !hardPay.pinDone) {
+        recordBarrier("카드 비밀번호 4자리를 먼저 입력해야 결제가 끝납니다.");
+        return;
+      }
+      root.querySelector("[data-hardware='receipt']")?.click();
     });
   }
 
@@ -1712,6 +2188,7 @@ function renderFriendlyPicker(root, config) {
 
 function renderAlienStation(root, mode) {
   const isKind = mode === "kind";
+  const isHard = mode === "hard";
   let picks = {};
   let alienSuccessMessage = "";
   let alienSuccessAction = "";
@@ -1904,13 +2381,62 @@ function renderAlienStation(root, mode) {
       ]
     }
   ];
+  const hardGroups = [
+    {
+      key: "drink",
+      title: "المشروبات",
+      language: "아랍어",
+      lang: "ar",
+      dir: "rtl",
+      correct: "citron-ice-hard",
+      barrier: "오른쪽부터 읽는 글자라 비슷한 유자 메뉴를 구분하기 어려웠습니다.",
+      items: [
+        hardItem("citron-hot-hard", "شاي يوزو ساخن", 3000),
+        hardItem("citron-ade-hard", "يوزو غازي", 3500),
+        hardItem("citron-ice-hard", "شاي يوزو بارد", 3000),
+        hardItem("barley-ice-hard", "شاي شعير بارد", 2500)
+      ]
+    },
+    {
+      key: "serve",
+      title: "Как получить",
+      language: "러시아어",
+      lang: "ru",
+      correct: "takeout-hard",
+      barrier: "아는 알파벳처럼 보였지만 뜻이 전혀 다른 글자였습니다.",
+      items: [hardItem("here-hard", "В зале"), hardItem("delivery-hard", "Доставка"), hardItem("takeout-hard", "С собой"), hardItem("later-hard", "Забрать позже")]
+    },
+    {
+      key: "sugar",
+      title: "मिठास",
+      language: "힌디어",
+      lang: "hi",
+      correct: "no-sugar-hard",
+      barrier: "글자 모양이 비슷해 보여서 단맛 옵션을 구분하기 어려웠습니다.",
+      items: [hardItem("less-sweet-hard", "कम मीठा"), hardItem("regular-hard", "सामान्य मीठा"), hardItem("no-sugar-hard", "बिना चीनी"), hardItem("extra-sweet-hard", "ज़्यादा मीठा")]
+    },
+    {
+      key: "cup",
+      title: "컵 셀렉트",
+      language: "외래어 범벅 한국어",
+      lang: "ko",
+      correct: "reusable-cup-hard",
+      barrier: "한국어인데도 외래어가 많아 무슨 뜻인지 알기 어려웠습니다.",
+      items: [
+        { ...hardItem("disposable-cup-hard", "디스포저블 컵"), desc: "테이크아웃 시 ECO 옵션 미적용" },
+        { ...hardItem("tumbler-discount-hard", "텀블러 디스카운트"), desc: "퍼스널 텀블러 지참 시 프라이스 오프" },
+        { ...hardItem("reusable-cup-hard", "리유저블 컵"), desc: "에코 리턴 시 디파짓 리펀드" },
+        { ...hardItem("mug-hard", "머그 (포 히어)"), desc: "다인인 전용 세라믹 웨어" }
+      ]
+    }
+  ];
   const pickLanguage = () => {
     const available = alienLanguageSets.filter((language) => !completedLanguages.has(language.id));
     const pool = available.length ? available : alienLanguageSets;
     return pool[Math.floor(Math.random() * pool.length)];
   };
-  let currentLanguage = isKind ? null : pickLanguage();
-  let groups = isKind ? easyGroups : currentLanguage.groups;
+  let currentLanguage = isKind || isHard ? null : pickLanguage();
+  let groups = isKind ? easyGroups : isHard ? hardGroups : currentLanguage.groups;
 
   function resetAlienRound() {
     picks = {};
@@ -1942,24 +2468,39 @@ function renderAlienStation(root, mode) {
     const nextGroupIndex = groups.findIndex((group) => !picks[group.key]);
     const activeGroupIndex = nextGroupIndex === -1 ? groups.length - 1 : nextGroupIndex;
     const activeGroup = groups[activeGroupIndex];
+    const langAttr = isHard ? ` lang="${activeGroup.lang}"` : "";
     root.innerHTML = kioskShell({
       brand: "모두티",
-      title: isKind ? "쉬운 말로 주문하기" : "낯선 말로 주문하기",
-      subtitle: isKind ? "따뜻한 보리차, 포장, 설탕 없음을 고릅니다." : `${currentLanguage.name} 메뉴와 짧은 안내만 보고 목표 옵션을 찾아야 합니다.`,
+      title: isKind ? "쉬운 말로 주문하기" : isHard ? "단계마다 바뀌는 말로 주문하기" : "낯선 말로 주문하기",
+      subtitle: isKind
+        ? "따뜻한 보리차, 포장, 설탕 없음을 고릅니다."
+        : isHard
+          ? "그림 없이 글자만 보고, 단계마다 다른 말로 된 메뉴에서 목표 옵션을 찾아야 합니다."
+          : `${currentLanguage.name} 메뉴와 짧은 안내만 보고 목표 옵션을 찾아야 합니다.`,
       mode,
-      status: `${cartItems.length} / 3 선택`,
-      steps: ["음료", "수령", "옵션"],
+      status: `${cartItems.length} / ${groups.length} 선택`,
+      steps: isHard ? ["음료", "수령", "단맛", "컵"] : ["음료", "수령", "옵션"],
       activeStep: activeGroupIndex,
       guide: isKind
         ? "따뜻한 보리차, 포장, 설탕 없음을 쉬운 말과 설명으로 확인합니다."
-        : `따뜻한 보리차, 포장, 설탕 없음을 ${currentLanguage.name} 메뉴와 짧은 안내만 보고 찾아봅니다.`,
+        : isHard
+          ? "차가운 유자차, 포장, 설탕 없음, 리유저블 컵을 글자만 보고 찾아봅니다."
+          : `따뜻한 보리차, 포장, 설탕 없음을 ${currentLanguage.name} 메뉴와 짧은 안내만 보고 찾아봅니다.`,
       cartItems,
-      className: isKind ? "friendly-kiosk" : "alien-kiosk",
+      className: isKind ? "friendly-kiosk" : isHard ? "alien-kiosk alien-hard-kiosk" : "alien-kiosk",
       body: `
         ${
           isKind
             ? ""
-            : `
+            : isHard
+              ? `
+              <div class="alien-language-status alien-hard-status">
+                <span>이번 단계의 말</span>
+                <b>${activeGroup.language}</b>
+                <small>${activeGroupIndex + 1} / ${groups.length} 단계</small>
+              </div>
+            `
+              : `
               <div class="alien-language-status">
                 <span>랜덤 외계어</span>
                 <b>${currentLanguage.name}</b>
@@ -1968,10 +2509,10 @@ function renderAlienStation(root, mode) {
             `
         }
         <div class="category-tabs">
-          ${groups.map((group, index) => `<span class="category-tab ${index === activeGroupIndex ? "is-active" : ""} ${picks[group.key] ? "is-complete" : ""}">${group.title}</span>`).join("")}
+          ${groups.map((group, index) => `<span class="category-tab ${index === activeGroupIndex ? "is-active" : ""} ${picks[group.key] ? "is-complete" : ""}"${isHard ? ` lang="${group.lang}"` : ""}>${group.title}</span>`).join("")}
         </div>
         <div class="alien-order">
-          <section class="dense-section alien-active-section">
+          <section class="dense-section alien-active-section"${langAttr}>
             <h4>${activeGroup.title}</h4>
             <div class="product-grid compact-products">
               ${activeGroup.items
@@ -1991,6 +2532,9 @@ function renderAlienStation(root, mode) {
       `
     });
     restoreKioskScroll(root, scrollState);
+    if (isHard && activeGroup.dir === "rtl") {
+      root.querySelector(".real-kiosk")?.setAttribute("dir", "rtl");
+    }
 
     root.querySelectorAll("[data-alien-replay]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -2025,11 +2569,24 @@ function renderAlienStation(root, mode) {
         const selected = group.items.find((item) => item.id === button.dataset.optionId);
         if (!selected) return;
         if (selected.id !== group.correct) {
-          recordBarrier(isKind ? "선택 조건을 다시 읽어 보세요." : "버튼을 못 누른 것이 아니라, 화면의 말이 충분히 친절하지 않았습니다.");
+          recordBarrier(isKind ? "선택 조건을 다시 읽어 보세요." : isHard ? group.barrier : "버튼을 못 누른 것이 아니라, 화면의 말이 충분히 친절하지 않았습니다.");
           return;
         }
         picks[group.key] = selected;
         if (Object.keys(picks).length === groups.length) {
+          if (isHard) {
+            completeStation("읽는 방향, 처음 보는 글자, 외래어까지 낯선 4단계 주문을 완료했습니다.");
+            showCompletion(
+              root,
+              "이 글자를 쓰는 사람이 한국 키오스크 앞에 서면 지금과 같은 느낌을 받습니다. 한국에 사는 이주민, 여행객, 외래어가 낯선 어르신에게는 쉬운 말, 그림, 여러 언어 안내가 필요합니다.",
+              {
+                autoReturn: true,
+                kicker: "최종 미션 해결",
+                title: "더 어려운 모드 완료"
+              }
+            );
+            return;
+          }
           if (!isKind) {
             completedLanguages.add(currentLanguage.id);
             if (completedLanguages.size === alienLanguageSets.length) {
@@ -2054,7 +2611,7 @@ function renderAlienStation(root, mode) {
     });
 
     root.querySelector("[data-cart-action]").addEventListener("click", () => {
-      recordBarrier("세 가지 조건을 모두 선택해야 결제할 수 있습니다.");
+      recordBarrier(isHard ? "네 가지 조건을 모두 선택해야 결제할 수 있습니다." : "세 가지 조건을 모두 선택해야 결제할 수 있습니다.");
     });
   }
 
@@ -2280,6 +2837,13 @@ els.kindMode.addEventListener("click", () => {
   state.kioskStarted = false;
   renderStation();
 });
+
+els.chromebookToggle.addEventListener("click", () => {
+  setChromebookMode(!document.body.classList.contains("chromebook-mode"));
+});
+
+document.body.dataset.view = "home";
+if (readChromebookPreference()) setChromebookMode(true);
 
 renderCards();
 renderProgress();

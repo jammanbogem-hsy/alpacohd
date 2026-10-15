@@ -2807,6 +2807,139 @@ body.is-dragging-card {
   font-size: 0.58rem;
 }
 
+.mega-products {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mega-products .product-card {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  gap: 4px;
+  min-height: 0;
+  padding: 6px 4px;
+  text-align: center;
+}
+
+.mega-products .product-image-frame {
+  width: 64px;
+  height: 52px;
+}
+
+.mega-products .product-image-frame img {
+  object-fit: contain;
+  transform: scale(1.15);
+}
+
+.mega-products .text-art {
+  width: 48px;
+  height: 48px;
+}
+
+.mega-products .product-copy {
+  gap: 1px;
+}
+
+.mega-products .product-copy b {
+  font-size: 0.78rem;
+}
+
+.mega-products .product-copy small,
+.mega-products .product-copy strong {
+  font-size: 0.66rem;
+}
+
+/* 더 어려운 모드 카드: 원본 이미지 여백 차이를 보정해 그림 크기를 비슷하게 맞춤 (컵 사이즈는 크기 비교용이라 제외) */
+.mega-products .product-image-zero-cider img,
+.mega-products .product-image-fanta img,
+.mega-products .product-image-zero-fanta img,
+.mega-products .product-image-iced-tea img,
+.mega-products .product-image-pay-cocoa img {
+  transform: scale(1.00);
+}
+
+.mega-products .product-image-pay-saseong img {
+  transform: scale(1.05);
+}
+
+.mega-products .product-image-mushroom img,
+.mega-products .product-image-pay-naeildo img,
+.mega-products .product-image-pay-gift img {
+  transform: scale(1.10);
+}
+
+.mega-products .product-image-hanwoo img,
+.mega-products .product-image-jalapeno img {
+  transform: scale(1.15);
+}
+
+.mega-products .product-image-zero-cola img,
+.mega-products .product-image-cider img {
+  transform: scale(1.20);
+}
+
+.mega-products .product-image-double-patty img,
+.mega-products .product-image-chicken-burger img,
+.mega-products .product-image-teriyaki img,
+.mega-products .product-image-truffle-mushroom img,
+.mega-products .product-image-rice-burger img,
+.mega-products .product-image-cola img,
+.mega-products .product-image-ade img {
+  transform: scale(1.25);
+}
+
+.mega-products .product-image-dakgangjeong img {
+  transform: scale(1.35);
+}
+
+.mega-products .product-image-bulgogi img,
+.mega-products .product-image-bacon img,
+.mega-products .product-image-yangnyeom-potato img,
+.mega-products .product-image-buffalo-wing img,
+.mega-products .product-image-onion-ring img,
+.mega-products .product-image-hash-brown img,
+.mega-products .product-image-pay-coupon img,
+.mega-products .product-image-pay-point img {
+  transform: scale(1.40);
+}
+
+.mega-products .product-image-nugget img,
+.mega-products .product-image-pay-cash img {
+  transform: scale(1.45);
+}
+
+.mega-products .product-image-salad img {
+  transform: scale(1.50);
+}
+
+.mega-products .product-image-shrimp img,
+.mega-products .product-image-pay-card img {
+  transform: scale(1.55);
+}
+
+.mega-products .product-image-cheese-set img {
+  transform: scale(1.65);
+}
+
+.mega-products .product-image-fries img {
+  transform: scale(1.80);
+}
+
+.mega-products .product-image-stick img,
+.mega-products .product-image-corn img,
+.mega-products .product-image-ice-none img {
+  transform: scale(1.95);
+}
+
+.mega-products .product-image-ice-normal img {
+  transform: scale(2.25);
+}
+
+.mega-products .product-image-ice-less img,
+.mega-products .product-image-ice-more img {
+  transform: scale(2.35);
+}
+
 .compact-products .product-card {
   min-height: 92px;
 }
@@ -3135,6 +3268,10 @@ body.is-dragging-card {
 }
 
 @media (max-width: 980px) {
+  .mega-products {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   .checkout-layout {
     grid-template-columns: 1fr;
   }
@@ -3267,6 +3404,20 @@ body.is-dragging-card {
 
   .tiny-products {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mega-products {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mega-products .product-card {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .mega-products .product-image-frame {
+    width: 56px;
+    height: 46px;
   }
 
   .product-card {
