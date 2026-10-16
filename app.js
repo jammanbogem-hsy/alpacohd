@@ -43,14 +43,22 @@ const stations = [
     badge: "결제",
     title: "어려운 결제 키오스크",
     short: "할인, 적립, 결제, 영수증까지 이어지는 복잡한 과정",
-    mission: "문자로 받은 쿠폰 번호를 입력하고, 휴대폰 번호 010-2580-1379로 포인트를 적립한 뒤 카드로 결제하고 영수증을 받으세요.",
+    mission: "ALPACO VIP를 인증하고, SNU 클래스 앱의 학생번호를 입력한 뒤 카드 결제를 완료해 보세요.",
+    kindMission: "문자로 받은 쿠폰 번호를 입력하고, 휴대폰 번호 010-2580-1379로 포인트를 적립한 뒤 카드로 결제하고 영수증을 받으세요.",
     kicker: "절차 장벽",
     insight: "결제 전 단계가 많고 안내가 흩어져 있으면 어디를 눌러야 하는지 헷갈립니다.",
     principle: "결제 흐름을 단순하게",
     summary: "할인, 적립, 결제, 카드 투입, 영수증 수령을 단계별로 명확하게 안내합니다.",
     closing: "할인, 적립, 결제, 수령은 실제 행동 순서대로 하나씩 안내해야 합니다.",
-    hardTitle: "함정이 숨은 결제 키오스크",
-    hardMission: "문자로 받은 쿠폰 번호를 입력하고 휴대폰 번호 010-2580-1379로 적립하세요. 추가 주문은 모두 거절하고 모바일 상품권으로 결제한 뒤, 모자란 금액은 카드로 내고 영수증을 받으세요. 카드 비밀번호는 1234입니다."
+    hardLabel: "어려운 모드",
+    hardTitle: "쿠폰·적립 결제 키오스크",
+    hardMission: "문자로 받은 쿠폰 번호를 입력하고, 휴대폰 번호 010-2580-1379로 포인트를 적립한 뒤 카드로 결제하고 영수증을 받으세요.",
+    extremeLabel: "더 어려운 모드",
+    extremeTitle: "함정이 숨은 결제 키오스크",
+    extremeMission: "문자로 받은 쿠폰 번호를 입력하고 휴대폰 번호 010-2580-1379로 적립하세요. 추가 주문은 모두 거절하고 모바일 상품권으로 결제한 뒤, 모자란 금액은 카드로 내고 영수증을 받으세요. 카드 비밀번호는 1234입니다.",
+    insaneLabel: "극악 모드",
+    insaneTitle: "극악 결제 키오스크",
+    insaneMission: "더 어려운 모드와 같은 결제를 결제 대기 시간 안에 끝내세요. 시간 연장 안내를 놓치지 말고, 카드 오류가 나면 다시 꽂고, 비밀번호(1234) 뒤에 서명까지 하세요."
   }
 ];
 
@@ -232,7 +240,11 @@ function renderStation() {
   els.stationKicker.textContent = station.kicker;
   const tier = ["insane", "extreme", "hard"].find((name) => state.mode === name && station[`${name}Title`]) || "";
   els.stationTitle.textContent = tier ? station[`${tier}Title`] : station.title;
-  els.stationMission.textContent = tier ? station[`${tier}Mission`] : station.mission;
+  els.stationMission.textContent = tier
+    ? station[`${tier}Mission`]
+    : state.mode === "kind" && station.kindMission
+      ? station.kindMission
+      : station.mission;
   els.insightText.textContent = station.insight;
   els.challengeMode.classList.toggle("is-active", state.mode !== "kind");
   els.kindMode.classList.toggle("is-active", state.mode === "kind");
@@ -240,7 +252,7 @@ function renderStation() {
 
   const renderers = {
     timer: renderTimerStation,
-    tiny: renderTinyStation,
+    tiny: (root, mode) => (mode === "challenge" ? renderLegacyPayStation(root, mode) : renderTinyStation(root, mode)),
     alien: renderAlienStation,
     contrast: renderContrastStation,
     audio: renderAudioStation
@@ -802,7 +814,7 @@ function renderKioskStart(root, station, mode) {
           <section class="start-panel">
             <p class="section-kicker">${modeLabel}</p>
             <h3>주문 목표를 확인했나요?</h3>
-            <p>${station.mission}</p>
+            <p>${mode === "kind" && station.kindMission ? station.kindMission : station.mission}</p>
             <form class="start-password-form" data-start-password-form="true">
               <label for="${inputId}">비밀번호</label>
               <input id="${inputId}" type="text" autocomplete="off" placeholder="선생님이 알려준 비밀번호 입력" data-start-password-input="true" />
@@ -1006,18 +1018,18 @@ function fxTimeoutNotice(root) {
 
 const HALL_OF_FAME_KEY = "alpaco-hall-of-fame";
 
-function readHallOfFame() {
+function readHallOfFame(key = HALL_OF_FAME_KEY) {
   try {
-    const list = JSON.parse(window.localStorage.getItem(HALL_OF_FAME_KEY) || "[]");
+    const list = JSON.parse(window.localStorage.getItem(key) || "[]");
     return Array.isArray(list) ? list : [];
   } catch {
     return [];
   }
 }
 
-function writeHallOfFame(list) {
+function writeHallOfFame(list, key = HALL_OF_FAME_KEY) {
   try {
-    window.localStorage.setItem(HALL_OF_FAME_KEY, JSON.stringify(list));
+    window.localStorage.setItem(key, JSON.stringify(list));
   } catch {
     // 저장이 막힌 환경에서도 이번 화면에는 기록이 보입니다.
   }
@@ -1071,6 +1083,7 @@ function prizeCardMarkup(prize) {
             </div>
             <strong>${prize.title}</strong>
             <p>${prize.detail}</p>
+            <span class="prize-owner" data-prize-owner="true">이름을 올려 주세요</span>
           </div>
         </div>
       </div>
@@ -1202,7 +1215,7 @@ async function savePrizeCardPng(prize, record) {
   ctx.fill();
   ctx.fillStyle = "#25293a";
   ctx.font = font(28);
-  ctx.fillText(`${record.name} · ${INSANE_TIMER_SECONDS}초 극악 모드 정복`, 300, 732);
+  ctx.fillText(`${record.name} · ${record.label || `${INSANE_TIMER_SECONDS}초 극악 모드 정복`}`, 300, 732);
   ctx.fillStyle = "#5b6072";
   ctx.font = font(22, 800);
   ctx.fillText(`${record.seconds.toFixed(1)}초 · 실수 ${record.mistakes}번 · ${new Date().toLocaleDateString("ko-KR")}`, 300, 770);
@@ -1220,7 +1233,13 @@ async function savePrizeCardPng(prize, record) {
 }
 
 // 극악 모드 성공 화면: 금빛 조명·트로피·팡파르와 함께 이 기기의 기록 순위를 보여 줍니다.
-function showHallOfFame({ seconds, mistakes }) {
+function showHallOfFame({
+  seconds,
+  mistakes,
+  storageKey = HALL_OF_FAME_KEY,
+  subtitle = `${INSANE_TIMER_SECONDS}초 극악 모드 정복!`,
+  label = `${INSANE_TIMER_SECONDS}초 극악 모드 정복`
+}) {
   document.querySelector(".hof-overlay")?.remove();
   const prize = drawPrize();
   let submittedName = "";
@@ -1241,7 +1260,7 @@ function showHallOfFame({ seconds, mistakes }) {
       </div>
       <p class="hof-kicker">HALL OF FAME</p>
       <h2>명예의 전당</h2>
-      <p class="hof-sub">${INSANE_TIMER_SECONDS}초 극악 모드 정복!</p>
+      <p class="hof-sub">${subtitle}</p>
       <div class="hof-stats">
         <span>걸린 시간 <b>${seconds.toFixed(1)}초</b></span>
         <span>실수 <b>${mistakes}번</b></span>
@@ -1250,7 +1269,7 @@ function showHallOfFame({ seconds, mistakes }) {
         <input type="text" maxlength="10" placeholder="이름 또는 별명" aria-label="명예의 전당 이름" data-hof-name="true" />
         <button type="submit">이름 올리기</button>
       </form>
-      <ol class="hof-list" data-hof-list="true">${hallOfFameRows(readHallOfFame())}</ol>
+      <ol class="hof-list" data-hof-list="true">${hallOfFameRows(readHallOfFame(storageKey))}</ol>
       <button class="hof-close" type="button" data-hof-close="true">키오스크 선택으로</button>
       </div>
       ${prizeCardMarkup(prize)}
@@ -1260,18 +1279,29 @@ function showHallOfFame({ seconds, mistakes }) {
   window.KioskFX?.sound?.("fanfare");
   bindPrizeCard(overlay, prize, () => {
     const typed = overlay.querySelector("[data-hof-name]")?.value.trim();
-    return { name: (typed || submittedName || "익명").replace(/[<>&"']/g, "").slice(0, 10), seconds, mistakes };
+    return { name: (typed || submittedName || "익명").replace(/[<>&"']/g, "").slice(0, 10), seconds, mistakes, label };
   });
 
   const form = overlay.querySelector("[data-hof-form]");
+  // 이름을 입력하는 대로 선물 카드 앞면에도 이름이 찍힙니다.
+  const owner = overlay.querySelector("[data-prize-owner]");
+  const showOwner = (name) => {
+    if (!owner) return;
+    owner.textContent = name ? `${name} 님` : "이름을 올려 주세요";
+    owner.classList.toggle("has-name", Boolean(name));
+  };
+  overlay.querySelector("[data-hof-name]").addEventListener("input", (event) => {
+    showOwner(event.currentTarget.value.trim().replace(/[<>&"']/g, "").slice(0, 10));
+  });
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const input = overlay.querySelector("[data-hof-name]");
     const name = input.value.trim().replace(/[<>&"']/g, "").slice(0, 10) || "익명";
     submittedName = name;
+    showOwner(name);
     const entry = { name, seconds, mistakes, prize: prize.id, at: Date.now() };
-    const list = [...readHallOfFame(), entry].sort((a, b) => a.seconds - b.seconds || a.mistakes - b.mistakes).slice(0, 20);
-    writeHallOfFame(list);
+    const list = [...readHallOfFame(storageKey), entry].sort((a, b) => a.seconds - b.seconds || a.mistakes - b.mistakes).slice(0, 20);
+    writeHallOfFame(list, storageKey);
     overlay.querySelector("[data-hof-list]").innerHTML = hallOfFameRows(list, entry.at);
     form.remove();
     window.KioskFX?.sound?.("approve");
@@ -1872,9 +1902,1084 @@ function randomApprovalNumber() {
   return String(Math.floor(10000000 + Math.random() * 90000000));
 }
 
-function renderTinyStation(root, mode) {
+// 결제 키오스크 1단계(어려운 결제): 예전 ALPACO VIP 인증 → SNU 클래스 적립 → 카드 → 영수증 흐름. 항상 challenge 모드로만 쓰입니다.
+function renderLegacyPayStation(root, mode) {
   const isKind = mode === "kind";
   const isHard = mode === "hard";
+  const picks = {};
+  const hardPay = {
+    upsellIndex: -1,
+    giftStage: "none",
+    remainder: null,
+    pinValue: "",
+    pinDone: false,
+    pinKeys: shuffledPinKeys()
+  };
+  let flowModalNote = "";
+  const hardware = {
+    card: false,
+    receipt: false
+  };
+  const affiliatePhone = {
+    open: false,
+    stage: "locked",
+    done: false
+  };
+  const rewardPhone = {
+    open: false,
+    stage: "locked",
+    done: false,
+    studentNumber: randomStudentNumber()
+  };
+  let flowModalMessage = "";
+  let focusGroupAfterModal = "";
+  let modalAnchorGroup = "";
+  const baseOrder = [{ label: "치즈버거 세트", price: 7200 }];
+  const affiliateApps = [
+    { id: "messages", label: "메시지", desc: "대화", initial: "M", imageKey: "message-app" },
+    { id: "photos", label: "사진", desc: "앨범", initial: "P", imageKey: "photo-app" },
+    { id: "map", label: "지도", desc: "길찾기", initial: "길", imageKey: "map-app" },
+    { id: "bank", label: "뱅크", desc: "계좌", initial: "B", imageKey: "bank-app" },
+    { id: "jammanbo-app", label: "JAMMANBO 멤버십", desc: "멤버십", initial: "J", imageKey: "jammanbo" },
+    { id: "weather", label: "날씨", desc: "예보", initial: "W", imageKey: "weather-app" },
+    { id: "snu-app", label: "SNU 클래스", desc: "수강 인증", initial: "S", imageKey: "snu-class" },
+    { id: "alpaco-vip-app", label: "ALPACO VIP", desc: "할인 바코드", initial: "A", imageKey: "alpaco-vip", correct: true },
+    { id: "settings", label: "설정", desc: "기기", initial: "설", imageKey: "settings-app" },
+    { id: "mail", label: "메일", desc: "편지함", initial: "@", imageKey: "mail-app" },
+    { id: "calendar", label: "캘린더", desc: "일정", initial: "C", imageKey: "calendar-app" },
+    { id: "music", label: "뮤직", desc: "재생", initial: "♪", imageKey: "music-app" }
+  ];
+  const groups = isKind
+    ? [
+        {
+          key: "discount",
+          title: "제휴할인",
+          correct: "alpaco-vip",
+          items: [
+            { id: "alpaco-vip", label: "ALPACO VIP", desc: "VIP 할인", price: -700 },
+            { id: "jammanbo", label: "JAMMANBO 멤버십", desc: "앱 멤버십", price: -500 },
+            { id: "snu-class", label: "SNU 클래스", desc: "클래스 인증", price: -300 },
+            { id: "none-discount", label: "제휴할인 없음", desc: "건너뛰기", price: 0, noArt: true }
+          ]
+        },
+        {
+          key: "reward",
+          title: "적립 방법",
+          correct: "snu-reward",
+          items: [
+            { id: "snu-reward", label: "SNU 클래스 적립", desc: "학생번호 입력", price: 0, noArt: true },
+            { id: "none-reward", label: "적립 안 함", desc: "건너뛰기", price: 0, noArt: true }
+          ]
+        },
+        {
+          key: "payment",
+          title: "결제수단",
+          correct: "card",
+          items: [
+            { id: "card", label: "카드 결제", desc: "카드 투입구 사용", price: 0, noArt: true },
+            { id: "easy-pay", label: "간편결제", desc: "앱으로 결제", price: 0, noArt: true }
+          ]
+        }
+      ]
+    : [
+        {
+          key: "discount",
+          title: "STEP 1 제휴할인",
+          correct: "alpaco-vip",
+          items: [
+            { id: "alpaco-vip", label: "ALPACO VIP", desc: "VIP 할인", price: -700 },
+            { id: "jammanbo", label: "JAMMANBO 멤버십", desc: "앱 멤버십", price: -500 },
+            { id: "snu-class", label: "SNU 클래스", desc: "클래스 인증", price: -300 },
+            { id: "none-discount", label: "제휴할인 없음", desc: "건너뛰기", price: 0, noArt: true }
+          ]
+        },
+        {
+          key: "reward",
+          title: "STEP 2 적립 방법",
+          correct: "snu-reward",
+          items: [
+            { id: "phone-reward", label: "휴대폰 번호", desc: "번호 입력", price: 0, noArt: true },
+            { id: "barcode-reward", label: "멤버십 바코드", desc: "스캔", price: 0, noArt: true },
+            { id: "snu-reward", label: "SNU 클래스 적립", desc: "학생번호 입력", price: 0, noArt: true },
+            { id: "none-reward", label: "적립 안 함", desc: "건너뛰기", price: 0, noArt: true }
+          ]
+        },
+        {
+          key: "payment",
+          title: "STEP 3 결제수단",
+          correct: isHard ? "gift-card" : "card",
+          items: [
+            { id: "n-pay", label: "내일도페이", desc: "앱 결제", price: 0, noArt: true },
+            { id: "app-card", label: "앱카드", desc: "QR/바코드", price: 0, noArt: true },
+            { id: "kakao-pay", label: "코코아페이", desc: "앱 결제", price: 0, noArt: true },
+            { id: "payco", label: "콩콩페이", desc: "간편결제", price: 0, noArt: true },
+            { id: "card", label: "카드 결제", desc: "IC페이", price: 0, noArt: true },
+            { id: "zero-pay", label: "동네페이", desc: "간편결제", price: 0, noArt: true },
+            { id: "apple-pay", label: "Orange Pay", desc: "휴대폰 태그", price: 0, noArt: true },
+            { id: "kb-pay", label: "별별페이", desc: "앱 결제", price: 0, noArt: true },
+            { id: "coupon-pay", label: "쿠폰사용", desc: "쿠폰 번호", price: 0, noArt: true },
+            { id: "gift-card", label: "모바일 상품권", desc: "바코드 스캔", price: 0, noArt: true }
+          ]
+        }
+      ];
+
+  function phoneAppIconMarkup(app) {
+    const imageSrc = app.imageKey ? productImages[app.imageKey] : "";
+    if (imageSrc) {
+      return `
+        <span class="phone-app-icon phone-app-image-icon phone-app-image-${app.imageKey}" aria-hidden="true">
+          <img src="${imageSrc}" alt="" loading="lazy">
+        </span>
+      `;
+    }
+    return `<span class="phone-app-icon">${app.initial}</span>`;
+  }
+
+  function affiliatePhonePanel() {
+    const stageCopy = {
+      locked: "스마트폰을 열어서 앱을 찾아봅시다.",
+      apps: "많은 앱 중에서 ALPACO VIP 앱을 찾아 선택해야 합니다.",
+      barcode: "ALPACO VIP 앱 안에서 제휴할인에 필요한 메뉴를 선택해야 합니다.",
+      done: "ALPACO VIP 바코드 인증이 완료되었습니다."
+    };
+    const phoneBody = {
+      locked: `
+        <div class="phone-lock-screen">
+          <span class="phone-clock">10:24</span>
+          <small>ALPACO 제휴할인을 계속하려면 휴대폰을 켜세요.</small>
+          <button class="phone-primary-button" type="button" data-phone-action="wake">스마트폰 켜기</button>
+        </div>
+      `,
+      apps: `
+        <span class="phone-title">홈 화면</span>
+        <div class="phone-app-grid">
+          ${affiliateApps
+            .map(
+              (app) => `
+                <button class="phone-app-button" type="button" data-affiliate-app="${app.id}">
+                  ${phoneAppIconMarkup(app)}
+                  <b>${app.label}</b>
+                </button>
+              `
+            )
+            .join("")}
+        </div>
+      `,
+      barcode: `
+        <span class="phone-title">ALPACO VIP</span>
+        <div class="vip-app-menu">
+          <button class="vip-app-option" type="button" data-phone-action="show-points">
+            <b>포인트 조회</b>
+            <small>잔여 포인트 보기</small>
+          </button>
+          <button class="vip-app-option" type="button" data-phone-action="show-coupons">
+            <b>쿠폰함</b>
+            <small>받은 쿠폰 확인</small>
+          </button>
+          <button class="vip-app-option" type="button" data-phone-action="generate-barcode">
+            <b>바코드 생성</b>
+            <small>제휴할인 인증용</small>
+          </button>
+          <button class="vip-app-option" type="button" data-phone-action="show-history">
+            <b>이용 내역</b>
+            <small>최근 사용 기록</small>
+          </button>
+        </div>
+      `,
+      done: `
+        <span class="phone-title">ALPACO VIP</span>
+        <div class="membership-card is-done">
+          <b>인증 완료</b>
+          <small>제휴할인이 주문 내역에 적용되었습니다.</small>
+          <span class="barcode-visual" aria-label="인증된 멤버십 바코드"></span>
+          <strong>할인 적용</strong>
+        </div>
+      `
+    };
+
+    return `
+      <section class="affiliate-phone-panel ${affiliatePhone.done ? "is-done" : ""}">
+        <div class="phone-panel-copy">
+          <h4>스마트폰 제휴 앱 인증</h4>
+          <p>${stageCopy[affiliatePhone.stage]}</p>
+        </div>
+        <div class="phone-mock" aria-label="스마트폰 앱 선택 화면">
+          <div class="phone-speaker" aria-hidden="true"></div>
+          <div class="phone-screen">
+            ${phoneBody[affiliatePhone.stage]}
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
+  function rewardPhonePanel() {
+    const stageCopy = {
+      locked: "SNU 클래스 적립을 하려면 스마트폰에서 학생번호를 확인해야 합니다.",
+      apps: "많은 앱 중에서 SNU 클래스 앱을 찾아 선택해야 합니다.",
+      student: "앱에 표시된 학생번호를 키오스크 입력칸에 그대로 입력하세요.",
+      done: "학생번호 확인이 완료되어 SNU 클래스 적립이 적용되었습니다."
+    };
+    const isStudentEntry = rewardPhone.stage === "student";
+    const rewardIntro = isStudentEntry
+      ? ""
+      : `
+        <div class="phone-panel-copy">
+          <h4>스마트폰 SNU 클래스 적립</h4>
+          <p>${stageCopy[rewardPhone.stage]}</p>
+        </div>
+      `;
+    const phoneBody = {
+      locked: `
+        <div class="phone-lock-screen">
+          <span class="phone-clock">10:24</span>
+          <small>SNU 클래스 적립을 계속하려면 휴대폰을 켜세요.</small>
+          <button class="phone-primary-button" type="button" data-reward-phone-action="wake">스마트폰 켜기</button>
+        </div>
+      `,
+      apps: `
+        <span class="phone-title">홈 화면</span>
+        <div class="phone-app-grid">
+          ${affiliateApps
+            .map(
+              (app) => `
+                <button class="phone-app-button" type="button" data-reward-app="${app.id}">
+                  ${phoneAppIconMarkup(app)}
+                  <b>${app.label}</b>
+                </button>
+              `
+            )
+            .join("")}
+        </div>
+      `,
+      student: `
+        <div class="phone-app-header reward-phone-app-header">
+          ${productImageMarkup(productImages["snu-class"], "phone-app-logo")}
+          <span class="reward-phone-app-title">
+            <span class="phone-title">SNU 클래스</span>
+            <small>스마트폰 SNU 클래스 적립</small>
+            <em>${stageCopy.student}</em>
+          </span>
+        </div>
+        <div class="student-id-card">
+          <b>학생번호</b>
+          <strong>${rewardPhone.studentNumber}</strong>
+          <small>대문자 영어와 숫자를 정확히 입력해야 합니다.</small>
+        </div>
+      `,
+      done: `
+        <div class="phone-app-header">
+          ${productImageMarkup(productImages["snu-class"], "phone-app-logo")}
+          <span class="phone-title">SNU 클래스</span>
+        </div>
+        <div class="student-id-card is-done">
+          <b>적립 완료</b>
+          <strong>${rewardPhone.studentNumber}</strong>
+          <small>학생번호가 확인되었습니다.</small>
+        </div>
+      `
+    };
+
+    return `
+      <section class="reward-phone-panel ${rewardPhone.done ? "is-done" : ""} ${isStudentEntry ? "has-student-entry" : ""}">
+        ${rewardIntro}
+        <div class="phone-mock" aria-label="스마트폰 SNU 클래스 앱 화면">
+          <div class="phone-speaker" aria-hidden="true"></div>
+          <div class="phone-screen">
+            ${phoneBody[rewardPhone.stage]}
+          </div>
+        </div>
+        ${
+          isStudentEntry
+            ? `
+              <form class="student-id-entry" data-student-id-form="true">
+                <label for="studentIdInput">키오스크 학생번호 입력</label>
+                <input id="studentIdInput" type="text" inputmode="text" autocomplete="off" maxlength="12" placeholder="예: A7K2M9Q4" data-student-id-input="true" />
+                <button class="phone-primary-button" type="submit">입력 완료</button>
+              </form>
+            `
+            : ""
+        }
+      </section>
+    `;
+  }
+
+  function paymentHardwarePanel(optionReady) {
+    const barcodeActive = (affiliatePhone.stage === "scan" && !affiliatePhone.done) || (isHard && hardPay.giftStage === "scan");
+    const cardDragActive = optionReady && !barcodeActive && !hardware.card;
+    const hint = barcodeActive
+      ? "바코드가 생성된 스마트폰을 바코드 인식하는 곳으로 끌어다 놓으세요."
+      : cardDragActive
+        ? "결제 카드를 카드 넣는 곳으로 끌어다 놓으세요."
+        : "";
+
+    return `
+      <section class="payment-hardware ${optionReady ? "is-ready" : ""} ${barcodeActive ? "is-barcode-stage" : ""} ${cardDragActive ? "is-card-stage" : ""}">
+        <h4>키오스크 앞면</h4>
+        ${hint ? `<p class="payment-hardware-hint">${hint}</p>` : ""}
+        ${
+          cardDragActive
+            ? `
+              <div class="card-drag-zone">
+                <div class="payment-card-hand" data-draggable-card="true" data-card-anchor-x="0.5" data-card-anchor-y="0.5" aria-label="결제 카드를 카드 넣는 곳으로 끌어다 놓기">
+                  <img src="${productImages["payment-card-hand"]}" alt="" draggable="false">
+                </div>
+              </div>
+            `
+            : ""
+        }
+        <div class="hardware-actions">
+          <button class="hardware-button barcode-target ${hardware.card ? "is-done" : ""}" type="button" data-hardware="card" data-barcode-target="card" data-card-target="slot" aria-label="카드 넣는 곳">
+            <span class="hardware-device-group">
+              <span class="hardware-image hardware-card-slot" aria-hidden="true">
+                <img src="${productImages["hardware-card-slot"]}" alt="" loading="lazy">
+              </span>
+              <b>카드 넣는 곳</b>
+            </span>
+          </button>
+          <button class="hardware-button barcode-target ${hardware.receipt ? "is-done" : ""}" type="button" data-hardware="receipt" data-barcode-target="receipt" aria-label="영수증과 번호표 챙기기">
+            <span class="hardware-device-group">
+              <span class="hardware-image hardware-receipt" aria-hidden="true">
+                <img src="${productImages["hardware-receipt"]}" alt="" loading="lazy">
+              </span>
+              <b>영수증/번호표<br>챙기기</b>
+            </span>
+          </button>
+          <button class="hardware-button barcode-target" type="button" data-barcode-target="scanner" aria-label="바코드 인식하는 곳">
+            <span class="hardware-device-group">
+              <span class="hardware-image hardware-barcode" aria-hidden="true">
+                <img src="${productImages["hardware-barcode"]}" alt="" loading="lazy">
+              </span>
+              <b>바코드 인식하는<br>곳</b>
+            </span>
+          </button>
+        </div>
+      </section>
+    `;
+  }
+
+  function affiliateScanPanel(optionReady) {
+    return `
+      <div class="payment-flow scan-payment-flow">
+        <section class="dense-section payment-section scan-payment-section">
+          <h4>제휴할인 바코드 인식</h4>
+          <p class="scan-payment-hint">바코드가 생성된 스마트폰을 아래 키오스크 앞면의 바코드 인식하는 곳으로 끌어다 대세요.</p>
+          <div class="scan-payment-layout">
+            <div class="phone-mock scan-phone-mock" aria-label="드래그 가능한 ALPACO VIP 스마트폰" data-draggable-barcode="true">
+              <div class="phone-speaker" aria-hidden="true"></div>
+              <div class="phone-screen">
+                <span class="phone-title">ALPACO VIP</span>
+                <div class="membership-card">
+                  <b>VIP 멤버십</b>
+                  <small>이 스마트폰을 바코드 인식하는 곳으로 끌어다 대세요.</small>
+                  <span class="barcode-visual" aria-label="멤버십 바코드"></span>
+                  <strong>APC-2026-0506</strong>
+                </div>
+              </div>
+            </div>
+            ${paymentHardwarePanel(optionReady)}
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  function upsellPanel() {
+    const offer = hardUpsellOffers[hardPay.upsellIndex];
+    const yesButton = `<button class="upsell-yes-button" type="button" data-upsell-answer="yes">${offer.yes}</button>`;
+    const noButton = `<button class="upsell-no-button" type="button" data-upsell-answer="no">${offer.no}</button>`;
+    return `
+      <div class="upsell-focus-flow">
+        <section class="upsell-popup is-${offer.layout}" role="dialog" aria-modal="true" aria-label="${offer.title}">
+          ${offer.layout === "corner" ? `<div class="upsell-corner-row">${noButton}</div>` : ""}
+          <span class="upsell-badge">오늘만 특가</span>
+          ${offer.imageKey ? productImageMarkup(productImages[offer.imageKey], "upsell-image") : `<span class="upsell-coin" aria-hidden="true">500</span>`}
+          <h4>${offer.title}</h4>
+          <p>${offer.desc}</p>
+          <div class="upsell-actions">
+            ${offer.layout === "above" ? noButton : ""}
+            ${yesButton}
+            ${offer.layout === "below" ? noButton : ""}
+          </div>
+          <small class="upsell-progress">${hardPay.upsellIndex + 1} / ${hardUpsellOffers.length}</small>
+        </section>
+      </div>
+    `;
+  }
+
+  function giftScanPanel() {
+    return `
+      <div class="payment-flow scan-payment-flow">
+        <section class="dense-section payment-section scan-payment-section">
+          <h4>모바일 상품권 바코드 인식</h4>
+          <p class="scan-payment-hint">모바일 상품권이 열린 스마트폰을 아래 키오스크 앞면의 바코드 인식하는 곳으로 끌어다 대세요.</p>
+          <div class="scan-payment-layout">
+            <div class="phone-mock scan-phone-mock gift-phone-mock" aria-label="드래그 가능한 모바일 상품권 스마트폰" data-draggable-barcode="gift">
+              <div class="phone-speaker" aria-hidden="true"></div>
+              <div class="phone-screen">
+                <span class="phone-title">모바일 상품권</span>
+                <div class="membership-card gift-card-ticket">
+                  <b>모두버거 금액권</b>
+                  <small>이 스마트폰을 바코드 인식하는 곳으로 끌어다 대세요.</small>
+                  <span class="barcode-visual" aria-label="모바일 상품권 바코드"></span>
+                  <strong>GIFT-0918-5300</strong>
+                </div>
+              </div>
+            </div>
+            ${paymentHardwarePanel(false)}
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  function remainderPanel() {
+    const paymentGroup = groups.find((item) => item.key === "payment");
+    const remainderItems = paymentGroup.items.filter((item) => item.id !== "gift-card");
+    return `
+      <div class="payment-flow">
+        <section class="dense-section payment-section remainder-section" data-payment-group="remainder">
+          <h4>STEP 4 남은 금액 결제수단</h4>
+          <p class="remainder-note">상품권 사용 후 결제할 금액이 남아 있습니다. 남은 금액: ${formatWon(remainderAmount())}</p>
+          <div class="product-grid payment-options">
+            ${remainderItems
+              .map((item) =>
+                productCard(item, `data-remainder-id="${item.id}"`, hardPay.remainder?.id === item.id ? "is-picked" : "")
+              )
+              .join("")}
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  function pinPadPanel() {
+    const dots = Array.from({ length: 4 }, (_, index) => `<span class="${index < hardPay.pinValue.length ? "is-filled" : ""}"></span>`).join("");
+    const digitButtons = hardPay.pinKeys
+      .map((key) => `<button class="pin-key" type="button" data-pin-key="${key}">${key}</button>`)
+      .join("");
+    return `
+      <div class="pin-focus-flow">
+        <section class="pin-pad-panel" aria-label="카드 비밀번호 보안 키패드">
+          <div class="pin-pad-head">
+            ${productImageMarkup(productImages["hardware-card-slot"], "pin-card-image")}
+            <span>
+              <h4>카드 비밀번호 4자리</h4>
+              <small>보안을 위해 숫자 위치가 누를 때마다 바뀝니다.</small>
+            </span>
+          </div>
+          <div class="pin-dots" aria-label="입력한 자릿수 ${hardPay.pinValue.length}">${dots}</div>
+          <div class="pin-grid">
+            ${digitButtons}
+            <button class="pin-key pin-key-sub" type="button" data-pin-action="clear">지우기</button>
+            <button class="pin-key pin-key-ok" type="button" data-pin-action="submit">확인</button>
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  function noteModal(message, note) {
+    return `
+      <div class="flow-modal-backdrop" role="dialog" aria-modal="true" aria-label="${message}">
+        <div class="flow-modal hard-note-modal">
+          <h4>${message}</h4>
+          <p>${note}</p>
+          <button class="phone-primary-button" type="button" data-flow-modal-close="true">확인</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function remainderAmount() {
+    const discount = picks.discount?.price || 0;
+    return baseOrder.reduce((sum, item) => sum + item.price, 0) + discount - HARD_GIFT_BALANCE;
+  }
+
+  function applyGiftCard() {
+    hardPay.giftStage = "short";
+    flowModalMessage = "상품권 잔액이 부족합니다";
+    flowModalNote = "부족한 금액은 다른 결제수단으로 이어서 결제해 주세요.";
+    focusGroupAfterModal = "";
+    modalAnchorGroup = "";
+    draw();
+  }
+
+  function applyAffiliateDiscount() {
+    const discountGroup = groups.find((item) => item.key === "discount");
+    picks.discount = discountGroup.items.find((item) => item.id === "alpaco-vip");
+    affiliatePhone.done = true;
+    affiliatePhone.stage = "done";
+    affiliatePhone.open = false;
+    flowModalMessage = "제휴인증에 성공했습니다";
+    focusGroupAfterModal = "reward";
+    modalAnchorGroup = "discount";
+    draw({ focusGroup: "discount" });
+  }
+
+  function applySnuReward() {
+    const rewardGroup = groups.find((item) => item.key === "reward");
+    picks.reward = rewardGroup.items.find((item) => item.id === "snu-reward");
+    rewardPhone.done = true;
+    rewardPhone.stage = "done";
+    rewardPhone.open = false;
+    flowModalMessage = "적립에 성공했습니다";
+    focusGroupAfterModal = "payment";
+    modalAnchorGroup = "reward";
+    draw({ focusGroup: "reward" });
+  }
+
+  function setupBarcodeDrag() {
+    const barcode = root.querySelector("[data-draggable-barcode]");
+    if (!barcode) return;
+
+    let activeTarget = null;
+    const setActiveTarget = (target) => {
+      if (activeTarget && activeTarget !== target) {
+        activeTarget.classList.remove("is-targeted", "is-drop-correct", "is-drop-wrong");
+      }
+      activeTarget = target;
+      if (activeTarget) {
+        activeTarget.classList.add("is-targeted");
+      }
+    };
+
+    barcode.addEventListener("pointerdown", (event) => {
+      if (typeof event.button === "number" && event.button !== 0) return;
+      event.preventDefault();
+
+      let lastX = event.clientX;
+      let lastY = event.clientY;
+      const sourceRect = barcode.getBoundingClientRect();
+      const ghostWidth = Math.max(145, Math.min(sourceRect.width * 0.5, 200, window.innerWidth * 0.38));
+      const dragGhost = barcode.cloneNode(true);
+      dragGhost.removeAttribute("data-draggable-barcode");
+      dragGhost.classList.add("barcode-drag-ghost");
+      dragGhost.style.width = `${ghostWidth}px`;
+      dragGhost.style.maxWidth = "none";
+      document.body.appendChild(dragGhost);
+      barcode.classList.add("is-drag-source");
+      document.body.classList.add("is-dragging-barcode");
+
+      const moveGhost = (x, y) => {
+        dragGhost.style.left = `${x}px`;
+        dragGhost.style.top = `${y}px`;
+      };
+
+      const onMove = (moveEvent) => {
+        lastX = moveEvent.clientX;
+        lastY = moveEvent.clientY;
+        moveGhost(lastX, lastY);
+        const target = document.elementFromPoint(lastX, lastY)?.closest("[data-barcode-target]");
+        setActiveTarget(target);
+      };
+
+      const onEnd = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onEnd);
+        window.removeEventListener("pointercancel", onEnd);
+
+        const target = document.elementFromPoint(lastX, lastY)?.closest("[data-barcode-target]");
+        dragGhost.remove();
+        barcode.classList.remove("is-drag-source");
+        document.body.classList.remove("is-dragging-barcode");
+        setActiveTarget(null);
+
+        if (!target) {
+          recordBarrier("바코드를 키오스크의 인식부까지 직접 가져다대야 합니다.");
+          return;
+        }
+        if (target.dataset.barcodeTarget !== "scanner") {
+          recordBarrier("카드 투입구나 영수증 출력구가 아니라 바코드 인식하는 곳에 대야 합니다.");
+          return;
+        }
+        if (barcode.dataset.draggableBarcode === "gift") {
+          applyGiftCard();
+          return;
+        }
+        applyAffiliateDiscount();
+      };
+
+      moveGhost(lastX, lastY);
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onEnd);
+      window.addEventListener("pointercancel", onEnd);
+    });
+  }
+
+  function setupCardDrag() {
+    const card = root.querySelector("[data-draggable-card]");
+    if (!card) return;
+
+    let activeTarget = null;
+    const setActiveTarget = (target) => {
+      if (activeTarget && activeTarget !== target) {
+        activeTarget.classList.remove("is-card-targeted", "is-drop-correct", "is-drop-wrong");
+      }
+      activeTarget = target;
+      if (activeTarget) {
+        activeTarget.classList.add("is-card-targeted");
+      }
+    };
+
+    card.addEventListener("pointerdown", (event) => {
+      if (typeof event.button === "number" && event.button !== 0) return;
+      event.preventDefault();
+
+      const anchorX = Number.parseFloat(card.dataset.cardAnchorX || "0.35");
+      const anchorY = Number.parseFloat(card.dataset.cardAnchorY || "0.26");
+      const sourceRect = card.getBoundingClientRect();
+      const ghostScale = 0.58;
+      const ghostWidth = Math.max(140, Math.min(sourceRect.width * ghostScale, 260, window.innerWidth * 0.42));
+      const ghostRatio = ghostWidth / Math.max(sourceRect.width, 1);
+      const ghostHeight = sourceRect.height * ghostRatio;
+      let lastX = event.clientX;
+      let lastY = event.clientY;
+      const dragGhost = card.cloneNode(true);
+      dragGhost.removeAttribute("data-draggable-card");
+      dragGhost.classList.add("card-drag-ghost");
+      dragGhost.style.width = `${ghostWidth}px`;
+      dragGhost.style.height = `${ghostHeight}px`;
+      document.body.appendChild(dragGhost);
+      card.classList.add("is-drag-source");
+      document.body.classList.add("is-dragging-card");
+
+      const moveGhost = (x, y) => {
+        dragGhost.style.left = `${x - ghostWidth * anchorX}px`;
+        dragGhost.style.top = `${y - ghostHeight * anchorY}px`;
+      };
+
+      const onMove = (moveEvent) => {
+        lastX = moveEvent.clientX;
+        lastY = moveEvent.clientY;
+        moveGhost(lastX, lastY);
+        const target = document.elementFromPoint(lastX, lastY)?.closest("[data-barcode-target]");
+        setActiveTarget(target);
+      };
+
+      const onEnd = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onEnd);
+        window.removeEventListener("pointercancel", onEnd);
+
+        const target = document.elementFromPoint(lastX, lastY)?.closest("[data-barcode-target]");
+        dragGhost.remove();
+        card.classList.remove("is-drag-source");
+        document.body.classList.remove("is-dragging-card");
+        setActiveTarget(null);
+
+        if (!target || target.dataset.cardTarget !== "slot") {
+          recordBarrier("카드의 가운데 부분을 카드 넣는 곳까지 직접 가져다 놓아야 합니다.");
+          return;
+        }
+
+        hardware.card = true;
+        if (isHard) {
+          hardPay.pinValue = "";
+          hardPay.pinKeys = shuffledPinKeys();
+          draw();
+          return;
+        }
+        flowModalMessage = "영수증을 챙겨주세요";
+        focusGroupAfterModal = "";
+        modalAnchorGroup = "";
+        draw({ preserveScroll: true });
+      };
+
+      moveGhost(lastX, lastY);
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onEnd);
+      window.addEventListener("pointercancel", onEnd);
+    });
+  }
+
+  function draw(options = {}) {
+    const scrollState = options.preserveScroll ? captureKioskScroll(root) : null;
+    const selectedOptions = selectedCartItems(picks);
+    const giftUsed = isHard && ["short", "done"].includes(hardPay.giftStage);
+    const hardCartItems = [
+      giftUsed ? { label: "모바일 상품권 사용", price: -HARD_GIFT_BALANCE } : null,
+      hardPay.remainder ? { label: `남은 금액 ${hardPay.remainder.label}`, price: 0 } : null
+    ].filter(Boolean);
+    const cartItems = [...baseOrder, ...selectedOptions, ...hardCartItems];
+    const optionReady = selectedOptions.length === groups.length;
+    const readyForCard = optionReady && (!isHard || hardPay.giftStage === "done");
+    const doneCount = isHard
+      ? (picks.discount ? 1 : 0) + (picks.reward ? 1 : 0) + (giftUsed ? 1 : 0) + (hardware.card ? 1 : 0) + (hardPay.pinDone ? 1 : 0) + (hardware.receipt ? 1 : 0)
+      : selectedOptions.length + (hardware.card ? 1 : 0) + (hardware.receipt ? 1 : 0);
+    const paymentSteps = isHard ? ["할인", "적립", "상품권", "카드", "비밀번호", "영수증"] : ["할인", "적립", "결제", "카드", "영수증"];
+    const modalNextGroupIndex = flowModalMessage ? groups.findIndex((group) => group.key === focusGroupAfterModal) : -1;
+    const activePaymentStep = modalNextGroupIndex > 0 ? modalNextGroupIndex - 1 : Math.min(doneCount, paymentSteps.length - 1);
+    const affiliatePhoneFocus = affiliatePhone.open && !affiliatePhone.done && ["locked", "apps", "barcode"].includes(affiliatePhone.stage);
+    const affiliateScanFocus = affiliatePhone.open && !affiliatePhone.done && affiliatePhone.stage === "scan";
+    const rewardPhoneFocus = rewardPhone.open && !rewardPhone.done && ["locked", "apps", "student"].includes(rewardPhone.stage);
+    const upsellFocus = isHard && hardPay.upsellIndex >= 0;
+    const giftScanFocus = isHard && optionReady && hardPay.giftStage === "scan";
+    const remainderFocus = isHard && optionReady && hardPay.giftStage === "short";
+    const pinFocus = isHard && hardware.card && !hardPay.pinDone;
+    const hardwareFocus = isHard ? readyForCard && !pinFocus : picks.payment?.id === "card" && optionReady;
+    const kioskClassName = [
+      isKind ? "friendly-kiosk payment-kiosk" : "busy-payment-kiosk payment-kiosk",
+      isHard ? "hard-payment-kiosk" : "",
+      affiliatePhoneFocus || rewardPhoneFocus ? "phone-focus-kiosk" : "",
+      affiliateScanFocus || giftScanFocus ? "barcode-scan-kiosk" : "",
+      hardwareFocus ? "hardware-focus-kiosk" : "",
+      upsellFocus ? "upsell-focus-kiosk" : "",
+      pinFocus ? "pin-focus-kiosk" : ""
+    ].filter(Boolean).join(" ");
+    const paymentBodyContent = affiliatePhoneFocus
+      ? `<div class="phone-focus-flow">${affiliatePhonePanel()}</div>`
+      : affiliateScanFocus
+        ? affiliateScanPanel(optionReady)
+        : rewardPhoneFocus
+          ? `<div class="phone-focus-flow">${rewardPhonePanel()}</div>`
+          : upsellFocus
+            ? upsellPanel()
+          : giftScanFocus
+            ? giftScanPanel()
+          : remainderFocus
+            ? remainderPanel()
+          : pinFocus
+            ? pinPadPanel()
+          : hardwareFocus
+            ? `<div class="hardware-focus-flow">${paymentHardwarePanel(readyForCard)}</div>`
+          : `
+          <div class="payment-flow ${isKind ? "is-friendly" : ""}">
+            ${groups
+              .map(
+                (group) => `
+                  <section class="dense-section payment-section" data-payment-group="${group.key}">
+                    <h4>${group.title}</h4>
+                    <div class="product-grid payment-options">
+                      ${group.items
+                        .map((item) =>
+                          productCard(
+                            item,
+                            `data-option-key="${group.key}" data-option-id="${item.id}"`,
+                            picks[group.key]?.id === item.id ? "is-picked" : ""
+                          )
+                        )
+                        .join("")}
+                    </div>
+                    ${flowModalMessage && modalAnchorGroup === group.key ? flowModal(flowModalMessage) : ""}
+                  </section>
+                `
+              )
+              .join("")}
+          </div>
+        `;
+    const modalInsideSection = flowModalMessage && modalAnchorGroup && !affiliatePhoneFocus && !affiliateScanFocus && !rewardPhoneFocus && !hardwareFocus;
+    const pageModal = flowModalNote ? noteModal(flowModalMessage, flowModalNote) : flowModal(flowModalMessage);
+    const paymentBody = `${paymentBodyContent}${flowModalMessage && !modalInsideSection ? pageModal : ""}`;
+    root.innerHTML = kioskShell({
+      brand: "모두페이",
+      title: isKind ? "차근차근 결제하기" : isHard ? "함정이 숨은 결제 화면" : "복잡한 결제 화면",
+      subtitle: "",
+      mode,
+      status: `${doneCount} / ${paymentSteps.length} 완료`,
+      steps: paymentSteps,
+      activeStep: activePaymentStep,
+      guide: isKind
+        ? "필요한 선택지만 단계별로 보여 주고, 기기에서 해야 할 일도 함께 안내합니다."
+        : isHard
+          ? "ALPACO VIP 인증, SNU 클래스 적립 뒤 결제수단을 고르세요. 결제 전에 안내 창이 나올 수 있습니다."
+          : "ALPACO VIP 인증, SNU 클래스 적립, 카드 결제, 영수증 수령을 차례로 진행합니다.",
+      cartItems,
+      className: kioskClassName,
+      body: paymentBody
+    });
+    restoreKioskScroll(root, scrollState);
+    setupBarcodeDrag();
+    setupCardDrag();
+
+    const focusGroup = options.focusGroup || "";
+    if (focusGroup) {
+      const focusTarget = root.querySelector(`[data-payment-group="${focusGroup}"]`);
+      if (focusTarget) {
+        window.requestAnimationFrame(() => focusTarget.scrollIntoView({ block: "start", behavior: "smooth" }));
+      }
+    }
+
+    const modalClose = root.querySelector("[data-flow-modal-close]");
+    if (modalClose) {
+      modalClose.addEventListener("click", () => {
+        const nextFocus = focusGroupAfterModal;
+        flowModalMessage = "";
+        flowModalNote = "";
+        focusGroupAfterModal = "";
+        modalAnchorGroup = "";
+        if (nextFocus) {
+          draw({ focusGroup: nextFocus });
+        } else {
+          draw({ preserveScroll: true });
+        }
+      });
+    }
+
+    root.querySelectorAll("[data-option-key]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const group = groups.find((item) => item.key === button.dataset.optionKey);
+        const selected = group.items.find((item) => item.id === button.dataset.optionId);
+        if (!selected) return;
+        if (isHard && group.key === "payment" && selected.id === "card") {
+          recordBarrier("모바일 상품권으로 먼저 결제한 뒤, 모자란 금액만 카드로 내야 합니다.");
+          return;
+        }
+        if (selected.id !== group.correct) {
+          recordBarrier(isKind ? "목표와 다른 선택입니다. 안내를 다시 확인해 보세요." : "선택지가 너무 많아 필요한 결제 절차를 찾기 어렵습니다.");
+          return;
+        }
+        if (isHard && group.key === "payment" && !picks.payment) {
+          if (!picks.discount || !picks.reward) {
+            recordBarrier("제휴할인과 적립을 먼저 마쳐야 결제수단을 고를 수 있습니다.");
+            return;
+          }
+          hardPay.upsellIndex = 0;
+          draw();
+          return;
+        }
+        if (group.key === "discount" && selected.id === "alpaco-vip" && !affiliatePhone.done) {
+          affiliatePhone.open = true;
+          affiliatePhone.stage = "locked";
+          draw({ preserveScroll: true });
+          return;
+        }
+        if (group.key === "reward" && selected.id === "snu-reward" && !rewardPhone.done) {
+          if (!rewardPhone.open) {
+            rewardPhone.studentNumber = randomStudentNumber();
+          }
+          rewardPhone.open = true;
+          rewardPhone.stage = "locked";
+          draw({ preserveScroll: true });
+          return;
+        }
+        picks[group.key] = selected;
+        if (group.key === "payment" && selected.id === "card") {
+          draw();
+          return;
+        }
+        draw({ preserveScroll: true });
+      });
+    });
+
+    root.querySelectorAll("[data-phone-action]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.dataset.phoneAction === "wake") {
+          affiliatePhone.stage = "apps";
+          draw({ preserveScroll: true });
+          return;
+        }
+        if (["show-points", "show-coupons", "show-history"].includes(button.dataset.phoneAction)) {
+          recordBarrier("제휴할인에는 포인트나 쿠폰함이 아니라 바코드 생성 메뉴가 필요합니다.");
+          return;
+        }
+        if (button.dataset.phoneAction === "generate-barcode") {
+          affiliatePhone.stage = "scan";
+          draw({ preserveScroll: true });
+        }
+      });
+    });
+
+    root.querySelectorAll("[data-barcode-target]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const giftScanning = isHard && hardPay.giftStage === "scan";
+        if ((affiliatePhone.stage !== "scan" || affiliatePhone.done) && !giftScanning) return;
+        recordBarrier("바코드는 버튼처럼 누르는 것이 아니라, 스마트폰 화면을 인식부에 가져다대야 합니다.");
+      });
+    });
+
+    root.querySelectorAll("[data-upsell-answer]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const offer = hardUpsellOffers[hardPay.upsellIndex];
+        if (!offer) return;
+        if (button.dataset.upsellAnswer === "yes") {
+          recordBarrier(offer.barrier);
+          hardPay.upsellIndex = 0;
+          draw();
+          return;
+        }
+        if (hardPay.upsellIndex < hardUpsellOffers.length - 1) {
+          hardPay.upsellIndex += 1;
+          draw();
+          return;
+        }
+        const paymentGroup = groups.find((item) => item.key === "payment");
+        picks.payment = paymentGroup.items.find((item) => item.id === "gift-card");
+        hardPay.upsellIndex = -1;
+        hardPay.giftStage = "scan";
+        draw();
+      });
+    });
+
+    root.querySelectorAll("[data-remainder-id]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const paymentGroup = groups.find((item) => item.key === "payment");
+        const selected = paymentGroup.items.find((item) => item.id === button.dataset.remainderId);
+        if (!selected) return;
+        if (selected.id !== "card") {
+          recordBarrier("모자란 금액은 미션에 나온 대로 카드로 결제해야 합니다.");
+          return;
+        }
+        hardPay.remainder = selected;
+        hardPay.giftStage = "done";
+        draw();
+      });
+    });
+
+    root.querySelectorAll("[data-pin-key]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (hardPay.pinValue.length < 4) {
+          hardPay.pinValue += button.dataset.pinKey;
+        }
+        hardPay.pinKeys = shuffledPinKeys();
+        draw();
+      });
+    });
+
+    root.querySelectorAll("[data-pin-action]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.dataset.pinAction === "clear") {
+          hardPay.pinValue = "";
+          hardPay.pinKeys = shuffledPinKeys();
+          draw();
+          return;
+        }
+        if (hardPay.pinValue !== HARD_CARD_PIN) {
+          recordBarrier("카드 비밀번호가 맞지 않습니다. 숫자 위치가 계속 바뀌어 같은 자리를 누르면 틀리기 쉽습니다.");
+          hardPay.pinValue = "";
+          hardPay.pinKeys = shuffledPinKeys();
+          draw();
+          return;
+        }
+        hardPay.pinDone = true;
+        flowModalMessage = "영수증을 챙겨주세요";
+        focusGroupAfterModal = "";
+        modalAnchorGroup = "";
+        draw();
+      });
+    });
+
+    root.querySelectorAll("[data-affiliate-app]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const app = affiliateApps.find((item) => item.id === button.dataset.affiliateApp);
+        if (!app) return;
+        if (!app.correct) {
+          recordBarrier("키오스크의 제휴할인 이름과 스마트폰 앱 이름을 다시 맞춰야 합니다.");
+          return;
+        }
+        affiliatePhone.stage = "barcode";
+        affiliatePhone.open = true;
+        draw({ preserveScroll: true });
+      });
+    });
+
+    root.querySelectorAll("[data-reward-phone-action]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.dataset.rewardPhoneAction === "wake") {
+          rewardPhone.stage = "apps";
+          draw({ preserveScroll: true });
+        }
+      });
+    });
+
+    root.querySelectorAll("[data-reward-app]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const app = affiliateApps.find((item) => item.id === button.dataset.rewardApp);
+        if (!app) return;
+        if (app.id !== "snu-app") {
+          recordBarrier("적립하려는 서비스와 같은 SNU 클래스 앱을 찾아야 학생번호를 확인할 수 있습니다.");
+          return;
+        }
+        rewardPhone.stage = "student";
+        rewardPhone.open = true;
+        draw({ preserveScroll: true });
+      });
+    });
+
+    const studentIdForm = root.querySelector("[data-student-id-form]");
+    if (studentIdForm) {
+      studentIdForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const input = root.querySelector("[data-student-id-input]");
+        const value = input ? input.value.trim().toUpperCase() : "";
+        if (value !== rewardPhone.studentNumber) {
+          recordBarrier("스마트폰 앱에 표시된 대문자 영어와 숫자를 키오스크에 정확히 입력해야 합니다.");
+          if (input) input.focus();
+          return;
+        }
+        applySnuReward();
+      });
+    }
+
+    root.querySelectorAll("[data-hardware]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if ((affiliatePhone.stage === "scan" && !affiliatePhone.done) || (isHard && hardPay.giftStage === "scan")) {
+          return;
+        }
+        if (!readyForCard) {
+          recordBarrier("할인, 적립, 결제수단을 먼저 통과해야 기기 조작을 할 수 있습니다.");
+          return;
+        }
+        if (button.dataset.hardware === "card") {
+          if (!hardware.card) {
+            recordBarrier("결제 카드를 카드 넣는 곳으로 끌어다 놓아야 합니다.");
+          }
+          return;
+        }
+        if (!hardware.card) {
+          recordBarrier("결제 카드를 넣은 뒤 영수증과 번호표가 나오는 곳을 확인해야 합니다.");
+          return;
+        }
+        hardware.receipt = true;
+        if (isHard) {
+          completeStation("추가 주문 거절, 상품권 잔액 부족, 바뀌는 보안 키패드까지 결제 절차를 끝까지 해냈습니다.");
+          showCompletion(root, "원하지 않는 추가 주문 유도와 나눠 내기, 보안 키패드까지 모두 통과했습니다. 잠시 뒤 키오스크 선택 화면으로 돌아갑니다.", {
+            autoReturn: true,
+            kicker: "최종 미션 해결",
+            title: "더 어려운 모드 완료"
+          });
+          return;
+        }
+        completeStation("결제 단계가 많고 기기 조작 위치가 흩어져 있으면 마지막까지 놓치기 쉽습니다.");
+        showCompletion(root, "결제 화면은 할인, 적립, 결제, 카드 투입, 영수증 수령을 한 단계씩 명확하게 안내해야 합니다.");
+      });
+    });
+
+    root.querySelector("[data-cart-action]").addEventListener("click", () => {
+      if (!readyForCard) {
+        recordBarrier(isHard ? "제휴할인, 적립, 모바일 상품권, 남은 금액 결제수단을 차례로 마쳐야 합니다." : "제휴할인, 적립 방법, 결제수단을 모두 선택해야 합니다.");
+        return;
+      }
+      if (!hardware.card) {
+        recordBarrier("결제 카드를 먼저 카드 넣는 곳으로 끌어다 놓아야 합니다.");
+        root.querySelector("[data-draggable-card]")?.scrollIntoView({ block: "center", behavior: "smooth" });
+        return;
+      }
+      if (isHard && !hardPay.pinDone) {
+        recordBarrier("카드 비밀번호 4자리를 먼저 입력해야 결제가 끝납니다.");
+        return;
+      }
+      root.querySelector("[data-hardware='receipt']")?.click();
+    });
+  }
+
+  draw();
+}
+
+function renderTinyStation(root, mode) {
+  const isKind = mode === "kind";
+  // 단계 구성: hard = 쿠폰·적립 기본 흐름, extreme = 함정(추가 주문·상품권·비밀번호), insane = 함정 + 대기 시간·카드 오류·서명
+  const isHard = mode === "extreme" || mode === "insane";
+  const isInsane = mode === "insane";
+  const insane = {
+    secondsLeft: 90,
+    warned: false,
+    cardRetried: false,
+    signing: false,
+    signLength: 0,
+    startedAt: performance.now(),
+    barrierStart: state.barriers.length
+  };
   const picks = {};
   const hardPay = {
     upsellIndex: -1,
@@ -2562,10 +3667,26 @@ function renderTinyStation(root, mode) {
 
   function finishPayment() {
     hardware.receipt = true;
+    if (isInsane) {
+      window.clearInterval(insaneTimer);
+      document.querySelector(".pay-timeout-overlay")?.remove();
+      const seconds = (performance.now() - insane.startedAt) / 1000;
+      const mistakes = state.barriers
+        .slice(0, state.barriers.length - insane.barrierStart)
+        .filter((entry) => !entry.success).length;
+      completeStation("대기 시간 제한, 카드 인식 오류, 전자 서명까지 극악 결제를 끝냈습니다.");
+      showHallOfFame({
+        seconds,
+        mistakes,
+        storageKey: "alpaco-hall-of-fame-pay",
+        subtitle: "극악 결제 키오스크 정복!",
+        label: "극악 결제 정복"
+      });
+      return;
+    }
     if (isHard) {
       completeStation("추가 주문 거절, 상품권 잔액 부족, 바뀌는 보안 키패드까지 결제 절차를 끝까지 해냈습니다.");
-      showCompletion(root, "원하지 않는 추가 주문 유도와 나눠 내기, 보안 키패드까지 모두 통과했습니다. 잠시 뒤 키오스크 선택 화면으로 돌아갑니다.", {
-        autoReturn: true,
+      showCompletion(root, "원하지 않는 추가 주문 유도와 나눠 내기, 보안 키패드까지 모두 통과했습니다. 마지막으로 대기 시간·카드 오류·서명이 더해진 극악 모드에 도전해 보세요.", {
         kicker: "최종 미션 해결",
         title: "더 어려운 모드 완료"
       });
@@ -2744,6 +3865,20 @@ function renderTinyStation(root, mode) {
           await fx("insertCard", cardReader());
           if (disposed) return;
           fx("readerState", cardReader(), "busy");
+          // 극악 모드: 첫 번째 투입은 IC 칩 인식 오류가 나서 다시 꽂아야 합니다.
+          if (isInsane && !insane.cardRetried) {
+            insane.cardRetried = true;
+            await fx("wait", 700);
+            if (disposed) return;
+            fx("readerState", cardReader(), "error");
+            fx("sound", "error");
+            flowModalMessage = "IC 칩을 인식하지 못했습니다";
+            flowModalNote = "카드를 빼서 칩이 위로 오도록 다시 꽂아 주세요.";
+            flowModalNext = "다음: 카드를 카드 리더기에 다시 넣으세요.";
+            focusGroupAfterModal = "";
+            draw();
+            return;
+          }
           if (isHard) {
             hardware.card = true;
             hardPay.pinValue = "";
@@ -2763,6 +3898,141 @@ function renderTinyStation(root, mode) {
     });
   }
 
+  // 극악 모드 전자 서명: 패드에 충분히 길게 서명해야 결제가 승인됩니다.
+  function signaturePanel() {
+    return `
+      <section class="signature-panel" aria-label="전자 서명">
+        <h4>전자 서명</h4>
+        <p>결제 금액을 확인하고 아래 칸에 서명해 주세요.</p>
+        <div class="signature-pad-wrap">
+          <canvas class="signature-pad" width="420" height="170" data-signature-pad="true" aria-label="서명 칸"></canvas>
+          <span class="signature-hint" aria-hidden="true">여기에 서명</span>
+        </div>
+        <div class="signature-actions">
+          <button class="tiny-secondary-button" type="button" data-signature-action="clear">다시 쓰기</button>
+          <button class="phone-primary-button" type="button" data-signature-action="done">서명 완료</button>
+        </div>
+      </section>
+    `;
+  }
+
+  function setupSignaturePad() {
+    const pad = root.querySelector("[data-signature-pad]");
+    if (!pad) return;
+    const ctx = pad.getContext("2d");
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#25293a";
+    let last = null;
+    const point = (event) => {
+      const rect = pad.getBoundingClientRect();
+      return { x: ((event.clientX - rect.left) / rect.width) * pad.width, y: ((event.clientY - rect.top) / rect.height) * pad.height };
+    };
+    pad.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      pad.setPointerCapture?.(event.pointerId);
+      last = point(event);
+      root.querySelector(".signature-hint")?.remove();
+    });
+    pad.addEventListener("pointermove", (event) => {
+      if (!last) return;
+      const next = point(event);
+      ctx.beginPath();
+      ctx.moveTo(last.x, last.y);
+      ctx.lineTo(next.x, next.y);
+      ctx.stroke();
+      insane.signLength += Math.hypot(next.x - last.x, next.y - last.y);
+      last = next;
+    });
+    const end = () => {
+      last = null;
+    };
+    pad.addEventListener("pointerup", end);
+    pad.addEventListener("pointercancel", end);
+    root.querySelector('[data-signature-action="clear"]')?.addEventListener("click", () => {
+      ctx.clearRect(0, 0, pad.width, pad.height);
+      insane.signLength = 0;
+    });
+    root.querySelector('[data-signature-action="done"]')?.addEventListener("click", (event) => {
+      fx("pressKey", event.currentTarget);
+      if (insane.signLength < 160) {
+        failWith("서명이 너무 짧습니다. 서명 칸에 이름을 쓰듯 길게 서명해야 합니다.", root.querySelector(".signature-panel"));
+        return;
+      }
+      runBusy(async () => {
+        fx("readerState", cardReader(), "busy");
+        await approveCardPayment();
+      });
+    });
+  }
+
+  // 극악 모드 결제 대기 시간: 15초가 남으면 '시간 연장' 안내가 뜨고, 작은 연장 버튼을 놓치면 처음으로 돌아갑니다.
+  let insaneTimer = 0;
+  function showTimeoutPrompt() {
+    document.querySelector(".pay-timeout-overlay")?.remove();
+    const overlay = document.createElement("div");
+    overlay.className = "pay-timeout-overlay";
+    overlay.innerHTML = `
+      <div class="pay-timeout-card" role="alertdialog" aria-label="시간 연장 안내">
+        <b>시간을 연장하시겠습니까?</b>
+        <p><span data-timeout-left>5</span>초 뒤 처음 화면으로 돌아갑니다.</p>
+        <button class="pay-timeout-home" type="button" data-timeout-action="home">처음으로</button>
+        <button class="pay-timeout-extend" type="button" data-timeout-action="extend">연장하기</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    fx("sound", "error");
+    let left = 5;
+    const countdown = window.setInterval(() => {
+      left -= 1;
+      const label = overlay.querySelector("[data-timeout-left]");
+      if (label) label.textContent = String(Math.max(left, 0));
+      if (left <= 0) close(false);
+    }, 1000);
+    const close = (extend) => {
+      window.clearInterval(countdown);
+      overlay.remove();
+      if (disposed) return;
+      if (extend) {
+        insane.secondsLeft += 60;
+        insane.warned = false;
+        fx("sound", "beep");
+        updateInsaneReadout();
+        return;
+      }
+      recordBarrier("시간 연장 안내의 작은 버튼을 놓쳐 결제가 처음부터 다시 시작되었습니다.");
+      renderStation();
+    };
+    overlay.querySelector('[data-timeout-action="extend"]').addEventListener("click", () => close(true));
+    overlay.querySelector('[data-timeout-action="home"]').addEventListener("click", () => close(false));
+    addCleanup(() => {
+      window.clearInterval(countdown);
+      overlay.remove();
+    });
+  }
+
+  function updateInsaneReadout() {
+    const readout = root.querySelector("#timerReadout");
+    if (readout) {
+      readout.textContent = `${insane.secondsLeft}초`;
+      readout.classList.toggle("is-low", insane.secondsLeft <= 15);
+    }
+  }
+
+  if (isInsane) {
+    insaneTimer = window.setInterval(() => {
+      if (disposed || pay.stage !== "none" || document.querySelector(".pay-timeout-overlay")) return;
+      insane.secondsLeft -= 1;
+      updateInsaneReadout();
+      if (insane.secondsLeft <= 15 && !insane.warned) {
+        insane.warned = true;
+        showTimeoutPrompt();
+      }
+    }, 1000);
+    addCleanup(() => window.clearInterval(insaneTimer));
+  }
+
   function draw(options = {}) {
     const scrollState = options.preserveScroll ? captureKioskScroll(root) : null;
     const selectedOptions = selectedCartItems(picks);
@@ -2775,9 +4045,19 @@ function renderTinyStation(root, mode) {
     const optionReady = selectedOptions.length === groups.length;
     const readyForCard = optionReady && (!isHard || hardPay.giftStage === "done");
     const doneCount = isHard
-      ? (picks.discount ? 1 : 0) + (picks.reward ? 1 : 0) + (giftUsed ? 1 : 0) + (hardware.card ? 1 : 0) + (hardPay.pinDone ? 1 : 0) + (hardware.receipt ? 1 : 0)
+      ? (picks.discount ? 1 : 0) +
+        (picks.reward ? 1 : 0) +
+        (giftUsed ? 1 : 0) +
+        (hardware.card ? 1 : 0) +
+        (isInsane ? (insane.signing || hardPay.pinDone ? 1 : 0) : 0) +
+        (hardPay.pinDone ? 1 : 0) +
+        (hardware.receipt ? 1 : 0)
       : selectedOptions.length + (hardware.card ? 1 : 0) + (hardware.receipt ? 1 : 0);
-    const paymentSteps = isHard ? ["할인", "적립", "상품권", "카드", "비밀번호", "영수증"] : ["할인", "적립", "결제", "카드", "영수증"];
+    const paymentSteps = isInsane
+      ? ["할인", "적립", "상품권", "카드", "비밀번호", "서명", "영수증"]
+      : isHard
+        ? ["할인", "적립", "상품권", "카드", "비밀번호", "영수증"]
+        : ["할인", "적립", "결제", "카드", "영수증"];
     const modalNextGroupIndex = flowModalMessage ? groups.findIndex((group) => group.key === focusGroupAfterModal) : -1;
     const activePaymentStep = modalNextGroupIndex > 0 ? modalNextGroupIndex - 1 : Math.min(doneCount, paymentSteps.length - 1);
     const couponFocus = coupon.open && !coupon.done;
@@ -2785,7 +4065,8 @@ function renderTinyStation(root, mode) {
     const upsellFocus = isHard && hardPay.upsellIndex >= 0;
     const giftScanFocus = isHard && optionReady && hardPay.giftStage === "scan";
     const remainderFocus = isHard && optionReady && hardPay.giftStage === "short";
-    const pinFocus = isHard && hardware.card && !hardPay.pinDone;
+    const signatureFocus = isInsane && insane.signing && !hardPay.pinDone;
+    const pinFocus = isHard && hardware.card && !hardPay.pinDone && !signatureFocus;
     const receiptFocus = ["approved", "printing"].includes(pay.stage);
     const hardwareFocus = receiptFocus || (isHard ? readyForCard && !pinFocus : picks.payment?.id === "card" && optionReady);
     const kioskClassName = [
@@ -2796,7 +4077,7 @@ function renderTinyStation(root, mode) {
       hardwareFocus ? "hardware-focus-kiosk" : "",
       receiptFocus ? "receipt-focus-kiosk" : "",
       upsellFocus ? "upsell-focus-kiosk" : "",
-      pinFocus ? "pin-focus-kiosk" : ""
+      pinFocus || signatureFocus ? "pin-focus-kiosk" : ""
     ].filter(Boolean).join(" ");
     const paymentBodyContent = couponFocus
       ? couponPanel()
@@ -2808,6 +4089,8 @@ function renderTinyStation(root, mode) {
             ? giftScanPanel()
           : remainderFocus
             ? remainderPanel()
+          : signatureFocus
+            ? signaturePanel()
           : pinFocus
             ? pinPadPanel()
           : receiptFocus
@@ -2841,10 +4124,11 @@ function renderTinyStation(root, mode) {
     const paymentBody = `${isKind ? kindChecklist() : ""}${paymentBodyContent}${flowModalMessage ? stepModal() : ""}`;
     root.innerHTML = kioskShell({
       brand: "모두페이",
-      title: isKind ? "차근차근 결제하기" : isHard ? "함정이 숨은 결제 화면" : "복잡한 결제 화면",
+      title: isKind ? "차근차근 결제하기" : isInsane ? "극악 결제 화면" : isHard ? "함정이 숨은 결제 화면" : "복잡한 결제 화면",
       subtitle: "",
       mode,
       status: `${doneCount} / ${paymentSteps.length} 완료`,
+      timer: isInsane ? `${insane.secondsLeft}초` : "",
       steps: paymentSteps,
       activeStep: activePaymentStep,
       guide: isKind
@@ -3093,12 +4377,21 @@ function renderTinyStation(root, mode) {
           refreshPinPad();
           return;
         }
+        if (isInsane && !insane.signing) {
+          insane.signing = true;
+          insane.signLength = 0;
+          fx("sound", "beep");
+          draw();
+          return;
+        }
         runBusy(async () => {
           fx("readerState", cardReader(), "busy");
           await approveCardPayment();
         });
       });
     });
+
+    setupSignaturePad();
 
     root.querySelectorAll("[data-hardware]").forEach((button) => {
       button.addEventListener("click", () => {

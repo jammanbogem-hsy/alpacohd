@@ -1031,3 +1031,136 @@
     font-size: 0.78rem;
   }
 }
+
+/* ---------- 극악 결제: 전자 서명 패드 ---------- */
+.signature-panel {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: min(100%, 440px);
+  margin: 6px auto 0;
+  padding: 14px;
+  border: 3px solid #25293a;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.signature-panel h4,
+.signature-panel p {
+  margin: 0;
+}
+
+.signature-panel p {
+  color: #5b6072;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.signature-pad-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.signature-pad {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 420 / 170;
+  border: 3px dashed #9aa0ad;
+  border-radius: 10px;
+  background:
+    linear-gradient(transparent calc(100% - 38px), #c9cdd6 calc(100% - 38px), #c9cdd6 calc(100% - 36px), transparent calc(100% - 36px)),
+    #fbfbfd;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.signature-hint {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  color: #b4b9c4;
+  font-size: 1.3rem;
+  font-weight: 900;
+  pointer-events: none;
+}
+
+.signature-actions {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 8px;
+  width: 100%;
+}
+
+/* ---------- 극악 결제: 결제 대기 시간 + 시간 연장 안내 ---------- */
+#timerReadout.is-low {
+  border-color: #d6283f;
+  background: #ff5d7d;
+  color: #ffffff;
+  animation: pay-low 0.6s ease-in-out infinite alternate;
+}
+
+.pay-timeout-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4500;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 22, 32, 0.55);
+}
+
+.pay-timeout-card {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  width: min(320px, 90vw);
+  padding: 20px 18px 16px;
+  border: 4px solid #25293a;
+  border-radius: 14px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 6px 6px 0 #25293a;
+}
+
+.pay-timeout-card b {
+  font-size: 1.15rem;
+}
+
+.pay-timeout-card p {
+  margin: 0;
+  color: #5b6072;
+  font-weight: 800;
+}
+
+.pay-timeout-card p span {
+  color: #d6283f;
+  font-size: 1.3rem;
+}
+
+/* 크고 눈에 띄는 버튼은 '처음으로', 연장 버튼은 작고 흐리게 (실제 키오스크의 함정) */
+.pay-timeout-home {
+  min-height: 56px;
+  border: 3px solid #25293a;
+  border-radius: 10px;
+  background: var(--coral);
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.pay-timeout-extend {
+  justify-self: end;
+  padding: 2px 6px;
+  border: 0;
+  background: transparent;
+  color: #9aa0ad;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+@keyframes pay-low {
+  from { box-shadow: 0 0 0 0 rgba(255, 93, 125, 0.7); }
+  to { box-shadow: 0 0 0 6px rgba(255, 93, 125, 0); }
+}
