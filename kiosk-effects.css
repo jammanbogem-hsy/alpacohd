@@ -1,0 +1,496 @@
+/* KioskFX 전용 스타일: 모든 효과는 body에 position: fixed로 붙는다. */
+
+.kfx-overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 4000;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+/* ---------- 바코드 스캔: 빨간 레이저 ---------- */
+.kfx-scan {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.kfx-scan-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(255, 40, 60, 0.08);
+  box-shadow: inset 0 0 0 2px rgba(255, 60, 80, 0.55);
+}
+
+.kfx-scan-line {
+  position: absolute;
+  left: -4%;
+  top: 0;
+  width: 108%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 999px;
+  background: #ff2a3d;
+  box-shadow:
+    0 0 6px 2px rgba(255, 42, 61, 0.9),
+    0 0 18px 6px rgba(255, 42, 61, 0.45);
+}
+
+.kfx-scan.is-done .kfx-scan-glow {
+  background: rgba(97, 185, 110, 0.18);
+  box-shadow: inset 0 0 0 3px rgba(97, 185, 110, 0.85);
+}
+
+/* ---------- 카드 투입 ---------- */
+.kfx-card {
+  overflow: hidden;
+  perspective: 260px;
+  perspective-origin: 50% 100%;
+}
+
+.kfx-card-img {
+  position: absolute;
+  left: 8px;
+  top: 0;
+  object-fit: contain;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 3px 0 rgba(37, 41, 58, 0.35));
+  user-select: none;
+}
+
+/* 기본 card.png는 투명 여백이 커서 카드 부분만 잘라 보여 준다. */
+.kfx-card-img.is-default {
+  object-fit: fill;
+  object-view-box: inset(24% 28% 35% 25%);
+}
+
+/* ---------- 카드 리더 LED (kiosk-3d.css의 초록 LED를 가리고 ::after로 새 LED) ---------- */
+.kiosk-hardware .hw-card-reader.fx-reader-busy,
+.kiosk-hardware .hw-card-reader.fx-reader-ok,
+.kiosk-hardware .hw-card-reader.fx-reader-error,
+.hw-card-reader.fx-reader-busy,
+.hw-card-reader.fx-reader-ok,
+.hw-card-reader.fx-reader-error {
+  position: relative;
+  background: linear-gradient(180deg, #0d0f15 0%, #2f3442 100%);
+}
+
+.hw-card-reader.fx-reader-busy::after,
+.hw-card-reader.fx-reader-ok::after,
+.hw-card-reader.fx-reader-error::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: #ffb020;
+  box-shadow: 0 0 6px 3px rgba(255, 176, 32, 0.75);
+}
+
+.hw-card-reader.fx-reader-busy::after {
+  animation: kfx-led-blink 0.42s steps(1, end) infinite;
+}
+
+.hw-card-reader.fx-reader-ok {
+  box-shadow:
+    inset 0 4px 0 rgba(0, 0, 0, 0.45),
+    0 0 12px 2px rgba(109, 255, 155, 0.75);
+}
+
+.hw-card-reader.fx-reader-ok::after {
+  background: #6dff9b;
+  box-shadow: 0 0 8px 4px rgba(109, 255, 155, 0.85);
+}
+
+.hw-card-reader.fx-reader-error {
+  box-shadow:
+    inset 0 4px 0 rgba(0, 0, 0, 0.45),
+    0 0 10px 2px rgba(255, 61, 85, 0.6);
+}
+
+.hw-card-reader.fx-reader-error::after {
+  background: #ff3d55;
+  box-shadow: 0 0 7px 3px rgba(255, 61, 85, 0.8);
+  animation: kfx-led-blink 0.28s steps(1, end) infinite;
+}
+
+@keyframes kfx-led-blink {
+  50% {
+    background: #4a3a1a;
+    box-shadow: none;
+  }
+}
+
+/* 화면 속 카드 슬롯 버튼 */
+[data-card-target="slot"].fx-reader-busy {
+  outline: 4px solid #ffb020;
+  outline-offset: 2px;
+  animation: kfx-slot-busy 0.42s steps(1, end) infinite;
+}
+
+[data-card-target="slot"].fx-reader-ok {
+  outline: 4px solid var(--grass);
+  outline-offset: 2px;
+  box-shadow: 0 0 14px rgba(97, 185, 110, 0.85);
+}
+
+[data-card-target="slot"].fx-reader-error {
+  outline: 4px solid var(--coral);
+  outline-offset: 2px;
+  animation: kfx-slot-busy 0.28s steps(1, end) infinite;
+}
+
+@keyframes kfx-slot-busy {
+  50% {
+    outline-color: transparent;
+  }
+}
+
+/* ---------- 결제 처리 중 ---------- */
+.kfx-processing {
+  z-index: 4200;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(32, 35, 49, 0.55);
+  pointer-events: auto;
+  cursor: progress;
+  backdrop-filter: blur(1.5px);
+}
+
+.kfx-processing-panel {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: min(260px, 100%);
+  padding: 18px 16px 16px;
+  border: 4px solid var(--line, #25293a);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 5px 5px 0 var(--line, #25293a);
+  color: var(--ink, #202331);
+  text-align: center;
+}
+
+.kfx-spinner {
+  width: 44px;
+  height: 44px;
+  border: 6px solid #e4e6ee;
+  border-top-color: var(--sky, #4ca7e8);
+  border-right-color: var(--sky, #4ca7e8);
+  border-radius: 50%;
+  animation: kfx-spin 0.8s linear infinite;
+}
+
+@keyframes kfx-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.kfx-processing-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.kfx-processing-detail {
+  color: var(--coral, #ff5d7d);
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.kfx-progress {
+  display: block;
+  width: 100%;
+  height: 12px;
+  overflow: hidden;
+  border: 3px solid var(--line, #25293a);
+  border-radius: 999px;
+  background: #eef0f5;
+}
+
+.kfx-progress-bar {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: repeating-linear-gradient(-45deg, var(--sun, #ffbf2f) 0 8px, #ffd56b 8px 16px);
+}
+
+/* ---------- 승인 도장 ---------- */
+.kfx-approve {
+  z-index: 4200;
+  display: grid;
+  place-items: center;
+}
+
+.kfx-stamp {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 14px 22px;
+  border: 5px solid var(--grass, #61b96e);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    0 0 0 3px #ffffff,
+    0 0 0 6px var(--line, #25293a),
+    6px 6px 0 6px rgba(37, 41, 58, 0.5);
+  color: #2f8a3d;
+  text-align: center;
+  transform: rotate(-6deg);
+}
+
+.kfx-stamp strong {
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.kfx-stamp span:not(.kfx-stamp-check) {
+  color: var(--ink, #202331);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.kfx-stamp-check {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--grass, #61b96e);
+  border: 3px solid var(--line, #25293a);
+}
+
+.kfx-stamp-check::after {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 5px;
+  width: 10px;
+  height: 18px;
+  border: solid #ffffff;
+  border-width: 0 5px 5px 0;
+  transform: rotate(42deg);
+}
+
+/* ---------- 틀린 입력 흔들기 ---------- */
+.fx-shake-flash {
+  box-shadow: 0 0 0 4px rgba(255, 93, 125, 0.75) !important;
+}
+
+/* ---------- 영수증 ---------- */
+.kfx-receipt {
+  z-index: 4100;
+}
+
+.kfx-receipt-lift {
+  position: relative;
+  transform-origin: 50% 0;
+  transition: transform 0.55s cubic-bezier(0.25, 0.9, 0.3, 1.1);
+}
+
+.kfx-receipt-clip {
+  overflow: hidden;
+  /* 슬릿에서 나오는 그림자 */
+  filter: drop-shadow(3px 4px 0 rgba(37, 41, 58, 0.35));
+}
+
+.kfx-receipt-paper {
+  all: unset;
+  box-sizing: border-box;
+  display: grid;
+  gap: 3px;
+  padding: 14px 14px 12px;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.018) 0 1px, transparent 1px 3px),
+    linear-gradient(90deg, #f3f1ea 0%, #fffefa 12%, #ffffff 50%, #fffefa 88%, #f1efe8 100%);
+  color: #2c2f3a;
+  font-family: "D2Coding", "Nanum Gothic Coding", "Menlo", "Consolas", "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: left;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.kfx-receipt-store {
+  font-size: 15px;
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: 0.08em;
+}
+
+.kfx-receipt-title {
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.kfx-receipt-meta {
+  color: #6a6e7c;
+  font-size: 11px;
+  text-align: center;
+}
+
+.kfx-receipt-sub {
+  color: #6a6e7c;
+  font-size: 11px;
+}
+
+.kfx-sep {
+  display: block;
+  margin: 4px 0;
+  border-top: 2px dashed #9ea2ae;
+}
+
+.kfx-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.kfx-row > span:last-child {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.kfx-total {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.kfx-receipt-barcode {
+  display: block;
+  width: 78%;
+  height: 34px;
+  margin: 4px auto 0;
+  fill: #2c2f3a;
+}
+
+.kfx-receipt-footer {
+  margin-top: 2px;
+  white-space: pre-line;
+  font-weight: 800;
+  text-align: center;
+}
+
+.kfx-receipt.is-ready .kfx-receipt-paper {
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+
+.kfx-receipt.is-ready .kfx-receipt-paper:active {
+  cursor: grabbing;
+}
+
+.kfx-receipt.is-ready .kfx-receipt-paper:focus-visible {
+  outline: 4px solid var(--sun, #ffbf2f);
+  outline-offset: 2px;
+}
+
+/* 뜯을 때 위쪽 톱니 자국 */
+.kfx-receipt.is-torn .kfx-receipt-clip {
+  overflow: visible;
+}
+
+.kfx-receipt.is-torn .kfx-receipt-paper {
+  clip-path: polygon(
+    0 6px, 4% 0, 8% 6px, 12% 0, 16% 6px, 20% 0, 24% 6px, 28% 0, 32% 6px, 36% 0, 40% 6px, 44% 0, 48% 6px,
+    52% 0, 56% 6px, 60% 0, 64% 6px, 68% 0, 72% 6px, 76% 0, 80% 6px, 84% 0, 88% 6px, 92% 0, 96% 6px, 100% 0,
+    100% 100%, 0 100%
+  );
+}
+
+.kfx-receipt-hint {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 18px;
+  width: max-content;
+  max-width: 190px;
+  padding: 8px 12px;
+  word-break: keep-all;
+  border: 3px solid var(--line, #25293a);
+  border-radius: 12px;
+  background: var(--sun, #ffbf2f);
+  box-shadow: 3px 3px 0 var(--line, #25293a);
+  color: var(--ink, #202331);
+  font-size: 0.95rem;
+  font-weight: 900;
+  line-height: 1.3;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.kfx-receipt-hint::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: -11px;
+  border: 8px solid transparent;
+  border-right-color: var(--line, #25293a);
+  border-left-width: 0;
+}
+
+.kfx-receipt-hint.is-left {
+  left: auto;
+  right: calc(100% + 12px);
+}
+
+.kfx-receipt-hint.is-left::before {
+  left: auto;
+  right: -11px;
+  border-right-color: transparent;
+  border-left-color: var(--line, #25293a);
+  border-left-width: 8px;
+  border-right-width: 0;
+}
+
+.kfx-receipt.is-ready .kfx-receipt-hint {
+  visibility: visible;
+  animation: kfx-hint-pulse 1s ease-in-out infinite;
+}
+
+@keyframes kfx-hint-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.06);
+  }
+}
+
+/* 크롬북 모드: 글자를 조금 크게 */
+body.chromebook-mode .kfx-processing-title {
+  font-size: 1.3rem;
+}
+
+/* 소리 켜기/끄기 버튼 */
+.sound-toggle[aria-pressed="false"] {
+  background: #e4e6ee;
+  color: var(--muted, #5b6072);
+  text-decoration: line-through;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kfx-spinner,
+  .hw-card-reader.fx-reader-busy::after,
+  .hw-card-reader.fx-reader-error::after,
+  [data-card-target="slot"].fx-reader-busy,
+  [data-card-target="slot"].fx-reader-error,
+  .kfx-receipt.is-ready .kfx-receipt-hint {
+    animation-duration: 1.6s;
+  }
+
+  .kfx-receipt-lift {
+    transition-duration: 0.15s;
+  }
+}

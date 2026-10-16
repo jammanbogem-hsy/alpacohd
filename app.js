@@ -39,14 +39,14 @@ const stations = [
     badge: "결제",
     title: "어려운 결제 키오스크",
     short: "할인, 적립, 결제, 영수증까지 이어지는 복잡한 과정",
-    mission: "ALPACO VIP를 인증하고, SNU 클래스 앱의 학생번호를 입력한 뒤 카드 결제를 완료해 보세요.",
+    mission: "문자로 받은 쿠폰 번호를 입력하고, 휴대폰 번호 010-2580-1379로 포인트를 적립한 뒤 카드로 결제하고 영수증을 받으세요.",
     kicker: "절차 장벽",
     insight: "결제 전 단계가 많고 안내가 흩어져 있으면 어디를 눌러야 하는지 헷갈립니다.",
     principle: "결제 흐름을 단순하게",
     summary: "할인, 적립, 결제, 카드 투입, 영수증 수령을 단계별로 명확하게 안내합니다.",
     closing: "할인, 적립, 결제, 수령은 실제 행동 순서대로 하나씩 안내해야 합니다.",
     hardTitle: "함정이 숨은 결제 키오스크",
-    hardMission: "추가 주문은 모두 거절하고, 모바일 상품권으로 결제한 뒤 모자란 금액은 카드로 내세요. 카드 비밀번호는 1234입니다."
+    hardMission: "문자로 받은 쿠폰 번호를 입력하고 휴대폰 번호 010-2580-1379로 적립하세요. 추가 주문은 모두 거절하고 모바일 상품권으로 결제한 뒤, 모자란 금액은 카드로 내고 영수증을 받으세요. 카드 비밀번호는 1234입니다."
   }
 ];
 
@@ -334,6 +334,24 @@ function showCompletion(root, message, options = {}) {
           }
         </div>
       `;
+  // 주문 키오스크는 실제 매장처럼 주문 완료 화면과 주문번호를 먼저 보여 줍니다.
+  const orderPrefix = { timer: "A", alien: "T" }[station.id];
+  const orderTicket = orderPrefix
+    ? `
+      <div class="completion-order" role="status">
+        <span class="completion-order-check" aria-hidden="true"></span>
+        <span class="completion-order-copy">
+          <b>주문이 완료되었습니다</b>
+          <small>주문번호를 확인해 주세요</small>
+        </span>
+        <span class="completion-order-number"><small>주문번호</small><strong>${orderPrefix}-${100 + Math.floor(Math.random() * 900)}</strong></span>
+      </div>
+    `
+    : "";
+  if (orderPrefix) {
+    fxToastLayer?.remove();
+    fxSound("approve");
+  }
 
   root.innerHTML = `
     <div class="kiosk-stage">
@@ -344,6 +362,7 @@ function showCompletion(root, message, options = {}) {
               ${celebrationParticles()}
             </div>
             <div class="completion-panel">
+              ${orderTicket}
               <p class="completion-kicker">${options.kicker || "미션 해결"}</p>
               <h3>${options.title || `${station.title} 완료`}</h3>
               <p>${message}</p>
@@ -476,7 +495,7 @@ const productImages = {
 function productImageMarkup(src, className = "") {
   return `
     <span class="product-image-frame ${className}" aria-hidden="true">
-      <img src="${src}" alt="" loading="lazy">
+      <img src="${src}" alt="" decoding="async">
     </span>
   `;
 }
@@ -810,6 +829,163 @@ function renderKioskStart(root, station, mode) {
   });
 }
 
+// ---------- 실제 매장 키오스크처럼 반응하는 터치 피드백 (kiosk-feedback.css) ----------
+// 효과는 document.body 위 fixed 레이어에서 비동기로만 돌아서, draw()로 화면이 바뀌어도 남고 입력을 막지 않습니다.
+function fxReducedMotion() {
+  return Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+}
+
+function fxSound(name) {
+  window.KioskFX?.sound?.(name);
+}
+
+// 같은 요소에 같은 애니메이션 클래스를 다시 붙여도 처음부터 재생되게 합니다.
+function fxRestartClass(element, className, duration = 320) {
+  if (!element) return;
+  element.classList.remove(className);
+  void element.offsetWidth;
+  element.classList.add(className);
+  window.setTimeout(() => element.classList.remove(className), duration);
+}
+
+function fxScreenRect(root) {
+  const screen = root.querySelector(".kiosk-device-screen");
+  return screen ? screen.getBoundingClientRect() : null;
+}
+
+// 키오스크 화면 위에 겹치는 레이어 (클릭은 그대로 아래로 통과)
+function fxScreenLayer(root, className, html, lifetime) {
+  const rect = fxScreenRect(root);
+  if (!rect) return null;
+  const layer = document.createElement("div");
+  layer.className = `kfx-screen-layer ${className}`;
+  layer.setAttribute("aria-hidden", "true");
+  Object.assign(layer.style, {
+    left: `${rect.left}px`,
+    top: `${rect.top}px`,
+    width: `${rect.width}px`,
+    height: `${rect.height}px`
+  });
+  layer.innerHTML = html;
+  document.body.appendChild(layer);
+  window.setTimeout(() => layer.remove(), lifetime);
+  return layer;
+}
+
+let fxToastLayer = null;
+
+// 브라우저 알림 대신 키오스크 화면 안에 잠깐 뜨는 안내 문구
+function fxKioskToast(root, message, tone = "error") {
+  fxToastLayer?.remove();
+  fxToastLayer = fxScreenLayer(root, "kfx-toast-layer", `<div class="kfx-toast kfx-toast-${tone}">${message}</div>`, 1400);
+  // 하단 주문 바 바로 위에 띄웁니다.
+  const screenRect = fxScreenRect(root);
+  const cartRect = root.querySelector(".order-cart")?.getBoundingClientRect();
+  if (fxToastLayer && screenRect && cartRect) {
+    fxToastLayer.style.paddingBottom = `${Math.max(screenRect.bottom - cartRect.top + 12, 12)}px`;
+  }
+}
+
+// 잘못 누른 타일: 빨갛게 번쩍이며 흔들림 + 오류음 + 화면 안내
+function fxReject(root, element, message) {
+  fxSound("error");
+  fxRestartClass(element, "kfx-wrong", 360);
+  fxKioskToast(root, message, "error");
+}
+
+// 다시 그리기 전에 고른 타일의 위치와 그림을 기억해 둡니다.
+function fxSnapshot(button) {
+  const rect = button.getBoundingClientRect();
+  const img = button.querySelector(".product-image-frame img");
+  const label = button.querySelector(".product-copy b")?.textContent || "";
+  return { rect, src: img ? img.getAttribute("src") : "", label };
+}
+
+// 고른 메뉴 그림이 하단 주문 바로 날아가고, 개수 배지가 튀고, 합계가 올라갑니다.
+function fxFlyToCart(root, snapshot, previousTotal) {
+  fxToastLayer?.remove();
+  const badge = root.querySelector(".order-cart .cart-count");
+  const totalEl = root.querySelector(".order-cart .cart-total strong");
+  const chips = root.querySelectorAll(".order-cart .cart-row");
+  const newestChip = chips[chips.length - 1];
+  const nextTotal = Number((totalEl?.textContent || "").replace(/[^0-9]/g, "")) || 0;
+
+  const land = () => {
+    fxRestartClass(badge, "kfx-bump", 320);
+    fxRestartClass(newestChip, "kfx-chip-in", 320);
+    fxCountUp(totalEl, previousTotal, nextTotal);
+  };
+
+  if (!snapshot || !badge || fxReducedMotion()) {
+    land();
+    return;
+  }
+
+  const from = snapshot.rect;
+  const to = badge.getBoundingClientRect();
+  const size = 56;
+  const fly = document.createElement("div");
+  fly.className = "kfx-fly";
+  fly.setAttribute("aria-hidden", "true");
+  fly.innerHTML = snapshot.src ? `<img src="${snapshot.src}" alt="">` : `<span>${snapshot.label.slice(0, 6)}</span>`;
+  fly.style.left = `${from.left + from.width / 2 - size / 2}px`;
+  fly.style.top = `${from.top + from.height / 2 - size / 2}px`;
+  document.body.appendChild(fly);
+  const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+  const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+  const animation = fly.animate(
+    [
+      { transform: "translate(0, 0) scale(1.15)", opacity: 1 },
+      { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 40}px) scale(0.8)`, opacity: 1, offset: 0.55 },
+      { transform: `translate(${dx}px, ${dy}px) scale(0.3)`, opacity: 0.4 }
+    ],
+    { duration: 300, easing: "cubic-bezier(0.45, 0, 0.6, 1)" }
+  );
+  animation.onfinish = () => {
+    fly.remove();
+    if (badge.isConnected) land();
+  };
+  window.setTimeout(() => fly.remove(), 600);
+}
+
+// 합계 금액을 계산기처럼 빠르게 세어 올립니다.
+function fxCountUp(element, from, to) {
+  if (!element || from === to || fxReducedMotion()) return;
+  const start = performance.now();
+  const duration = 260;
+  const tick = (now) => {
+    if (!element.isConnected) return;
+    const progress = Math.min((now - start) / duration, 1);
+    element.textContent = formatWon(Math.round(from + (to - from) * progress));
+    if (progress < 1) window.requestAnimationFrame(tick);
+  };
+  window.requestAnimationFrame(tick);
+}
+
+// 다음 단계 화면이 실제 키오스크처럼 옆에서 밀려 들어옵니다. back이면 반대 방향.
+function fxStepEnter(root, direction = "next") {
+  const board = root.querySelector(".order-board");
+  if (!board || fxReducedMotion()) return;
+  fxRestartClass(board, direction === "back" ? "kfx-step-back" : "kfx-step-next", 260);
+}
+
+// 시간 초과로 처음 화면으로 돌아갈 때 잠깐 뜨는 안내 (입력은 막지 않음)
+function fxTimeoutNotice(root) {
+  fxSound("error");
+  fxToastLayer?.remove();
+  fxScreenLayer(
+    root,
+    "kfx-timeout-layer",
+    `
+      <div class="kfx-timeout">
+        <span class="kfx-clock"><i></i></span>
+        <b>시간이 초과되어 처음 화면으로 돌아갑니다</b>
+      </div>
+    `,
+    1300
+  );
+}
+
 function renderTimerStation(root, mode) {
   const isKind = mode === "kind";
   const isHard = mode === "hard";
@@ -1061,10 +1237,14 @@ function renderTimerStation(root, mode) {
         const selected = current.items.find((item) => item.id === button.dataset.product);
         if (!selected) return;
         if (selected.id !== current.correct) {
+          fxReject(root, button, "주문 내용과 다른 메뉴예요. 다시 확인해 주세요.");
           recordBarrier(isKind ? "원하는 조건과 다른 항목입니다. 설명을 다시 확인해 보세요." : "빨리 고르려다 엉뚱한 메뉴를 눌렀습니다.");
           return;
         }
 
+        fxSound("beep");
+        const snapshot = fxSnapshot(button);
+        const previousTotal = selectedCartItems(order).reduce((sum, item) => sum + (item.price || 0), 0);
         order[current.key] = selected;
         window.clearInterval(timer);
         if (step === steps.length - 1) {
@@ -1090,11 +1270,14 @@ function renderTimerStation(root, mode) {
         step += 1;
         timeLeft = timeLimit;
         draw();
+        fxStepEnter(root, "next");
+        fxFlyToCart(root, snapshot, previousTotal);
         if (!isKind) startClock();
       });
     });
 
-    root.querySelector("[data-cart-action]").addEventListener("click", () => {
+    root.querySelector("[data-cart-action]").addEventListener("click", (event) => {
+      fxReject(root, event.currentTarget, "메뉴를 모두 고른 뒤 결제할 수 있어요.");
       recordBarrier(isKind ? "아직 주문 단계를 차례로 완료해야 합니다." : "장바구니 버튼이 있어도 시간 제한이 있으면 확인하기 어렵습니다.");
     });
   }
@@ -1112,6 +1295,8 @@ function renderTimerStation(root, mode) {
     const wholeSecond = Math.ceil(Math.max(timeLeft, 0));
     if (readout.dataset.second && readout.dataset.second !== String(wholeSecond)) {
       readout.animate?.([{ transform: "scale(1.28)" }, { transform: "scale(1)" }], { duration: 240, easing: "ease-out" });
+      // 마지막 2초는 초마다 작게 째깍 소리를 냅니다.
+      if (wholeSecond > 0 && wholeSecond <= 2) fxSound("tick");
     }
     readout.dataset.second = String(wholeSecond);
     const kiosk = root.querySelector(".real-kiosk");
@@ -1132,6 +1317,8 @@ function renderTimerStation(root, mode) {
         Object.keys(order).forEach((key) => delete order[key]);
         timeLeft = timeLimit;
         draw();
+        fxStepEnter(root, "back");
+        fxTimeoutNotice(root);
         startClock();
       }
     }, 100);
@@ -1182,6 +1369,47 @@ function shuffledPinKeys() {
   return keys;
 }
 
+const TINY_REWARD_PHONE = "01025801379";
+const TINY_COUPON_DISCOUNT = 1000;
+const TINY_COUPON_LENGTH = 12;
+
+// 문자 쿠폰 번호. 어려운 모드는 O/0, I/1, S/5, B/8, Z/2처럼 닮은 글자를 일부러 섞고, 개선 모드는 닮은 글자를 빼고 만듭니다.
+function randomCouponCode(friendly = false) {
+  const tricky = "O0I1S5B8Z2";
+  const plain = "ACDEFHJKLMNPRTUVWXY34679";
+  const pool = friendly ? plain : `${tricky}${tricky}${plain}`;
+  const chars = Array.from({ length: TINY_COUPON_LENGTH }, () => pool[Math.floor(Math.random() * pool.length)]);
+  if (!friendly) {
+    const slots = shuffledPinKeys().map(Number).slice(0, 5);
+    slots.forEach((slot) => {
+      chars[slot] = tricky[Math.floor(Math.random() * tricky.length)];
+    });
+  }
+  return chars.join("");
+}
+
+function normalizeCouponInput(value) {
+  return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, TINY_COUPON_LENGTH);
+}
+
+function formatCouponCode(code) {
+  return code.replace(/(.{4})(?=.)/g, "$1-");
+}
+
+function formatPhoneDigits(digits, placeholder = "") {
+  const padded = placeholder ? digits.padEnd(11, placeholder) : digits;
+  return [padded.slice(0, 3), padded.slice(3, 7), padded.slice(7, 11)].filter(Boolean).join("-");
+}
+
+function receiptTimestamp(date = new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function randomApprovalNumber() {
+  return String(Math.floor(10000000 + Math.random() * 90000000));
+}
+
 function renderTinyStation(root, mode) {
   const isKind = mode === "kind";
   const isHard = mode === "hard";
@@ -1194,35 +1422,50 @@ function renderTinyStation(root, mode) {
     pinDone: false,
     pinKeys: shuffledPinKeys()
   };
-  let flowModalNote = "";
   const hardware = {
     card: false,
     receipt: false
   };
-  const affiliatePhone = {
+  // 쿠폰: 휴대폰 메시지 앱에서 쿠폰 번호를 찾아 키오스크에 입력합니다. 개선 모드는 문자가 바로 열려 있습니다.
+  const coupon = {
     open: false,
-    stage: "locked",
+    stage: isKind ? "sms" : "locked",
+    code: randomCouponCode(isKind),
+    expiredCode: randomCouponCode(),
+    value: "",
     done: false
   };
-  const rewardPhone = {
+  // 적립: 010이 미리 입력된 번호 키패드 + 작은 필수 동의 체크.
+  const phoneReward = {
     open: false,
-    stage: "locked",
+    digits: "010",
+    consent: false,
     done: false,
-    studentNumber: randomStudentNumber()
+    points: 0
+  };
+  // 결제 마무리: approved(영수증 출력 여부 선택) → printing(영수증 출력 중) / fallback(KioskFX 없을 때 출력구 누르기)
+  const pay = {
+    stage: "none",
+    approval: randomApprovalNumber(),
+    time: ""
   };
   let flowModalMessage = "";
+  let flowModalNote = "";
+  let flowModalNext = "";
   let focusGroupAfterModal = "";
-  let modalAnchorGroup = "";
+  let freshCart = null;
+  let busy = false;
+  let disposed = false;
   const baseOrder = [{ label: "치즈버거 세트", price: 7200 }];
-  const affiliateApps = [
-    { id: "messages", label: "메시지", desc: "대화", initial: "M", imageKey: "message-app" },
+  const phoneApps = [
     { id: "photos", label: "사진", desc: "앨범", initial: "P", imageKey: "photo-app" },
     { id: "map", label: "지도", desc: "길찾기", initial: "길", imageKey: "map-app" },
     { id: "bank", label: "뱅크", desc: "계좌", initial: "B", imageKey: "bank-app" },
     { id: "jammanbo-app", label: "JAMMANBO 멤버십", desc: "멤버십", initial: "J", imageKey: "jammanbo" },
     { id: "weather", label: "날씨", desc: "예보", initial: "W", imageKey: "weather-app" },
     { id: "snu-app", label: "SNU 클래스", desc: "수강 인증", initial: "S", imageKey: "snu-class" },
-    { id: "alpaco-vip-app", label: "ALPACO VIP", desc: "할인 바코드", initial: "A", imageKey: "alpaco-vip", correct: true },
+    { id: "alpaco-vip-app", label: "ALPACO VIP", desc: "할인 바코드", initial: "A", imageKey: "alpaco-vip" },
+    { id: "messages", label: "메시지", desc: "대화", initial: "M", imageKey: "message-app", correct: true },
     { id: "settings", label: "설정", desc: "기기", initial: "설", imageKey: "settings-app" },
     { id: "mail", label: "메일", desc: "편지함", initial: "@", imageKey: "mail-app" },
     { id: "calendar", label: "캘린더", desc: "일정", initial: "C", imageKey: "calendar-app" },
@@ -1232,27 +1475,25 @@ function renderTinyStation(root, mode) {
     ? [
         {
           key: "discount",
-          title: "제휴할인",
-          correct: "alpaco-vip",
+          title: "① 할인 쿠폰",
+          correct: "coupon-code",
           items: [
-            { id: "alpaco-vip", label: "ALPACO VIP", desc: "VIP 할인", price: -700 },
-            { id: "jammanbo", label: "JAMMANBO 멤버십", desc: "앱 멤버십", price: -500 },
-            { id: "snu-class", label: "SNU 클래스", desc: "클래스 인증", price: -300 },
-            { id: "none-discount", label: "제휴할인 없음", desc: "건너뛰기", price: 0, noArt: true }
+            { id: "coupon-code", label: "문자 쿠폰 번호 입력", desc: "휴대폰 문자 보기", price: -TINY_COUPON_DISCOUNT, noArt: true },
+            { id: "none-discount", label: "할인 없음", desc: "건너뛰기", price: 0, noArt: true }
           ]
         },
         {
           key: "reward",
-          title: "적립 방법",
-          correct: "snu-reward",
+          title: "② 포인트 적립",
+          correct: "phone-reward",
           items: [
-            { id: "snu-reward", label: "SNU 클래스 적립", desc: "학생번호 입력", price: 0, noArt: true },
+            { id: "phone-reward", label: "휴대폰 번호로 적립", desc: "번호 입력", price: 0, noArt: true },
             { id: "none-reward", label: "적립 안 함", desc: "건너뛰기", price: 0, noArt: true }
           ]
         },
         {
           key: "payment",
-          title: "결제수단",
+          title: "③ 결제수단",
           correct: "card",
           items: [
             { id: "card", label: "카드 결제", desc: "카드 투입구 사용", price: 0, noArt: true },
@@ -1263,23 +1504,23 @@ function renderTinyStation(root, mode) {
     : [
         {
           key: "discount",
-          title: "STEP 1 제휴할인",
-          correct: "alpaco-vip",
+          title: "STEP 1 할인·쿠폰",
+          correct: "coupon-code",
           items: [
             { id: "alpaco-vip", label: "ALPACO VIP", desc: "VIP 할인", price: -700 },
             { id: "jammanbo", label: "JAMMANBO 멤버십", desc: "앱 멤버십", price: -500 },
-            { id: "snu-class", label: "SNU 클래스", desc: "클래스 인증", price: -300 },
-            { id: "none-discount", label: "제휴할인 없음", desc: "건너뛰기", price: 0, noArt: true }
+            { id: "coupon-code", label: "쿠폰 번호 입력", desc: "문자 쿠폰", price: -TINY_COUPON_DISCOUNT, noArt: true },
+            { id: "none-discount", label: "할인 없음", desc: "건너뛰기", price: 0, noArt: true }
           ]
         },
         {
           key: "reward",
-          title: "STEP 2 적립 방법",
-          correct: "snu-reward",
+          title: "STEP 2 포인트 적립",
+          correct: "phone-reward",
           items: [
-            { id: "phone-reward", label: "휴대폰 번호", desc: "번호 입력", price: 0, noArt: true },
             { id: "barcode-reward", label: "멤버십 바코드", desc: "스캔", price: 0, noArt: true },
             { id: "snu-reward", label: "SNU 클래스 적립", desc: "학생번호 입력", price: 0, noArt: true },
+            { id: "phone-reward", label: "휴대폰 번호", desc: "번호 입력", price: 0, noArt: true },
             { id: "none-reward", label: "적립 안 함", desc: "건너뛰기", price: 0, noArt: true }
           ]
         },
@@ -1314,28 +1555,25 @@ function renderTinyStation(root, mode) {
     return `<span class="phone-app-icon">${app.initial}</span>`;
   }
 
-  function affiliatePhonePanel() {
-    const stageCopy = {
-      locked: "스마트폰을 열어서 앱을 찾아봅시다.",
-      apps: "많은 앱 중에서 ALPACO VIP 앱을 찾아 선택해야 합니다.",
-      barcode: "ALPACO VIP 앱 안에서 제휴할인에 필요한 메뉴를 선택해야 합니다.",
-      done: "ALPACO VIP 바코드 인증이 완료되었습니다."
-    };
-    const phoneBody = {
-      locked: `
-        <div class="phone-lock-screen">
+  // 휴대폰 화면: 잠금 → 홈 화면(앱 찾기) → 메시지 앱(문자 쿠폰). 개선 모드는 문자가 바로 열려 있습니다.
+  function couponPhoneScreen() {
+    if (coupon.stage === "locked") {
+      return `
+        <div class="phone-lock-screen coupon-lock-screen">
           <span class="phone-clock">10:24</span>
-          <small>ALPACO 제휴할인을 계속하려면 휴대폰을 켜세요.</small>
-          <button class="phone-primary-button" type="button" data-phone-action="wake">스마트폰 켜기</button>
+          <span class="lock-notification"><b>새 메시지 ${isHard ? 3 : 2}개</b><small>내용을 보려면 잠금을 해제하세요</small></span>
+          <button class="phone-primary-button" type="button" data-coupon-phone="wake">스마트폰 켜기</button>
         </div>
-      `,
-      apps: `
+      `;
+    }
+    if (coupon.stage === "apps") {
+      return `
         <span class="phone-title">홈 화면</span>
-        <div class="phone-app-grid">
-          ${affiliateApps
+        <div class="phone-app-grid coupon-app-grid">
+          ${phoneApps
             .map(
               (app) => `
-                <button class="phone-app-button" type="button" data-affiliate-app="${app.id}">
+                <button class="phone-app-button" type="button" data-coupon-app="${app.id}">
                   ${phoneAppIconMarkup(app)}
                   <b>${app.label}</b>
                 </button>
@@ -1343,153 +1581,162 @@ function renderTinyStation(root, mode) {
             )
             .join("")}
         </div>
-      `,
-      barcode: `
-        <span class="phone-title">ALPACO VIP</span>
-        <div class="vip-app-menu">
-          <button class="vip-app-option" type="button" data-phone-action="show-points">
-            <b>포인트 조회</b>
-            <small>잔여 포인트 보기</small>
-          </button>
-          <button class="vip-app-option" type="button" data-phone-action="show-coupons">
-            <b>쿠폰함</b>
-            <small>받은 쿠폰 확인</small>
-          </button>
-          <button class="vip-app-option" type="button" data-phone-action="generate-barcode">
-            <b>바코드 생성</b>
-            <small>제휴할인 인증용</small>
-          </button>
-          <button class="vip-app-option" type="button" data-phone-action="show-history">
-            <b>이용 내역</b>
-            <small>최근 사용 기록</small>
-          </button>
-        </div>
-      `,
-      done: `
-        <span class="phone-title">ALPACO VIP</span>
-        <div class="membership-card is-done">
-          <b>인증 완료</b>
-          <small>제휴할인이 주문 내역에 적용되었습니다.</small>
-          <span class="barcode-visual" aria-label="인증된 멤버십 바코드"></span>
-          <strong>할인 적용</strong>
-        </div>
-      `
-    };
-
+      `;
+    }
+    const messages = [
+      isKind
+        ? null
+        : { from: "택배 알림", time: "오전 9:12", text: `[Web발신] 고객님의 택배가 배송을 시작했습니다. 운송장 ${isHard ? "5102-8831-0094" : "6620-1180-4471"}` },
+      isHard ? { from: "모두페이", time: "어제", text: "[Web발신] (사용기간 만료) 500원 할인 쿠폰", code: coupon.expiredCode, expired: true } : null,
+      { from: "모두페이", time: "방금", text: `[Web발신] ${formatWon(TINY_COUPON_DISCOUNT)} 할인 쿠폰이 도착했어요! 오늘 자정까지 사용하세요.`, code: coupon.code }
+    ].filter(Boolean);
     return `
-      <section class="affiliate-phone-panel ${affiliatePhone.done ? "is-done" : ""}">
-        <div class="phone-panel-copy">
-          <h4>스마트폰 제휴 앱 인증</h4>
-          <p>${stageCopy[affiliatePhone.stage]}</p>
-        </div>
-        <div class="phone-mock" aria-label="스마트폰 앱 선택 화면">
-          <div class="phone-speaker" aria-hidden="true"></div>
-          <div class="phone-screen">
-            ${phoneBody[affiliatePhone.stage]}
-          </div>
-        </div>
-      </section>
+      <span class="phone-title">메시지</span>
+      <div class="sms-thread">
+        ${messages
+          .map(
+            (message) => `
+              <div class="sms-bubble ${message.code ? "is-coupon" : ""} ${message.expired ? "is-expired" : ""}">
+                <span class="sms-sender"><b>${message.from}</b><small>${message.time}</small></span>
+                <p>${message.text}</p>
+                ${message.code ? `<span class="sms-code-label">쿠폰번호</span><strong class="sms-code">${formatCouponCode(message.code)}</strong>` : ""}
+              </div>
+            `
+          )
+          .join("")}
+      </div>
     `;
   }
 
-  function rewardPhonePanel() {
-    const stageCopy = {
-      locked: "SNU 클래스 적립을 하려면 스마트폰에서 학생번호를 확인해야 합니다.",
-      apps: "많은 앱 중에서 SNU 클래스 앱을 찾아 선택해야 합니다.",
-      student: "앱에 표시된 학생번호를 키오스크 입력칸에 그대로 입력하세요.",
-      done: "학생번호 확인이 완료되어 SNU 클래스 적립이 적용되었습니다."
+  function couponPanel() {
+    const phoneCopy = {
+      locked: "① 스마트폰을 켜세요.",
+      apps: "② 쿠폰이 온 메시지 앱을 찾으세요.",
+      sms: isKind ? "문자에 온 쿠폰 번호를 보고 입력하세요." : "③ 문자의 쿠폰 번호를 키오스크에 입력하세요."
     };
-    const isStudentEntry = rewardPhone.stage === "student";
-    const rewardIntro = isStudentEntry
-      ? ""
-      : `
-        <div class="phone-panel-copy">
-          <h4>스마트폰 SNU 클래스 적립</h4>
-          <p>${stageCopy[rewardPhone.stage]}</p>
-        </div>
-      `;
-    const phoneBody = {
-      locked: `
-        <div class="phone-lock-screen">
-          <span class="phone-clock">10:24</span>
-          <small>SNU 클래스 적립을 계속하려면 휴대폰을 켜세요.</small>
-          <button class="phone-primary-button" type="button" data-reward-phone-action="wake">스마트폰 켜기</button>
-        </div>
-      `,
-      apps: `
-        <span class="phone-title">홈 화면</span>
-        <div class="phone-app-grid">
-          ${affiliateApps
-            .map(
-              (app) => `
-                <button class="phone-app-button" type="button" data-reward-app="${app.id}">
-                  ${phoneAppIconMarkup(app)}
-                  <b>${app.label}</b>
-                </button>
-              `
-            )
-            .join("")}
-        </div>
-      `,
-      student: `
-        <div class="phone-app-header reward-phone-app-header">
-          ${productImageMarkup(productImages["snu-class"], "phone-app-logo")}
-          <span class="reward-phone-app-title">
-            <span class="phone-title">SNU 클래스</span>
-            <small>스마트폰 SNU 클래스 적립</small>
-            <em>${stageCopy.student}</em>
-          </span>
-        </div>
-        <div class="student-id-card">
-          <b>학생번호</b>
-          <strong>${rewardPhone.studentNumber}</strong>
-          <small>대문자 영어와 숫자를 정확히 입력해야 합니다.</small>
-        </div>
-      `,
-      done: `
-        <div class="phone-app-header">
-          ${productImageMarkup(productImages["snu-class"], "phone-app-logo")}
-          <span class="phone-title">SNU 클래스</span>
-        </div>
-        <div class="student-id-card is-done">
-          <b>적립 완료</b>
-          <strong>${rewardPhone.studentNumber}</strong>
-          <small>학생번호가 확인되었습니다.</small>
-        </div>
-      `
-    };
-
+    const keyRows = ["1234567890", "QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
     return `
-      <section class="reward-phone-panel ${rewardPhone.done ? "is-done" : ""} ${isStudentEntry ? "has-student-entry" : ""}">
-        ${rewardIntro}
-        <div class="phone-mock" aria-label="스마트폰 SNU 클래스 앱 화면">
-          <div class="phone-speaker" aria-hidden="true"></div>
-          <div class="phone-screen">
-            ${phoneBody[rewardPhone.stage]}
+      <div class="coupon-focus-flow">
+        <section class="coupon-entry-panel ${isKind ? "is-friendly" : ""}" aria-label="쿠폰 번호 입력">
+          <div class="coupon-phone-side">
+            <p class="coupon-step-copy">${phoneCopy[coupon.stage]}</p>
+            <div class="phone-mock coupon-phone-mock" aria-label="스마트폰 화면">
+              <div class="phone-speaker" aria-hidden="true"></div>
+              <div class="phone-screen">${couponPhoneScreen()}</div>
+            </div>
           </div>
-        </div>
-        ${
-          isStudentEntry
-            ? `
-              <form class="student-id-entry" data-student-id-form="true">
-                <label for="studentIdInput">키오스크 학생번호 입력</label>
-                <input id="studentIdInput" type="text" inputmode="text" autocomplete="off" maxlength="12" placeholder="예: A7K2M9Q4" data-student-id-input="true" />
-                <button class="phone-primary-button" type="submit">입력 완료</button>
-              </form>
+          <div class="coupon-kiosk-side">
+            <h4>쿠폰 번호 입력</h4>
+            <p>${isKind ? "하이픈(-)은 자동으로 들어가요. 영어 대문자와 숫자 12자리예요." : `쿠폰 번호 ${TINY_COUPON_LENGTH}자리를 입력하세요.`}</p>
+            <input class="coupon-input" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="14" placeholder="XXXX-XXXX-XXXX" value="${formatCouponCode(coupon.value)}" aria-label="쿠폰 번호" data-coupon-input="true" />
+            <div class="coupon-keyboard" aria-label="쿠폰 번호 키보드">
+              ${keyRows
+                .map(
+                  (row) => `
+                    <div class="coupon-key-row">
+                      ${[...row].map((key) => `<button class="coupon-key" type="button" data-coupon-key="${key}">${key}</button>`).join("")}
+                      ${row === "ZXCVBNM" ? `<button class="coupon-key coupon-key-wide" type="button" data-coupon-key="back" aria-label="한 글자 지우기">지움</button>` : ""}
+                    </div>
+                  `
+                )
+                .join("")}
+            </div>
+            <div class="coupon-actions">
+              <button class="tiny-secondary-button" type="button" data-coupon-cancel="true">이전</button>
+              <button class="phone-primary-button" type="button" data-coupon-submit="true">쿠폰 적용</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  function phoneRewardPanel() {
+    const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "back"];
+    const keyLabel = { clear: "전체 지움", back: "지움" };
+    return `
+      <div class="phone-reward-flow">
+        <section class="phone-reward-panel ${isKind ? "is-friendly" : ""}" aria-label="휴대폰 번호 적립">
+          <div class="phone-reward-head">
+            <h4>휴대폰 번호로 포인트 적립</h4>
+            <p>${isKind ? "미션에 나온 휴대폰 번호를 누르고, 아래 동의 칸에 꼭 체크하세요." : "회원 휴대폰 번호를 입력하세요."}</p>
+          </div>
+          <output class="phone-number-display" data-phone-display="true">${formatPhoneDigits(phoneReward.digits, "_")}</output>
+          <div class="phone-keypad">
+            ${keys
+              .map(
+                (key) =>
+                  `<button class="phone-key ${keyLabel[key] ? "phone-key-sub" : ""}" type="button" data-phone-key="${key}">${keyLabel[key] || key}</button>`
+              )
+              .join("")}
+          </div>
+          <label class="consent-row ${isKind ? "is-friendly" : ""}">
+            <input type="checkbox" data-consent="true" ${phoneReward.consent ? "checked" : ""} />
+            <span>${isKind ? "<b>필수</b> 개인정보 수집·이용에 동의합니다" : "개인정보 수집·이용 동의(필수)"}</span>
+            ${isKind ? "" : `<em>[보기]</em>`}
+          </label>
+          <div class="phone-reward-actions">
+            <button class="tiny-secondary-button" type="button" data-phone-cancel="true">이전</button>
+            <button class="phone-primary-button" type="button" data-phone-submit="true">적립하기</button>
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  // 카드 승인 뒤 실제 키오스크처럼 영수증 출력 여부를 묻습니다. 어려운 모드는 '출력 안 함'이 더 크게 보입니다.
+  function receiptPanel() {
+    const printing = pay.stage === "printing";
+    const paid = paidCardAmount();
+    return `
+      <div class="receipt-choice-flow">
+        <section class="receipt-choice-panel ${isKind ? "is-friendly" : ""} ${printing ? "is-printing" : ""}" aria-label="결제 완료">
+          <span class="receipt-choice-check" aria-hidden="true">✓</span>
+          <h4>${printing ? "영수증이 나오고 있어요" : "결제가 완료되었습니다"}</h4>
+          <p class="receipt-choice-amount">카드 결제 ${formatWon(paid)} · 승인번호 ${pay.approval}</p>
+          ${
+            printing
+              ? `<p class="tiny-next-step">다음: 기계 아래 영수증 출력구에서 나온 영수증을 뜯어 가져가세요.</p>`
+              : `
+                <p class="receipt-choice-question">영수증을 출력할까요?</p>
+                <div class="receipt-choice-actions">
+                  <button class="receipt-skip-button" type="button" data-receipt-choice="skip">출력 안 함</button>
+                  <button class="receipt-print-button" type="button" data-receipt-choice="print">영수증 출력</button>
+                </div>
+                ${isKind ? `<p class="tiny-next-step">다음: '영수증 출력'을 누르고 기계 아래에서 영수증을 받으세요.</p>` : ""}
+              `
+          }
+        </section>
+      </div>
+    `;
+  }
+
+  function kindChecklist() {
+    const steps = ["문자 쿠폰 번호 입력", "휴대폰 번호로 적립", "카드 결제 고르기", "카드 넣기", "영수증 받기"];
+    const done = [Boolean(picks.discount), Boolean(picks.reward), Boolean(picks.payment), hardware.card, hardware.receipt];
+    const current = done.indexOf(false);
+    return `
+      <ol class="tiny-checklist" aria-label="결제 순서">
+        ${steps
+          .map(
+            (label, index) => `
+              <li class="${done[index] ? "is-done" : ""} ${index === current ? "is-current" : ""}">
+                <b>${done[index] ? "✓" : "①②③④⑤"[index]}</b><span>${label}</span>
+              </li>
             `
-            : ""
-        }
-      </section>
+          )
+          .join("")}
+      </ol>
     `;
   }
 
   function paymentHardwarePanel(optionReady) {
-    const barcodeActive = (affiliatePhone.stage === "scan" && !affiliatePhone.done) || (isHard && hardPay.giftStage === "scan");
+    const barcodeActive = isHard && hardPay.giftStage === "scan";
     const cardDragActive = optionReady && !barcodeActive && !hardware.card;
     const hint = barcodeActive
-      ? "바코드가 생성된 스마트폰을 바코드 인식하는 곳으로 끌어다 놓으세요."
+      ? "모바일 상품권이 열린 스마트폰을 바코드 인식하는 곳으로 끌어다 놓으세요."
       : cardDragActive
-        ? "결제 카드를 카드 넣는 곳으로 끌어다 놓으세요."
+        ? `결제 카드를 카드 넣는 곳으로 끌어다 놓으세요.${isKind ? "" : `<span class="tiny-next-step">다음: 카드를 기계 아래 카드 리더기에 넣으세요.</span>`}`
         : "";
 
     return `
@@ -1534,32 +1781,6 @@ function renderTinyStation(root, mode) {
           </button>
         </div>
       </section>
-    `;
-  }
-
-  function affiliateScanPanel(optionReady) {
-    return `
-      <div class="payment-flow scan-payment-flow">
-        <section class="dense-section payment-section scan-payment-section">
-          <h4>제휴할인 바코드 인식</h4>
-          <p class="scan-payment-hint">바코드가 생성된 스마트폰을 아래 키오스크 앞면의 바코드 인식하는 곳으로 끌어다 대세요.</p>
-          <div class="scan-payment-layout">
-            <div class="phone-mock scan-phone-mock" aria-label="드래그 가능한 ALPACO VIP 스마트폰" data-draggable-barcode="true">
-              <div class="phone-speaker" aria-hidden="true"></div>
-              <div class="phone-screen">
-                <span class="phone-title">ALPACO VIP</span>
-                <div class="membership-card">
-                  <b>VIP 멤버십</b>
-                  <small>이 스마트폰을 바코드 인식하는 곳으로 끌어다 대세요.</small>
-                  <span class="barcode-visual" aria-label="멤버십 바코드"></span>
-                  <strong>APC-2026-0506</strong>
-                </div>
-              </div>
-            </div>
-            ${paymentHardwarePanel(optionReady)}
-          </div>
-        </section>
-      </div>
     `;
   }
 
@@ -1658,54 +1879,254 @@ function renderTinyStation(root, mode) {
     `;
   }
 
-  function noteModal(message, note) {
+  function stepModal() {
     return `
-      <div class="flow-modal-backdrop" role="dialog" aria-modal="true" aria-label="${message}">
-        <div class="flow-modal hard-note-modal">
-          <h4>${message}</h4>
-          <p>${note}</p>
+      <div class="flow-modal-backdrop" role="dialog" aria-modal="true" aria-label="${flowModalMessage}">
+        <div class="flow-modal tiny-step-modal ${flowModalNote ? "hard-note-modal" : ""}">
+          <h4>${flowModalMessage}</h4>
+          ${flowModalNote ? `<p>${flowModalNote}</p>` : ""}
+          ${flowModalNext ? `<p class="tiny-next-step">${flowModalNext}</p>` : ""}
           <button class="phone-primary-button" type="button" data-flow-modal-close="true">확인</button>
         </div>
       </div>
     `;
   }
 
+  function openModal(message, note = "", next = "", focusGroup = "") {
+    flowModalMessage = message;
+    flowModalNote = note;
+    flowModalNext = next;
+    focusGroupAfterModal = focusGroup;
+  }
+
+  function orderSubtotal() {
+    return baseOrder.reduce((sum, item) => sum + item.price, 0) + (picks.discount?.price || 0);
+  }
+
   function remainderAmount() {
-    const discount = picks.discount?.price || 0;
-    return baseOrder.reduce((sum, item) => sum + item.price, 0) + discount - HARD_GIFT_BALANCE;
+    return orderSubtotal() - HARD_GIFT_BALANCE;
+  }
+
+  function paidCardAmount() {
+    return isHard ? remainderAmount() : orderSubtotal();
+  }
+
+  // KioskFX(kiosk-effects.js)가 없거나 일부 기능만 있어도 흐름이 멈추지 않도록 항상 감싸서 부릅니다.
+  function fx(name, ...args) {
+    const method = window.KioskFX?.[name];
+    if (typeof method !== "function") return Promise.resolve(null);
+    try {
+      return Promise.resolve(method.apply(window.KioskFX, args)).catch(() => null);
+    } catch (error) {
+      return Promise.resolve(null);
+    }
+  }
+
+  function kioskScreen() {
+    return root.querySelector(".kiosk-device-screen") || root;
+  }
+
+  function cardReader() {
+    return root.querySelector(".hw-card-reader");
+  }
+
+  // 효과가 진행되는 동안에는 추가 클릭·드래그를 막아 단계를 건너뛰지 못하게 합니다.
+  async function runBusy(task) {
+    if (busy || disposed) return;
+    busy = true;
+    root.classList.add("is-kiosk-busy");
+    try {
+      await task();
+    } finally {
+      busy = false;
+      root.classList.remove("is-kiosk-busy");
+    }
+  }
+
+  function failWith(message, element) {
+    fx("sound", "error");
+    if (element) fx("shake", element);
+    recordBarrier(message);
   }
 
   function applyGiftCard() {
     hardPay.giftStage = "short";
-    flowModalMessage = "상품권 잔액이 부족합니다";
-    flowModalNote = "부족한 금액은 다른 결제수단으로 이어서 결제해 주세요.";
-    focusGroupAfterModal = "";
-    modalAnchorGroup = "";
+    openModal(
+      "상품권 잔액이 부족합니다",
+      `상품권 ${formatWon(HARD_GIFT_BALANCE)}을 사용했어요. 남은 ${formatWon(remainderAmount())}은 다른 결제수단으로 이어서 결제해 주세요.`,
+      "다음: STEP 4에서 남은 금액을 낼 카드 결제를 고르세요."
+    );
     draw();
   }
 
-  function applyAffiliateDiscount() {
+  function applyCoupon() {
     const discountGroup = groups.find((item) => item.key === "discount");
-    picks.discount = discountGroup.items.find((item) => item.id === "alpaco-vip");
-    affiliatePhone.done = true;
-    affiliatePhone.stage = "done";
-    affiliatePhone.open = false;
-    flowModalMessage = "제휴인증에 성공했습니다";
-    focusGroupAfterModal = "reward";
-    modalAnchorGroup = "discount";
-    draw({ focusGroup: "discount" });
+    const couponItem = discountGroup.items.find((item) => item.id === "coupon-code");
+    picks.discount = { ...couponItem, label: "문자 쿠폰 할인" };
+    coupon.done = true;
+    coupon.open = false;
+    freshCart = { label: picks.discount.label, chip: `-${formatWon(TINY_COUPON_DISCOUNT)}`, tone: "discount" };
+    openModal(
+      "쿠폰 할인이 적용되었습니다",
+      `주문 금액에서 ${formatWon(TINY_COUPON_DISCOUNT)}이 빠졌어요.`,
+      isKind ? "다음: ② 포인트 적립에서 '휴대폰 번호로 적립'을 고르세요." : "다음: STEP 2에서 적립 방법을 고르세요.",
+      "reward"
+    );
+    draw();
   }
 
-  function applySnuReward() {
+  function applyPhoneReward() {
     const rewardGroup = groups.find((item) => item.key === "reward");
-    picks.reward = rewardGroup.items.find((item) => item.id === "snu-reward");
-    rewardPhone.done = true;
-    rewardPhone.stage = "done";
-    rewardPhone.open = false;
-    flowModalMessage = "적립에 성공했습니다";
-    focusGroupAfterModal = "payment";
-    modalAnchorGroup = "reward";
-    draw({ focusGroup: "reward" });
+    const rewardItem = rewardGroup.items.find((item) => item.id === "phone-reward");
+    phoneReward.points = Math.floor(orderSubtotal() * 0.01);
+    picks.reward = { ...rewardItem, label: `포인트 적립 +${phoneReward.points}P` };
+    phoneReward.done = true;
+    phoneReward.open = false;
+    freshCart = { label: picks.reward.label, chip: `+${phoneReward.points}P 적립`, tone: "points" };
+    openModal(
+      "포인트가 적립되었습니다",
+      `010-****-${TINY_REWARD_PHONE.slice(7)} 회원님께 ${phoneReward.points}P가 적립돼요.`,
+      isKind
+        ? "다음: ③ 결제수단에서 '카드 결제'를 고르세요."
+        : isHard
+          ? "다음: STEP 3에서 미션에 나온 결제수단을 고르세요."
+          : "다음: STEP 3에서 카드 결제를 고르세요.",
+      "payment"
+    );
+    draw();
+  }
+
+  function pushCouponKey(key) {
+    const input = root.querySelector("[data-coupon-input]");
+    if (!input) return;
+    const current = normalizeCouponInput(input.value);
+    coupon.value = key === "back" ? current.slice(0, -1) : normalizeCouponInput(`${current}${key}`);
+    input.value = formatCouponCode(coupon.value);
+  }
+
+  function submitCoupon() {
+    runBusy(async () => {
+      const input = root.querySelector("[data-coupon-input]");
+      const panel = root.querySelector(".coupon-kiosk-side");
+      const value = normalizeCouponInput(input?.value);
+      coupon.value = value;
+      if (value.length < TINY_COUPON_LENGTH) {
+        failWith(`쿠폰 번호 ${TINY_COUPON_LENGTH}자리를 모두 입력해야 합니다. 휴대폰 문자에서 쿠폰 번호를 찾아보세요.`, panel);
+        return;
+      }
+      if (isHard && value === coupon.expiredCode) {
+        failWith("사용 기간이 지난 쿠폰입니다. 가장 최근에 받은 문자의 쿠폰 번호를 확인해야 합니다.", panel);
+        return;
+      }
+      if (value !== coupon.code) {
+        failWith("쿠폰 번호가 맞지 않습니다. 숫자 0과 영어 O, 숫자 1과 영어 I, 숫자 5와 영어 S처럼 닮은 글자를 다시 확인해 보세요.", panel);
+        return;
+      }
+      await fx("processing", kioskScreen(), { title: "쿠폰 확인 중", detail: "쿠폰 번호를 확인하고 있어요", ms: isKind ? 700 : 1000 });
+      if (disposed) return;
+      fx("sound", "beep");
+      applyCoupon();
+    });
+  }
+
+  function pushPhoneKey(key) {
+    const keyButton = root.querySelector(`[data-phone-key="${key}"]`);
+    if (keyButton) fx("pressKey", keyButton);
+    if (key === "clear") phoneReward.digits = "010";
+    else if (key === "back") phoneReward.digits = phoneReward.digits.length > 3 ? phoneReward.digits.slice(0, -1) : phoneReward.digits;
+    else if (/^[0-9]$/.test(key) && phoneReward.digits.length < 11) phoneReward.digits += key;
+    const display = root.querySelector("[data-phone-display]");
+    if (display) display.textContent = formatPhoneDigits(phoneReward.digits, "_");
+  }
+
+  function submitPhoneReward() {
+    runBusy(async () => {
+      const display = root.querySelector("[data-phone-display]");
+      const consentBox = root.querySelector("[data-consent]");
+      phoneReward.consent = Boolean(consentBox?.checked);
+      if (phoneReward.digits.length < 11) {
+        failWith("휴대폰 번호 11자리를 모두 입력해야 적립할 수 있습니다.", display);
+        return;
+      }
+      if (phoneReward.digits !== TINY_REWARD_PHONE) {
+        failWith(`미션에 나온 휴대폰 번호(${formatPhoneDigits(TINY_REWARD_PHONE)})와 다릅니다. 숫자를 다시 확인해 보세요.`, display);
+        return;
+      }
+      if (!phoneReward.consent) {
+        failWith("작은 글씨의 '개인정보 수집·이용 동의(필수)'에 체크해야 적립할 수 있습니다.", root.querySelector(".consent-row"));
+        return;
+      }
+      await fx("processing", kioskScreen(), { title: "포인트 적립 중", detail: "회원 정보를 확인하고 있어요", ms: isKind ? 700 : 1000 });
+      if (disposed) return;
+      fx("sound", "beep");
+      applyPhoneReward();
+    });
+  }
+
+  // 카드 승인(어려운 모드는 비밀번호 확인 뒤) → 영수증 출력 여부 선택 화면
+  async function approveCardPayment() {
+    await fx("processing", kioskScreen(), { title: "결제 중입니다", detail: "카드를 빼지 마세요", ms: isKind ? 1200 : 1600 });
+    if (disposed) return;
+    await fx("approve", kioskScreen(), { title: "승인되었습니다", detail: `카드 ${formatWon(paidCardAmount())} 결제 완료` });
+    if (disposed) return;
+    hardware.card = true;
+    if (isHard) hardPay.pinDone = true;
+    pay.stage = "approved";
+    pay.time = receiptTimestamp();
+    draw();
+    fx("readerState", cardReader(), "ok");
+  }
+
+  function receiptData() {
+    const discountAmount = Math.abs(picks.discount?.price || 0);
+    const cardLabel = "신용카드(IC) 일시불";
+    return {
+      store: "모두페이",
+      title: "영수증",
+      items: baseOrder.map((item) => ({ label: item.label, price: item.price })),
+      discounts: discountAmount ? [{ label: picks.discount.label, amount: discountAmount }] : [],
+      payments: isHard
+        ? [
+            { label: "모바일 상품권", amount: HARD_GIFT_BALANCE },
+            { label: cardLabel, amount: remainderAmount() }
+          ]
+        : [{ label: cardLabel, amount: orderSubtotal() }],
+      total: orderSubtotal(),
+      approval: pay.approval,
+      time: pay.time || receiptTimestamp(),
+      footer: `포인트 적립 +${phoneReward.points}P (010-****-${TINY_REWARD_PHONE.slice(7)})\n이용해 주셔서 감사합니다`
+    };
+  }
+
+  function finishPayment() {
+    hardware.receipt = true;
+    if (isHard) {
+      completeStation("추가 주문 거절, 상품권 잔액 부족, 바뀌는 보안 키패드까지 결제 절차를 끝까지 해냈습니다.");
+      showCompletion(root, "원하지 않는 추가 주문 유도와 나눠 내기, 보안 키패드까지 모두 통과했습니다. 잠시 뒤 키오스크 선택 화면으로 돌아갑니다.", {
+        autoReturn: true,
+        kicker: "최종 미션 해결",
+        title: "더 어려운 모드 완료"
+      });
+      return;
+    }
+    completeStation("결제 단계가 많고 기기 조작 위치가 흩어져 있으면 마지막까지 놓치기 쉽습니다.");
+    showCompletion(root, "결제 화면은 할인, 적립, 결제, 카드 투입, 영수증 수령을 한 단계씩 명확하게 안내해야 합니다.");
+  }
+
+  // 영수증 출력: KioskFX.printReceipt가 있으면 출력구에서 종이가 나오고, 학생이 뜯어 가면 완료됩니다.
+  async function printReceipt() {
+    if (pay.stage !== "approved") return;
+    if (typeof window.KioskFX?.printReceipt !== "function") {
+      pay.stage = "fallback";
+      openModal("영수증을 챙겨주세요", "", "다음: 기계 아래 영수증 출력구를 눌러 영수증을 가져가세요.");
+      draw();
+      return;
+    }
+    pay.stage = "printing";
+    draw();
+    await fx("printReceipt", root.querySelector(".hw-receipt-printer"), receiptData());
+    if (disposed || pay.stage !== "printing") return;
+    finishPayment();
   }
 
   function setupBarcodeDrag() {
@@ -1765,18 +2186,21 @@ function renderTinyStation(root, mode) {
         setActiveTarget(null);
 
         if (!target) {
-          recordBarrier("바코드를 키오스크의 인식부까지 직접 가져다대야 합니다.");
+          failWith("바코드를 키오스크의 인식부까지 직접 가져다대야 합니다.");
           return;
         }
         if (target.dataset.barcodeTarget !== "scanner") {
-          recordBarrier("카드 투입구나 영수증 출력구가 아니라 바코드 인식하는 곳에 대야 합니다.");
+          failWith("카드 투입구나 영수증 출력구가 아니라 바코드 인식하는 곳에 대야 합니다.", target);
           return;
         }
-        if (barcode.dataset.draggableBarcode === "gift") {
+        runBusy(async () => {
+          await fx("scan", target);
+          if (disposed) return;
+          await fx("processing", kioskScreen(), { title: "잔액 조회 중", detail: "모바일 상품권 잔액을 확인하고 있어요", ms: 1200 });
+          if (disposed) return;
+          fx("sound", "error");
           applyGiftCard();
-          return;
-        }
-        applyAffiliateDiscount();
+        });
       };
 
       moveGhost(lastX, lastY);
@@ -1848,21 +2272,26 @@ function renderTinyStation(root, mode) {
         setActiveTarget(null);
 
         if (!target || target.dataset.cardTarget !== "slot") {
-          recordBarrier("카드의 가운데 부분을 카드 넣는 곳까지 직접 가져다 놓아야 합니다.");
+          failWith("카드의 가운데 부분을 카드 넣는 곳까지 직접 가져다 놓아야 합니다.", target);
           return;
         }
 
-        hardware.card = true;
-        if (isHard) {
-          hardPay.pinValue = "";
-          hardPay.pinKeys = shuffledPinKeys();
-          draw();
-          return;
-        }
-        flowModalMessage = "영수증을 챙겨주세요";
-        focusGroupAfterModal = "";
-        modalAnchorGroup = "";
-        draw({ preserveScroll: true });
+        // 화면의 카드 넣는 곳에 놓아도 실제 기계 아래 카드 리더기로 카드가 들어갑니다.
+        card.classList.add("is-inserted");
+        runBusy(async () => {
+          await fx("insertCard", cardReader());
+          if (disposed) return;
+          fx("readerState", cardReader(), "busy");
+          if (isHard) {
+            hardware.card = true;
+            hardPay.pinValue = "";
+            hardPay.pinKeys = shuffledPinKeys();
+            draw();
+            fx("readerState", cardReader(), "busy");
+            return;
+          }
+          await approveCardPayment();
+        });
       };
 
       moveGhost(lastX, lastY);
@@ -1889,29 +2318,28 @@ function renderTinyStation(root, mode) {
     const paymentSteps = isHard ? ["할인", "적립", "상품권", "카드", "비밀번호", "영수증"] : ["할인", "적립", "결제", "카드", "영수증"];
     const modalNextGroupIndex = flowModalMessage ? groups.findIndex((group) => group.key === focusGroupAfterModal) : -1;
     const activePaymentStep = modalNextGroupIndex > 0 ? modalNextGroupIndex - 1 : Math.min(doneCount, paymentSteps.length - 1);
-    const affiliatePhoneFocus = affiliatePhone.open && !affiliatePhone.done && ["locked", "apps", "barcode"].includes(affiliatePhone.stage);
-    const affiliateScanFocus = affiliatePhone.open && !affiliatePhone.done && affiliatePhone.stage === "scan";
-    const rewardPhoneFocus = rewardPhone.open && !rewardPhone.done && ["locked", "apps", "student"].includes(rewardPhone.stage);
+    const couponFocus = coupon.open && !coupon.done;
+    const rewardFocus = phoneReward.open && !phoneReward.done;
     const upsellFocus = isHard && hardPay.upsellIndex >= 0;
     const giftScanFocus = isHard && optionReady && hardPay.giftStage === "scan";
     const remainderFocus = isHard && optionReady && hardPay.giftStage === "short";
     const pinFocus = isHard && hardware.card && !hardPay.pinDone;
-    const hardwareFocus = isHard ? readyForCard && !pinFocus : picks.payment?.id === "card" && optionReady;
+    const receiptFocus = ["approved", "printing"].includes(pay.stage);
+    const hardwareFocus = receiptFocus || (isHard ? readyForCard && !pinFocus : picks.payment?.id === "card" && optionReady);
     const kioskClassName = [
       isKind ? "friendly-kiosk payment-kiosk" : "busy-payment-kiosk payment-kiosk",
       isHard ? "hard-payment-kiosk" : "",
-      affiliatePhoneFocus || rewardPhoneFocus ? "phone-focus-kiosk" : "",
-      affiliateScanFocus || giftScanFocus ? "barcode-scan-kiosk" : "",
+      couponFocus || rewardFocus ? "phone-focus-kiosk tiny-entry-kiosk" : "",
+      giftScanFocus ? "barcode-scan-kiosk" : "",
       hardwareFocus ? "hardware-focus-kiosk" : "",
+      receiptFocus ? "receipt-focus-kiosk" : "",
       upsellFocus ? "upsell-focus-kiosk" : "",
       pinFocus ? "pin-focus-kiosk" : ""
     ].filter(Boolean).join(" ");
-    const paymentBodyContent = affiliatePhoneFocus
-      ? `<div class="phone-focus-flow">${affiliatePhonePanel()}</div>`
-      : affiliateScanFocus
-        ? affiliateScanPanel(optionReady)
-        : rewardPhoneFocus
-          ? `<div class="phone-focus-flow">${rewardPhonePanel()}</div>`
+    const paymentBodyContent = couponFocus
+      ? couponPanel()
+      : rewardFocus
+        ? phoneRewardPanel()
           : upsellFocus
             ? upsellPanel()
           : giftScanFocus
@@ -1920,6 +2348,8 @@ function renderTinyStation(root, mode) {
             ? remainderPanel()
           : pinFocus
             ? pinPadPanel()
+          : receiptFocus
+            ? receiptPanel()
           : hardwareFocus
             ? `<div class="hardware-focus-flow">${paymentHardwarePanel(readyForCard)}</div>`
           : `
@@ -1940,16 +2370,13 @@ function renderTinyStation(root, mode) {
                         )
                         .join("")}
                     </div>
-                    ${flowModalMessage && modalAnchorGroup === group.key ? flowModal(flowModalMessage) : ""}
                   </section>
                 `
               )
               .join("")}
           </div>
         `;
-    const modalInsideSection = flowModalMessage && modalAnchorGroup && !affiliatePhoneFocus && !affiliateScanFocus && !rewardPhoneFocus && !hardwareFocus;
-    const pageModal = flowModalNote ? noteModal(flowModalMessage, flowModalNote) : flowModal(flowModalMessage);
-    const paymentBody = `${paymentBodyContent}${flowModalMessage && !modalInsideSection ? pageModal : ""}`;
+    const paymentBody = `${isKind ? kindChecklist() : ""}${paymentBodyContent}${flowModalMessage ? stepModal() : ""}`;
     root.innerHTML = kioskShell({
       brand: "모두페이",
       title: isKind ? "차근차근 결제하기" : isHard ? "함정이 숨은 결제 화면" : "복잡한 결제 화면",
@@ -1959,10 +2386,10 @@ function renderTinyStation(root, mode) {
       steps: paymentSteps,
       activeStep: activePaymentStep,
       guide: isKind
-        ? "필요한 선택지만 단계별로 보여 주고, 기기에서 해야 할 일도 함께 안내합니다."
+        ? ""
         : isHard
-          ? "ALPACO VIP 인증, SNU 클래스 적립 뒤 결제수단을 고르세요. 결제 전에 안내 창이 나올 수 있습니다."
-          : "ALPACO VIP 인증, SNU 클래스 적립, 카드 결제, 영수증 수령을 차례로 진행합니다.",
+          ? "문자 쿠폰 입력, 휴대폰 번호 적립 뒤 결제수단을 고르세요. 결제 전에 안내 창이 나올 수 있습니다."
+          : "문자 쿠폰 입력, 휴대폰 번호 적립, 카드 결제, 영수증 수령을 차례로 진행합니다.",
       cartItems,
       className: kioskClassName,
       body: paymentBody
@@ -1970,6 +2397,7 @@ function renderTinyStation(root, mode) {
     restoreKioskScroll(root, scrollState);
     setupBarcodeDrag();
     setupCardDrag();
+    highlightCart();
 
     const focusGroup = options.focusGroup || "";
     if (focusGroup) {
@@ -1985,15 +2413,22 @@ function renderTinyStation(root, mode) {
         const nextFocus = focusGroupAfterModal;
         flowModalMessage = "";
         flowModalNote = "";
+        flowModalNext = "";
         focusGroupAfterModal = "";
-        modalAnchorGroup = "";
         if (nextFocus) {
           draw({ focusGroup: nextFocus });
         } else {
           draw({ preserveScroll: true });
         }
+        freshCart = null;
       });
     }
+
+    const wrongChoiceMessage = {
+      discount: isKind ? "목표와 다른 선택입니다. 문자로 받은 쿠폰 번호를 입력해 보세요." : "미션에 없는 할인입니다. 문자로 받은 쿠폰 번호를 입력해야 합니다.",
+      reward: isKind ? "목표와 다른 선택입니다. 휴대폰 번호로 적립해 보세요." : "미션에 없는 적립 방법입니다. 휴대폰 번호로 적립해야 합니다.",
+      payment: isKind ? "목표와 다른 선택입니다. 안내를 다시 확인해 보세요." : "선택지가 너무 많아 필요한 결제 절차를 찾기 어렵습니다."
+    };
 
     root.querySelectorAll("[data-option-key]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -2005,33 +2440,30 @@ function renderTinyStation(root, mode) {
           return;
         }
         if (selected.id !== group.correct) {
-          recordBarrier(isKind ? "목표와 다른 선택입니다. 안내를 다시 확인해 보세요." : "선택지가 너무 많아 필요한 결제 절차를 찾기 어렵습니다.");
+          recordBarrier(wrongChoiceMessage[group.key]);
           return;
         }
         if (isHard && group.key === "payment" && !picks.payment) {
           if (!picks.discount || !picks.reward) {
-            recordBarrier("제휴할인과 적립을 먼저 마쳐야 결제수단을 고를 수 있습니다.");
+            recordBarrier("쿠폰 할인과 포인트 적립을 먼저 마쳐야 결제수단을 고를 수 있습니다.");
             return;
           }
           hardPay.upsellIndex = 0;
           draw();
           return;
         }
-        if (group.key === "discount" && selected.id === "alpaco-vip" && !affiliatePhone.done) {
-          affiliatePhone.open = true;
-          affiliatePhone.stage = "locked";
-          draw({ preserveScroll: true });
+        if (group.key === "discount" && !coupon.done) {
+          coupon.open = true;
+          draw();
+          window.requestAnimationFrame(() => root.querySelector("[data-coupon-input]")?.focus({ preventScroll: true }));
           return;
         }
-        if (group.key === "reward" && selected.id === "snu-reward" && !rewardPhone.done) {
-          if (!rewardPhone.open) {
-            rewardPhone.studentNumber = randomStudentNumber();
-          }
-          rewardPhone.open = true;
-          rewardPhone.stage = "locked";
-          draw({ preserveScroll: true });
+        if (group.key === "reward" && !phoneReward.done) {
+          phoneReward.open = true;
+          draw();
           return;
         }
+        if (picks[group.key]) return;
         picks[group.key] = selected;
         if (group.key === "payment" && selected.id === "card") {
           draw();
@@ -2041,28 +2473,85 @@ function renderTinyStation(root, mode) {
       });
     });
 
-    root.querySelectorAll("[data-phone-action]").forEach((button) => {
+    root.querySelectorAll("[data-coupon-phone]").forEach((button) => {
       button.addEventListener("click", () => {
-        if (button.dataset.phoneAction === "wake") {
-          affiliatePhone.stage = "apps";
-          draw({ preserveScroll: true });
+        coupon.stage = "apps";
+        draw();
+      });
+    });
+
+    root.querySelectorAll("[data-coupon-app]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const app = phoneApps.find((item) => item.id === button.dataset.couponApp);
+        if (!app) return;
+        if (!app.correct) {
+          recordBarrier("쿠폰 번호는 문자 메시지로 왔습니다. 메시지 앱을 찾아 보세요.");
           return;
         }
-        if (["show-points", "show-coupons", "show-history"].includes(button.dataset.phoneAction)) {
-          recordBarrier("제휴할인에는 포인트나 쿠폰함이 아니라 바코드 생성 메뉴가 필요합니다.");
+        coupon.stage = "sms";
+        draw();
+      });
+    });
+
+    const couponInput = root.querySelector("[data-coupon-input]");
+    if (couponInput) {
+      couponInput.addEventListener("input", () => {
+        coupon.value = normalizeCouponInput(couponInput.value);
+        couponInput.value = formatCouponCode(coupon.value);
+      });
+      couponInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          submitCoupon();
           return;
         }
-        if (button.dataset.phoneAction === "generate-barcode") {
-          affiliatePhone.stage = "scan";
-          draw({ preserveScroll: true });
+        const keyName = event.key === "Backspace" ? "back" : event.key.length === 1 ? event.key.toUpperCase() : "";
+        const keyButton = keyName ? root.querySelector(`[data-coupon-key="${keyName}"]`) : null;
+        if (keyButton) fx("pressKey", keyButton);
+      });
+    }
+
+    root.querySelectorAll("[data-coupon-key]").forEach((button) => {
+      button.addEventListener("click", () => {
+        fx("pressKey", button);
+        pushCouponKey(button.dataset.couponKey);
+      });
+    });
+
+    root.querySelector("[data-coupon-submit]")?.addEventListener("click", submitCoupon);
+    root.querySelector("[data-coupon-cancel]")?.addEventListener("click", () => {
+      coupon.open = false;
+      draw({ focusGroup: "discount" });
+    });
+
+    root.querySelectorAll("[data-phone-key]").forEach((button) => {
+      button.addEventListener("click", () => pushPhoneKey(button.dataset.phoneKey));
+    });
+    root.querySelector("[data-consent]")?.addEventListener("change", (event) => {
+      phoneReward.consent = event.target.checked;
+      if (phoneReward.consent) fx("sound", "key");
+    });
+    root.querySelector("[data-phone-submit]")?.addEventListener("click", submitPhoneReward);
+    root.querySelector("[data-phone-cancel]")?.addEventListener("click", () => {
+      phoneReward.open = false;
+      draw({ focusGroup: "reward" });
+    });
+
+    root.querySelectorAll("[data-receipt-choice]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (pay.stage !== "approved") return;
+        if (button.dataset.receiptChoice === "skip") {
+          recordBarrier("미션에서는 영수증을 받아야 합니다. '영수증 출력'을 눌러야 영수증이 나옵니다.");
+          return;
         }
+        fx("pressKey", button);
+        printReceipt();
       });
     });
 
     root.querySelectorAll("[data-barcode-target]").forEach((button) => {
       button.addEventListener("click", () => {
-        const giftScanning = isHard && hardPay.giftStage === "scan";
-        if ((affiliatePhone.stage !== "scan" || affiliatePhone.done) && !giftScanning) return;
+        if (!(isHard && hardPay.giftStage === "scan")) return;
         recordBarrier("바코드는 버튼처럼 누르는 것이 아니라, 스마트폰 화면을 인식부에 가져다대야 합니다.");
       });
     });
@@ -2105,94 +2594,53 @@ function renderTinyStation(root, mode) {
       });
     });
 
+    // 비밀번호 키패드는 다시 그리지 않고 제자리에서 숫자만 섞어, 누른 키의 눌림 효과가 보이게 합니다.
+    const refreshPinPad = () => {
+      root.querySelectorAll(".pin-dots span").forEach((dot, index) => dot.classList.toggle("is-filled", index < hardPay.pinValue.length));
+      root.querySelectorAll("[data-pin-key]").forEach((key, index) => {
+        key.dataset.pinKey = hardPay.pinKeys[index];
+        key.textContent = hardPay.pinKeys[index];
+      });
+    };
+
     root.querySelectorAll("[data-pin-key]").forEach((button) => {
       button.addEventListener("click", () => {
+        fx("pressKey", button);
         if (hardPay.pinValue.length < 4) {
           hardPay.pinValue += button.dataset.pinKey;
         }
         hardPay.pinKeys = shuffledPinKeys();
-        draw();
+        refreshPinPad();
       });
     });
 
     root.querySelectorAll("[data-pin-action]").forEach((button) => {
       button.addEventListener("click", () => {
+        fx("pressKey", button);
         if (button.dataset.pinAction === "clear") {
           hardPay.pinValue = "";
           hardPay.pinKeys = shuffledPinKeys();
-          draw();
+          refreshPinPad();
           return;
         }
         if (hardPay.pinValue !== HARD_CARD_PIN) {
-          recordBarrier("카드 비밀번호가 맞지 않습니다. 숫자 위치가 계속 바뀌어 같은 자리를 누르면 틀리기 쉽습니다.");
+          failWith("카드 비밀번호가 맞지 않습니다. 숫자 위치가 계속 바뀌어 같은 자리를 누르면 틀리기 쉽습니다.", root.querySelector(".pin-pad-panel"));
+          fx("readerState", cardReader(), "error");
           hardPay.pinValue = "";
           hardPay.pinKeys = shuffledPinKeys();
-          draw();
+          refreshPinPad();
           return;
         }
-        hardPay.pinDone = true;
-        flowModalMessage = "영수증을 챙겨주세요";
-        focusGroupAfterModal = "";
-        modalAnchorGroup = "";
-        draw();
+        runBusy(async () => {
+          fx("readerState", cardReader(), "busy");
+          await approveCardPayment();
+        });
       });
     });
-
-    root.querySelectorAll("[data-affiliate-app]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const app = affiliateApps.find((item) => item.id === button.dataset.affiliateApp);
-        if (!app) return;
-        if (!app.correct) {
-          recordBarrier("키오스크의 제휴할인 이름과 스마트폰 앱 이름을 다시 맞춰야 합니다.");
-          return;
-        }
-        affiliatePhone.stage = "barcode";
-        affiliatePhone.open = true;
-        draw({ preserveScroll: true });
-      });
-    });
-
-    root.querySelectorAll("[data-reward-phone-action]").forEach((button) => {
-      button.addEventListener("click", () => {
-        if (button.dataset.rewardPhoneAction === "wake") {
-          rewardPhone.stage = "apps";
-          draw({ preserveScroll: true });
-        }
-      });
-    });
-
-    root.querySelectorAll("[data-reward-app]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const app = affiliateApps.find((item) => item.id === button.dataset.rewardApp);
-        if (!app) return;
-        if (app.id !== "snu-app") {
-          recordBarrier("적립하려는 서비스와 같은 SNU 클래스 앱을 찾아야 학생번호를 확인할 수 있습니다.");
-          return;
-        }
-        rewardPhone.stage = "student";
-        rewardPhone.open = true;
-        draw({ preserveScroll: true });
-      });
-    });
-
-    const studentIdForm = root.querySelector("[data-student-id-form]");
-    if (studentIdForm) {
-      studentIdForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-        const input = root.querySelector("[data-student-id-input]");
-        const value = input ? input.value.trim().toUpperCase() : "";
-        if (value !== rewardPhone.studentNumber) {
-          recordBarrier("스마트폰 앱에 표시된 대문자 영어와 숫자를 키오스크에 정확히 입력해야 합니다.");
-          if (input) input.focus();
-          return;
-        }
-        applySnuReward();
-      });
-    }
 
     root.querySelectorAll("[data-hardware]").forEach((button) => {
       button.addEventListener("click", () => {
-        if ((affiliatePhone.stage === "scan" && !affiliatePhone.done) || (isHard && hardPay.giftStage === "scan")) {
+        if ((isHard && hardPay.giftStage === "scan") || pay.stage === "printing") {
           return;
         }
         if (!readyForCard) {
@@ -2205,28 +2653,22 @@ function renderTinyStation(root, mode) {
           }
           return;
         }
-        if (!hardware.card) {
+        if (!hardware.card || (isHard && !hardPay.pinDone)) {
           recordBarrier("결제 카드를 넣은 뒤 영수증과 번호표가 나오는 곳을 확인해야 합니다.");
           return;
         }
-        hardware.receipt = true;
-        if (isHard) {
-          completeStation("추가 주문 거절, 상품권 잔액 부족, 바뀌는 보안 키패드까지 결제 절차를 끝까지 해냈습니다.");
-          showCompletion(root, "원하지 않는 추가 주문 유도와 나눠 내기, 보안 키패드까지 모두 통과했습니다. 잠시 뒤 키오스크 선택 화면으로 돌아갑니다.", {
-            autoReturn: true,
-            kicker: "최종 미션 해결",
-            title: "더 어려운 모드 완료"
-          });
+        if (pay.stage === "approved") {
+          recordBarrier("화면에서 '영수증 출력'을 먼저 눌러야 영수증이 나옵니다.");
           return;
         }
-        completeStation("결제 단계가 많고 기기 조작 위치가 흩어져 있으면 마지막까지 놓치기 쉽습니다.");
-        showCompletion(root, "결제 화면은 할인, 적립, 결제, 카드 투입, 영수증 수령을 한 단계씩 명확하게 안내해야 합니다.");
+        if (pay.stage === "fallback") finishPayment();
       });
     });
 
     root.querySelector("[data-cart-action]").addEventListener("click", () => {
+      if (pay.stage === "printing") return;
       if (!readyForCard) {
-        recordBarrier(isHard ? "제휴할인, 적립, 모바일 상품권, 남은 금액 결제수단을 차례로 마쳐야 합니다." : "제휴할인, 적립 방법, 결제수단을 모두 선택해야 합니다.");
+        recordBarrier(isHard ? "쿠폰 할인, 포인트 적립, 모바일 상품권, 남은 금액 결제수단을 차례로 마쳐야 합니다." : "쿠폰 할인, 포인트 적립, 결제수단을 모두 마쳐야 합니다.");
         return;
       }
       if (!hardware.card) {
@@ -2238,9 +2680,57 @@ function renderTinyStation(root, mode) {
         recordBarrier("카드 비밀번호 4자리를 먼저 입력해야 결제가 끝납니다.");
         return;
       }
-      root.querySelector("[data-hardware='receipt']")?.click();
+      if (pay.stage === "approved") {
+        recordBarrier("화면에서 '영수증 출력'을 눌러 영수증을 받아야 합니다.");
+        return;
+      }
+      if (pay.stage === "fallback") finishPayment();
     });
   }
+
+  // 새로 적용된 할인·적립 줄을 주문 내역에서 반짝이게 하고, 금액 변화를 떠오르는 칩으로 보여 줍니다.
+  function highlightCart() {
+    if (!freshCart) return;
+    const cart = root.querySelector(".order-cart");
+    if (!cart) return;
+    const row = [...cart.querySelectorAll(".cart-row")].find((item) => item.querySelector("span")?.textContent.trim() === freshCart.label);
+    row?.classList.add("is-fresh");
+    cart.querySelector(".cart-total strong")?.classList.add("is-updating");
+    cart.insertAdjacentHTML("beforeend", `<span class="cart-delta-chip is-${freshCart.tone}" aria-hidden="true">${freshCart.chip}</span>`);
+  }
+
+  const blockWhileBusy = (event) => {
+    if (!busy) return;
+    event.stopPropagation();
+    event.preventDefault();
+  };
+  // 휴대폰 번호 키패드는 실제 키보드 숫자로도 누를 수 있습니다.
+  const onPhoneKeydown = (event) => {
+    if (busy || disposed || !phoneReward.open || phoneReward.done) return;
+    if (event.target?.matches?.("input[type='text']")) return;
+    if (/^[0-9]$/.test(event.key)) {
+      event.preventDefault();
+      pushPhoneKey(event.key);
+    } else if (event.key === "Backspace") {
+      event.preventDefault();
+      pushPhoneKey("back");
+    } else if (event.key === "Enter" && !event.target?.matches?.("button")) {
+      event.preventDefault();
+      submitPhoneReward();
+    }
+  };
+  root.addEventListener("click", blockWhileBusy, true);
+  root.addEventListener("pointerdown", blockWhileBusy, true);
+  document.addEventListener("keydown", onPhoneKeydown);
+  addCleanup(() => {
+    disposed = true;
+    busy = false;
+    root.classList.remove("is-kiosk-busy");
+    root.removeEventListener("click", blockWhileBusy, true);
+    root.removeEventListener("pointerdown", blockWhileBusy, true);
+    document.removeEventListener("keydown", onPhoneKeydown);
+    window.KioskFX?.clear?.();
+  });
 
   draw();
 }
@@ -2523,10 +3013,10 @@ function renderAlienStation(root, mode) {
       correct: "reusable-cup-hard",
       barrier: "한국어인데도 외래어가 많아 무슨 뜻인지 알기 어려웠습니다.",
       items: [
-        { ...hardItem("disposable-cup-hard", "디스포저블 컵"), desc: "테이크아웃 시 ECO 옵션 미적용" },
-        { ...hardItem("tumbler-discount-hard", "텀블러 디스카운트"), desc: "퍼스널 텀블러 지참 시 프라이스 오프" },
-        { ...hardItem("reusable-cup-hard", "리유저블 컵"), desc: "에코 리턴 시 디파짓 리펀드" },
-        { ...hardItem("mug-hard", "머그 (포 히어)"), desc: "다인인 전용 세라믹 웨어" }
+        { ...hardItem("disposable-cup-hard", "디스포저블 컵"), price: null, desc: "테이크아웃 시 ECO 옵션 미적용" },
+        { ...hardItem("tumbler-discount-hard", "텀블러 디스카운트"), price: null, desc: "퍼스널 텀블러 지참 시 프라이스 오프" },
+        { ...hardItem("reusable-cup-hard", "리유저블 컵"), price: null, desc: "에코 리턴 시 디파짓 리펀드" },
+        { ...hardItem("mug-hard", "머그 (포 히어)"), price: null, desc: "다인인 전용 세라믹 웨어" }
       ]
     }
   ];
@@ -2641,6 +3131,7 @@ function renderAlienStation(root, mode) {
         if (button.dataset.alienReplay === "again") {
           resetAlienRound();
           draw();
+          fxStepEnter(root, "next");
           return;
         }
         completeStation("낯선 말과 부족한 설명은 디지털 기기가 익숙하지 않은 사람에게 주문 장벽이 됩니다.");
@@ -2660,6 +3151,7 @@ function renderAlienStation(root, mode) {
           return;
         }
         draw();
+        fxStepEnter(root, "next");
       });
     }
 
@@ -2669,9 +3161,13 @@ function renderAlienStation(root, mode) {
         const selected = group.items.find((item) => item.id === button.dataset.optionId);
         if (!selected) return;
         if (selected.id !== group.correct) {
+          fxReject(root, button, "주문 내용과 다른 옵션이에요. 다시 확인해 주세요.");
           recordBarrier(isKind ? "선택 조건을 다시 읽어 보세요." : isHard ? group.barrier : "버튼을 못 누른 것이 아니라, 화면의 말이 충분히 친절하지 않았습니다.");
           return;
         }
+        fxSound("beep");
+        const snapshot = fxSnapshot(button);
+        const previousTotal = selectedCartItems(picks).reduce((sum, item) => sum + (item.price || 0), 0);
         picks[group.key] = selected;
         if (Object.keys(picks).length === groups.length) {
           if (isHard) {
@@ -2693,24 +3189,29 @@ function renderAlienStation(root, mode) {
               alienSuccessMessage = "5개 외계어 메뉴를 모두 해결했습니다.";
               alienSuccessAction = "complete";
               draw();
+              fxFlyToCart(root, snapshot, previousTotal);
               return;
             }
             alienReplayPrompt = true;
             draw();
+            fxFlyToCart(root, snapshot, previousTotal);
             return;
           }
           alienSuccessMessage = "잘 골랐습니다. 목표 메뉴를 모두 찾았습니다.";
           alienSuccessAction = "complete";
           draw();
+          fxFlyToCart(root, snapshot, previousTotal);
           return;
         }
         alienSuccessMessage = "잘 골랐습니다. 다음 항목을 찾아보세요.";
         alienSuccessAction = "next";
         draw();
+        fxFlyToCart(root, snapshot, previousTotal);
       });
     });
 
-    root.querySelector("[data-cart-action]").addEventListener("click", () => {
+    root.querySelector("[data-cart-action]").addEventListener("click", (event) => {
+      fxReject(root, event.currentTarget, "옵션을 모두 고른 뒤 결제할 수 있어요.");
       recordBarrier(isHard ? "네 가지 조건을 모두 선택해야 결제할 수 있습니다." : "세 가지 조건을 모두 선택해야 결제할 수 있습니다.");
     });
   }
@@ -2959,6 +3460,28 @@ els.chromebookToggle.addEventListener("click", () => {
 
 document.body.dataset.view = "home";
 if (readChromebookPreference()) setChromebookMode(true);
+
+// 제한 시간이 짧은 화면에서 그림이 늦게 뜨지 않도록 메뉴·배너 이미지를 미리 받아 둡니다.
+function preloadKioskImages() {
+  const sources = new Set([
+    ...Object.values(productImages),
+    "assets/menu/banner-burger.png",
+    "assets/menu/banner-tea.png",
+    "assets/menu/banner-pay.png"
+  ]);
+  window.kioskImageCache = [...sources].map((src) => {
+    const image = new Image();
+    image.decoding = "async";
+    image.src = src;
+    return image;
+  });
+}
+
+if ("requestIdleCallback" in window) {
+  window.requestIdleCallback(preloadKioskImages, { timeout: 1200 });
+} else {
+  window.setTimeout(preloadKioskImages, 300);
+}
 
 renderCards();
 renderProgress();

@@ -1,0 +1,472 @@
+/* 실제 매장 키오스크 같은 터치 반응: 누름·선택·오류·장바구니 담기·화면 전환·시간 초과·주문 완료.
+   모든 효과는 300ms 안팎이며 겹침 레이어는 pointer-events: none 이라 입력을 막지 않습니다. */
+
+/* ---------- 누름 반응 ---------- */
+
+.real-kiosk .product-grid > .product-card:active,
+.real-kiosk .product-grid > .product-card.is-pressed {
+  border-color: #2f7de1;
+  background: #eef5ff;
+  transform: translateY(1px) scale(0.965);
+  box-shadow: inset 0 3px 0 rgba(37, 41, 58, 0.12);
+  transition-duration: 0.05s;
+}
+
+.real-kiosk .checkout-button {
+  transition:
+    transform 0.06s ease,
+    box-shadow 0.06s ease,
+    filter 0.06s ease;
+}
+
+.real-kiosk .checkout-button:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0 var(--line);
+  filter: brightness(0.92);
+}
+
+/* 홈·키오스크 선택 카드 */
+.station-card {
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.station-card:hover,
+.station-card:focus-visible {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 var(--line);
+}
+
+.station-card:active {
+  transform: translate(4px, 4px);
+  box-shadow: 2px 2px 0 var(--line);
+  transition-duration: 0.05s;
+}
+
+/* ---------- 잘못 누름: 빨간 번쩍임 + 흔들림 ---------- */
+
+.real-kiosk .kfx-wrong {
+  position: relative;
+  border-color: #e23b4a !important;
+  animation: kfx-shake 0.3s ease-in-out;
+}
+
+.real-kiosk .product-card.kfx-wrong {
+  background: #ffe3e6 !important;
+}
+
+.real-kiosk .kfx-wrong::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  background: rgba(226, 59, 74, 0.28);
+  pointer-events: none;
+  animation: kfx-flash 0.34s ease-out forwards;
+}
+
+@keyframes kfx-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes kfx-flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* ---------- 장바구니로 날아가는 메뉴 ---------- */
+
+.kfx-fly {
+  position: fixed;
+  z-index: 5200;
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  overflow: hidden;
+  border: 3px solid var(--line);
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 3px #4fc96a,
+    0 6px 14px rgba(37, 41, 58, 0.25);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.kfx-fly img {
+  width: 100%;
+  height: 100%;
+  transform: scale(1.2);
+  object-fit: contain;
+}
+
+.kfx-fly span {
+  padding: 0 4px;
+  color: var(--ink);
+  font-size: 0.62rem;
+  font-weight: 900;
+  line-height: 1.1;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.real-kiosk .cart-count.kfx-bump {
+  animation: kfx-bump 0.3s ease-out;
+}
+
+@keyframes kfx-bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.45);
+    background: #4fc96a;
+    color: #ffffff;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.real-kiosk .cart-row.kfx-chip-in {
+  animation: kfx-chip-in 0.28s ease-out;
+}
+
+@keyframes kfx-chip-in {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.85);
+    border-color: #4fc96a;
+  }
+  60% {
+    opacity: 1;
+    border-color: #4fc96a;
+    background: #e9ffe6;
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* ---------- 단계 화면 전환 (옆으로 밀려 들어옴) ---------- */
+
+.real-kiosk .order-board.kfx-step-next,
+.real-kiosk .order-board.kfx-step-back {
+  overflow-x: hidden;
+}
+
+.real-kiosk .order-board.kfx-step-next > * {
+  animation: kfx-slide-next 0.22s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.real-kiosk .order-board.kfx-step-back > * {
+  animation: kfx-slide-back 0.22s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+/* 성공 안내 모달은 화면 전환과 함께 움직이지 않게 */
+.real-kiosk .order-board.kfx-step-next > .flow-modal-backdrop,
+.real-kiosk .order-board.kfx-step-back > .flow-modal-backdrop {
+  animation: none;
+}
+
+@keyframes kfx-slide-next {
+  from {
+    opacity: 0.35;
+    transform: translateX(26px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes kfx-slide-back {
+  from {
+    opacity: 0.35;
+    transform: translateX(-26px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- 키오스크 화면 위 겹침 레이어 ---------- */
+
+.kfx-screen-layer {
+  position: fixed;
+  z-index: 5100;
+  display: grid;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.kfx-screen-layer * {
+  pointer-events: none;
+}
+
+/* 화면 안 안내 문구 (주문 바 바로 위) */
+.kfx-toast-layer {
+  align-items: end;
+  justify-items: center;
+  padding: 0 16px 120px;
+}
+
+.kfx-toast {
+  max-width: 92%;
+  padding: 10px 18px;
+  border: 3px solid var(--line);
+  border-radius: 999px;
+  background: #25293a;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 900;
+  text-align: center;
+  box-shadow: 0 8px 18px rgba(37, 41, 58, 0.3);
+  animation: kfx-toast 1.4s ease-out forwards;
+}
+
+.kfx-toast-error {
+  border-color: #ffffff;
+  background: #d6283f;
+}
+
+@keyframes kfx-toast {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  12% {
+    opacity: 1;
+    transform: none;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* 시간 초과 안내: 메뉴는 그대로 보이도록 상단 띠로 */
+.kfx-timeout-layer {
+  align-content: start;
+  justify-items: center;
+  padding-top: 18%;
+}
+
+.kfx-timeout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 92%;
+  padding: 12px 20px;
+  border: 3px solid var(--line);
+  border-radius: 14px;
+  background: #fff4cc;
+  color: var(--ink);
+  box-shadow: 0 10px 22px rgba(37, 41, 58, 0.3);
+  animation: kfx-timeout 1.3s ease-out forwards;
+}
+
+.kfx-timeout b {
+  font-size: 1rem;
+  font-weight: 900;
+  word-break: keep-all;
+}
+
+.kfx-clock {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 3px solid var(--line);
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.kfx-clock::before,
+.kfx-clock i {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  width: 3px;
+  border-radius: 2px;
+  background: #d6283f;
+  transform-origin: 50% 100%;
+}
+
+.kfx-clock::before {
+  height: 11px;
+  margin-left: -1.5px;
+}
+
+.kfx-clock i {
+  height: 8px;
+  margin-left: -1.5px;
+  background: var(--line);
+  transform: rotate(-90deg);
+}
+
+@keyframes kfx-timeout {
+  0% {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.95);
+  }
+  14% {
+    opacity: 1;
+    transform: none;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/* ---------- 주문 완료 화면: 주문번호 표 ---------- */
+
+.completion-order {
+  display: flex;
+  align-items: center;
+  justify-self: center;
+  gap: 12px;
+  width: min(100%, 520px);
+  padding: 6px 12px;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  background: #ffffff;
+  text-align: left;
+  box-shadow: 4px 4px 0 var(--line);
+  animation: kfx-ticket 0.3s ease-out both;
+}
+
+.completion-order-check {
+  position: relative;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--line);
+  border-radius: 50%;
+  background: #4fc96a;
+}
+
+.completion-order-check::after {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 4px;
+  width: 9px;
+  height: 16px;
+  border: solid #ffffff;
+  border-width: 0 4px 4px 0;
+  transform: rotate(40deg);
+}
+
+.completion-order-copy {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.completion-order-copy b {
+  color: var(--ink);
+  font-size: 1.05rem;
+}
+
+.completion-order-copy small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.completion-order-number {
+  display: grid;
+  flex: none;
+  justify-items: center;
+  padding: 4px 12px;
+  border: 3px dashed #25293a;
+  border-radius: 10px;
+  background: #fff4cc;
+}
+
+.completion-order-number small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.completion-order-number strong {
+  color: #d6283f;
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+}
+
+@keyframes kfx-ticket {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .real-kiosk .kfx-wrong,
+  .real-kiosk .cart-count.kfx-bump,
+  .real-kiosk .cart-row.kfx-chip-in,
+  .real-kiosk .order-board.kfx-step-next > *,
+  .real-kiosk .order-board.kfx-step-back > *,
+  .completion-order {
+    animation: none;
+  }
+
+  .kfx-toast,
+  .kfx-timeout {
+    animation: kfx-fade-only 1.3s linear forwards;
+  }
+
+  .station-card:hover,
+  .station-card:focus-visible,
+  .station-card:active,
+  .real-kiosk .product-grid > .product-card:active {
+    transform: none;
+  }
+}
+
+@keyframes kfx-fade-only {
+  0%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

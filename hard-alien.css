@@ -26,3 +26,23 @@
 .alien-hard-kiosk[dir="rtl"] .alien-active-section h4 {
   text-align: right;
 }
+
+/* 컵 단계는 설명 줄이 더해져 카드가 높아지므로 여백을 줄여 한 화면에 맞춘다 */
+.alien-hard-kiosk .alien-active-section[lang="ko"] .product-card {
+  min-height: 0;
+  padding-block: 8px;
+}
+
+.alien-hard-kiosk .alien-active-section[lang="ko"] .product-copy {
+  gap: 2px;
+}
+
+.alien-hard-kiosk .alien-active-section[lang="ko"] .product-copy b {
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.alien-hard-kiosk .alien-active-section[lang="ko"] .product-copy small {
+  font-size: 0.78rem;
+  line-height: 1.3;
+}

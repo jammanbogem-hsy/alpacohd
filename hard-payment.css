@@ -298,3 +298,736 @@
     min-height: 46px;
   }
 }
+
+/* ===== 결제 키오스크: 문자 쿠폰 · 휴대폰 번호 적립 · 영수증 선택 (모든 모드 공통) ===== */
+
+.tiny-entry-kiosk .kiosk-order-main {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.tiny-next-step {
+  display: block;
+  margin: 6px 0 0;
+  padding: 6px 10px;
+  border: 2px dashed var(--violet);
+  border-radius: 8px;
+  background: #f1f0ff;
+  color: #3d3fa8;
+  font-size: 0.86rem;
+  font-weight: 900;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.tiny-step-modal p {
+  margin: 0;
+}
+
+.tiny-step-modal .tiny-next-step {
+  margin: 0;
+}
+
+.tiny-secondary-button {
+  min-height: 46px;
+  padding: 10px;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.real-kiosk .phone-primary-button {
+  cursor: pointer;
+}
+
+/* 효과 진행 중에는 클릭이 막혀 있음을 커서로도 보여 줍니다 */
+.is-kiosk-busy .real-kiosk,
+.is-kiosk-busy .real-kiosk * {
+  cursor: progress !important;
+}
+
+.payment-card-hand.is-inserted {
+  visibility: hidden;
+}
+
+/* --- 개선 모드 순서 체크리스트 --- */
+.tiny-checklist {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.tiny-checklist li {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 5px 3px;
+  border: 2px solid #d7dce8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.tiny-checklist li b {
+  font-size: 0.95rem;
+}
+
+.tiny-checklist li.is-done {
+  border-color: var(--grass);
+  background: #e9ffe6;
+  color: #2f7a3b;
+}
+
+.tiny-checklist li.is-current {
+  border-color: var(--line);
+  background: var(--cream);
+  color: var(--ink);
+  box-shadow: 0 0 0 3px var(--sun);
+  animation: tiny-current-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes tiny-current-pulse {
+  50% {
+    box-shadow: 0 0 0 5px rgba(255, 191, 47, 0.45);
+  }
+}
+
+/* --- 문자 쿠폰 입력 --- */
+.coupon-focus-flow,
+.phone-reward-flow,
+.receipt-choice-flow {
+  display: grid;
+  min-height: 0;
+  place-items: center;
+}
+
+.coupon-entry-panel {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(170px, 0.8fr) minmax(0, 1.4fr);
+  align-items: start;
+  gap: 12px;
+  padding: 10px;
+  border: 3px solid var(--line);
+  border-radius: 10px;
+  background: #eef6ff;
+}
+
+.coupon-phone-side {
+  display: grid;
+  gap: 6px;
+}
+
+.coupon-step-copy {
+  margin: 0;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: var(--line);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.coupon-phone-mock {
+  padding: 7px;
+  border-radius: 18px;
+}
+
+.coupon-phone-mock .phone-screen {
+  min-height: 300px;
+  align-content: start;
+  gap: 6px;
+  padding: 8px;
+}
+
+.coupon-lock-screen {
+  min-height: 284px;
+  gap: 10px;
+}
+
+.lock-notification {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 0.78rem;
+}
+
+.lock-notification small {
+  font-size: 0.66rem;
+}
+
+.coupon-app-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.coupon-app-grid .phone-app-button {
+  padding: 5px 2px;
+  font-size: 0.6rem;
+  line-height: 1.15;
+}
+
+.coupon-app-grid .phone-app-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.sms-thread {
+  display: grid;
+  gap: 6px;
+}
+
+.sms-bubble {
+  display: grid;
+  gap: 3px;
+  padding: 7px 8px;
+  border-radius: 12px 12px 12px 4px;
+  background: #eef0f5;
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.sms-bubble p {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.sms-sender {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.64rem;
+}
+
+.sms-bubble.is-coupon {
+  background: #fff4cc;
+}
+
+.sms-bubble.is-expired {
+  background: #f1f1f1;
+  opacity: 0.78;
+}
+
+.sms-code-label {
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 900;
+}
+
+/* 닮은 글자 함정: 일부러 0과 O가 비슷해 보이는 일반 글꼴을 씁니다 */
+.sms-code {
+  font-size: 0.86rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.coupon-entry-panel.is-friendly .sms-code {
+  padding: 4px 6px;
+  border: 2px solid var(--line);
+  border-radius: 6px;
+  background: #ffffff;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.84rem;
+  letter-spacing: 0.02em;
+}
+
+.coupon-kiosk-side {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 10px;
+  border: 3px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.coupon-kiosk-side h4 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.coupon-kiosk-side p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.coupon-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.coupon-input:focus {
+  outline: 3px solid var(--sky);
+  outline-offset: 1px;
+}
+
+.coupon-keyboard {
+  display: grid;
+  gap: 4px;
+}
+
+.coupon-key-row {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+}
+
+.coupon-key {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 34px;
+  min-height: 32px;
+  padding: 0;
+  border: 2px solid var(--line);
+  border-radius: 6px;
+  background: #f7f7f2;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 900;
+  box-shadow: 0 2px 0 var(--line);
+  cursor: pointer;
+}
+
+.coupon-key:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.coupon-key-wide {
+  flex: 1.8 1 0;
+  max-width: 62px;
+  background: #e7eaf3;
+  font-size: 0.72rem;
+}
+
+.coupon-actions,
+.phone-reward-actions {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 8px;
+}
+
+/* --- 휴대폰 번호 적립 --- */
+.phone-reward-panel {
+  display: grid;
+  width: min(100%, 380px);
+  gap: 8px;
+  padding: 12px;
+  border: 3px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.phone-reward-head h4 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.phone-reward-head p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.phone-number-display {
+  display: block;
+  padding: 8px;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  background: #f8fbff;
+  font-size: 1.45rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.phone-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.phone-key {
+  min-height: 42px;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  background: #f7f7f2;
+  color: var(--ink);
+  font-size: 1.15rem;
+  font-weight: 900;
+  box-shadow: 0 3px 0 var(--line);
+  cursor: pointer;
+}
+
+.phone-key:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--line);
+}
+
+.phone-key-sub {
+  background: #e7eaf3;
+  font-size: 0.8rem;
+}
+
+/* 장벽: 필수 동의가 작고 흐리게 숨어 있습니다 */
+.consent-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #9aa0b0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.consent-row input {
+  width: 11px;
+  height: 11px;
+  margin: 0;
+}
+
+.consent-row em {
+  color: #b6bac6;
+  font-style: normal;
+  text-decoration: underline;
+}
+
+.consent-row.is-friendly {
+  gap: 10px;
+  padding: 8px 10px;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.consent-row.is-friendly input {
+  width: 24px;
+  height: 24px;
+  accent-color: var(--grass);
+}
+
+.consent-row.is-friendly b {
+  margin-right: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--coral);
+  color: #ffffff;
+  font-size: 0.74rem;
+}
+
+/* --- 승인 후 영수증 출력 선택 --- */
+.receipt-choice-panel {
+  display: grid;
+  width: min(100%, 400px);
+  justify-items: center;
+  gap: 10px;
+  padding: 20px 18px;
+  border: 4px solid var(--line);
+  border-radius: 12px;
+  background: #ffffff;
+  text-align: center;
+}
+
+.receipt-choice-check {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  border: 4px solid var(--line);
+  border-radius: 50%;
+  background: var(--grass);
+  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.receipt-choice-panel h4 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.receipt-choice-amount {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.receipt-choice-question {
+  margin: 4px 0 0;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.receipt-choice-actions {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 2fr 1fr;
+  gap: 8px;
+}
+
+/* 어려운 모드: '출력 안 함'이 크고 눈에 띄고, '영수증 출력'은 작습니다 */
+.receipt-skip-button,
+.receipt-print-button {
+  min-height: 56px;
+  border: 3px solid var(--line);
+  border-radius: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.receipt-skip-button {
+  background: var(--coral);
+  color: #ffffff;
+  font-size: 1.1rem;
+  box-shadow: 3px 3px 0 var(--line);
+}
+
+.receipt-print-button {
+  background: #f1f2f6;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.receipt-choice-panel.is-friendly .receipt-choice-actions {
+  grid-template-columns: 1fr 1fr;
+}
+
+.receipt-choice-panel.is-friendly .receipt-skip-button {
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 1rem;
+  box-shadow: none;
+}
+
+.receipt-choice-panel.is-friendly .receipt-print-button {
+  background: var(--grass);
+  color: #ffffff;
+  font-size: 1.1rem;
+  box-shadow: 3px 3px 0 var(--line);
+}
+
+.receipt-choice-panel.is-printing .receipt-choice-check {
+  background: var(--sky);
+  animation: tiny-current-pulse 1s ease-in-out infinite;
+}
+
+/* --- 주문 내역 변화 애니메이션 --- */
+.payment-kiosk .order-cart {
+  position: relative;
+}
+
+.payment-kiosk .cart-row.is-fresh {
+  animation: cart-row-fresh 1.6s ease-out 2;
+}
+
+@keyframes cart-row-fresh {
+  0% {
+    border-color: var(--sun);
+    background: #fff1b8;
+    transform: scale(1.12);
+  }
+  60% {
+    border-color: var(--sun);
+    background: #fff7d6;
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.payment-kiosk .cart-total strong.is-updating {
+  display: inline-block;
+  animation: cart-total-bump 0.7s ease-out 2;
+}
+
+@keyframes cart-total-bump {
+  30% {
+    color: var(--grass);
+    transform: scale(1.25);
+  }
+}
+
+.cart-delta-chip {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  z-index: 6;
+  padding: 4px 12px;
+  border: 3px solid var(--line);
+  border-radius: 999px;
+  background: var(--sun);
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 900;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 0);
+  animation: cart-delta-float 1.9s ease-out forwards;
+}
+
+.cart-delta-chip.is-points {
+  background: var(--mint);
+}
+
+@keyframes cart-delta-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 10px) scale(0.8);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -14px) scale(1.08);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -26px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -40px) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tiny-checklist li.is-current,
+  .payment-kiosk .cart-row.is-fresh,
+  .payment-kiosk .cart-total strong.is-updating,
+  .receipt-choice-panel.is-printing .receipt-choice-check {
+    animation: none;
+  }
+
+  .cart-delta-chip {
+    animation-duration: 0.01s;
+  }
+}
+
+/* 1366×768 크롬북처럼 세로가 짧은 화면: 쿠폰·번호 입력 화면을 한 화면에 맞춥니다 */
+@media (max-height: 820px) {
+  .tiny-checklist {
+    margin-bottom: 5px;
+  }
+
+  .tiny-checklist li {
+    padding: 3px 2px;
+    font-size: 0.66rem;
+  }
+
+  .tiny-checklist li b {
+    font-size: 0.82rem;
+  }
+
+  .coupon-entry-panel {
+    gap: 8px;
+    padding: 7px;
+  }
+
+  .coupon-phone-mock .phone-screen {
+    min-height: 0;
+  }
+
+  .coupon-lock-screen {
+    min-height: 230px;
+  }
+
+  .sms-thread {
+    gap: 4px;
+  }
+
+  .sms-bubble {
+    gap: 2px;
+    padding: 5px 7px;
+    font-size: 0.64rem;
+    line-height: 1.3;
+  }
+
+  .coupon-kiosk-side {
+    gap: 5px;
+    padding: 8px;
+  }
+
+  .coupon-input {
+    min-height: 38px;
+  }
+
+  .coupon-key {
+    min-height: 29px;
+  }
+
+  .phone-reward-panel {
+    gap: 6px;
+    padding: 9px 12px;
+  }
+
+  .phone-number-display {
+    padding: 4px;
+    font-size: 1.25rem;
+  }
+
+  .phone-keypad {
+    gap: 5px;
+  }
+
+  .phone-key {
+    min-height: 35px;
+  }
+
+  .consent-row.is-friendly {
+    padding: 5px 10px;
+  }
+
+  .phone-reward-actions .phone-primary-button,
+  .phone-reward-actions .tiny-secondary-button,
+  .coupon-actions .phone-primary-button,
+  .coupon-actions .tiny-secondary-button {
+    min-height: 40px;
+    padding: 6px;
+  }
+}
+
+@media (max-height: 820px) {
+  body.kiosk-focus-mode .real-kiosk.payment-kiosk .hardware-focus-flow .payment-card-hand {
+    width: min(240px, 56%);
+  }
+
+  .payment-hardware-hint .tiny-next-step {
+    margin-top: 4px;
+    padding: 3px 8px;
+    font-size: 0.78rem;
+  }
+}
