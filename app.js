@@ -1037,9 +1037,193 @@ function hallOfFameRows(list, highlightAt) {
     .join("");
 }
 
+// 극악 모드 선물 카드: 꽝 50% · 마이쮸 35% · 신쫄이 10% · 모두 다 5%
+const PRIZES = [
+  { id: "miss", weight: 50, rank: "꽝", title: "아쉽지만 꽝!", detail: "다음 도전에서 다시 만나요", image: "assets/menu/prize-miss.png", emoji: "📦", tone: "miss" },
+  { id: "candy", weight: 35, rank: "당첨", title: "마이쮸", detail: "선생님께 카드를 보여 주세요", image: "assets/menu/prize-candy.png", emoji: "🍬", tone: "candy" },
+  { id: "jelly", weight: 10, rank: "희귀", title: "신쫄이", detail: "선생님께 카드를 보여 주세요", image: "assets/menu/prize-jelly.png", emoji: "🍭", tone: "jelly" },
+  { id: "all", weight: 5, rank: "전설", title: "모두 다!", detail: "마이쮸 + 신쫄이 모두 받아요", image: "assets/menu/prize-all.png", emoji: "🎁", tone: "all" }
+];
+
+function drawPrize() {
+  const total = PRIZES.reduce((sum, item) => sum + item.weight, 0);
+  let roll = Math.random() * total;
+  return PRIZES.find((item) => (roll -= item.weight) < 0) || PRIZES[0];
+}
+
+function prizeCardMarkup(prize) {
+  return `
+    <div class="hof-prize" data-prize-tone="${prize.tone}">
+      <p class="hof-prize-title">선물 카드 뽑기</p>
+      <div class="prize-card" data-prize-card="true" aria-live="polite">
+        <div class="prize-card-inner">
+          <div class="prize-face prize-back" aria-label="선물 카드 뒷면">
+            <img src="assets/menu/card-back.png" alt="" onerror="this.remove()">
+            <span class="prize-back-mark" aria-hidden="true">🏆</span>
+            <b>HALL OF FAME</b>
+          </div>
+          <div class="prize-face prize-front prize-tone-${prize.tone}" aria-label="선물 카드 앞면">
+            <small>명예의 전당 선물 카드</small>
+            <em class="prize-rank">${prize.rank}</em>
+            <div class="prize-art">
+              <img src="${prize.image}" alt="" onerror="this.remove()">
+              <span aria-hidden="true">${prize.emoji}</span>
+            </div>
+            <strong>${prize.title}</strong>
+            <p>${prize.detail}</p>
+          </div>
+        </div>
+      </div>
+      <div class="hof-prize-actions">
+        <button class="prize-flip-button" type="button" data-prize-flip="true">카드 뒤집기</button>
+        <button class="prize-save-button" type="button" data-prize-save="true" disabled>PNG로 저장</button>
+      </div>
+    </div>
+  `;
+}
+
+function bindPrizeCard(overlay, prize, getRecord) {
+  const card = overlay.querySelector("[data-prize-card]");
+  const flip = overlay.querySelector("[data-prize-flip]");
+  const save = overlay.querySelector("[data-prize-save]");
+  let revealed = false;
+  const reveal = () => {
+    if (revealed) return;
+    revealed = true;
+    card.classList.add("is-revealing");
+    flip.disabled = true;
+    window.KioskFX?.sound?.("insert");
+    window.setTimeout(() => {
+      card.classList.remove("is-revealing");
+      card.classList.add("is-revealed");
+      overlay.querySelector(".hof-prize").classList.add("is-done");
+      flip.textContent = "앞면 / 뒷면 보기";
+      flip.disabled = false;
+      save.disabled = false;
+      window.KioskFX?.sound?.(prize.id === "miss" ? "error" : prize.id === "all" ? "fanfare" : "approve");
+    }, 1700);
+  };
+  flip.addEventListener("click", () => {
+    if (!revealed) {
+      reveal();
+      return;
+    }
+    card.classList.toggle("show-back");
+  });
+  card.addEventListener("click", () => flip.click());
+  save.addEventListener("click", () => savePrizeCardPng(prize, getRecord()));
+}
+
+function loadImage(src) {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = src;
+  });
+}
+
+function roundRectPath(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + width, y, x + width, y + height, radius);
+  ctx.arcTo(x + width, y + height, x, y + height, radius);
+  ctx.arcTo(x, y + height, x, y, radius);
+  ctx.arcTo(x, y, x + width, y, radius);
+  ctx.closePath();
+}
+
+// 선물 카드 앞면(+작게 뒷면)을 캔버스로 다시 그려 PNG로 내려받습니다.
+async function savePrizeCardPng(prize, record) {
+  const tones = {
+    miss: ["#e9ebf0", "#b9bec8"],
+    candy: ["#ffe1ec", "#ff8fb4"],
+    jelly: ["#eaffd6", "#9fe07a"],
+    all: ["#fff2b3", "#ffb84d"]
+  };
+  const [light, deep] = tones[prize.tone] || tones.miss;
+  const canvas = document.createElement("canvas");
+  canvas.width = 600;
+  canvas.height = 840;
+  const ctx = canvas.getContext("2d");
+  const font = (size, weight = 900) => `${weight} ${size}px "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif`;
+
+  ctx.fillStyle = "#25293a";
+  roundRectPath(ctx, 0, 0, 600, 840, 40);
+  ctx.fill();
+  const gold = ctx.createLinearGradient(0, 0, 600, 840);
+  gold.addColorStop(0, "#ffe08a");
+  gold.addColorStop(0.5, "#c98a10");
+  gold.addColorStop(1, "#ffe08a");
+  ctx.fillStyle = gold;
+  roundRectPath(ctx, 12, 12, 576, 816, 32);
+  ctx.fill();
+  const face = ctx.createLinearGradient(0, 30, 0, 810);
+  face.addColorStop(0, light);
+  face.addColorStop(1, deep);
+  ctx.fillStyle = face;
+  roundRectPath(ctx, 28, 28, 544, 784, 24);
+  ctx.fill();
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#8a5a00";
+  ctx.font = font(22);
+  ctx.fillText("HALL OF FAME", 300, 82);
+  ctx.fillStyle = "#25293a";
+  ctx.font = font(34);
+  ctx.fillText("명예의 전당 선물 카드", 300, 128);
+
+  ctx.fillStyle = "#25293a";
+  roundRectPath(ctx, 230, 150, 140, 46, 23);
+  ctx.fill();
+  ctx.fillStyle = "#ffd25e";
+  ctx.font = font(24);
+  ctx.fillText(prize.rank, 300, 182);
+
+  const art = await loadImage(prize.image);
+  if (art) {
+    const size = 330;
+    const ratio = Math.min(size / art.width, size / art.height);
+    ctx.drawImage(art, 300 - (art.width * ratio) / 2, 375 - (art.height * ratio) / 2, art.width * ratio, art.height * ratio);
+  } else {
+    ctx.font = font(180, 400);
+    ctx.fillText(prize.emoji, 300, 440);
+  }
+
+  ctx.fillStyle = "#25293a";
+  ctx.font = font(64);
+  ctx.fillText(prize.title, 300, 610);
+  ctx.fillStyle = "#3b3f52";
+  ctx.font = font(26, 800);
+  ctx.fillText(prize.detail, 300, 655);
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+  roundRectPath(ctx, 60, 690, 480, 100, 18);
+  ctx.fill();
+  ctx.fillStyle = "#25293a";
+  ctx.font = font(28);
+  ctx.fillText(`${record.name} · ${INSANE_TIMER_SECONDS}초 극악 모드 정복`, 300, 732);
+  ctx.fillStyle = "#5b6072";
+  ctx.font = font(22, 800);
+  ctx.fillText(`${record.seconds.toFixed(1)}초 · 실수 ${record.mistakes}번 · ${new Date().toLocaleDateString("ko-KR")}`, 300, 770);
+
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `명예의전당_선물카드_${record.name}.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+  }, "image/png");
+}
+
 // 극악 모드 성공 화면: 금빛 조명·트로피·팡파르와 함께 이 기기의 기록 순위를 보여 줍니다.
 function showHallOfFame({ seconds, mistakes }) {
   document.querySelector(".hof-overlay")?.remove();
+  const prize = drawPrize();
+  let submittedName = "";
   const overlay = document.createElement("div");
   overlay.className = "hof-overlay";
   overlay.setAttribute("role", "dialog");
@@ -1050,6 +1234,7 @@ function showHallOfFame({ seconds, mistakes }) {
     <div class="hof-rays" aria-hidden="true"></div>
     <div class="hof-sparkles" aria-hidden="true">${sparkles}</div>
     <section class="hof-card">
+      <div class="hof-main">
       <div class="hof-trophy" aria-hidden="true">
         <img src="assets/menu/hall-of-fame-trophy.png" alt="" onerror="this.remove()">
         <span>🏆</span>
@@ -1067,17 +1252,24 @@ function showHallOfFame({ seconds, mistakes }) {
       </form>
       <ol class="hof-list" data-hof-list="true">${hallOfFameRows(readHallOfFame())}</ol>
       <button class="hof-close" type="button" data-hof-close="true">키오스크 선택으로</button>
+      </div>
+      ${prizeCardMarkup(prize)}
     </section>
   `;
   document.body.appendChild(overlay);
   window.KioskFX?.sound?.("fanfare");
+  bindPrizeCard(overlay, prize, () => {
+    const typed = overlay.querySelector("[data-hof-name]")?.value.trim();
+    return { name: (typed || submittedName || "익명").replace(/[<>&"']/g, "").slice(0, 10), seconds, mistakes };
+  });
 
   const form = overlay.querySelector("[data-hof-form]");
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const input = overlay.querySelector("[data-hof-name]");
     const name = input.value.trim().replace(/[<>&"']/g, "").slice(0, 10) || "익명";
-    const entry = { name, seconds, mistakes, at: Date.now() };
+    submittedName = name;
+    const entry = { name, seconds, mistakes, prize: prize.id, at: Date.now() };
     const list = [...readHallOfFame(), entry].sort((a, b) => a.seconds - b.seconds || a.mistakes - b.mistakes).slice(0, 20);
     writeHallOfFame(list);
     overlay.querySelector("[data-hof-list]").innerHTML = hallOfFameRows(list, entry.at);
