@@ -838,3 +838,30 @@ body.kiosk-focus-mode .real-kiosk .order-heading p {
 body.kiosk-focus-mode .real-kiosk .order-board {
   gap: 4px;
 }
+
+/* 3초 키오스크 어려운 모드: 선택지 6개를 3×2로 고르게 */
+.real-kiosk .product-grid.six-products:not(.payment-options):not(.mega-products) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.real-kiosk .product-grid.six-products:not(.payment-options):not(.mega-products) > .product-card:not(.no-art) {
+  gap: 2px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.real-kiosk .product-grid.six-products:not(.payment-options):not(.mega-products) > .product-card:not(.no-art) .product-image-frame {
+  width: 76px;
+  height: 54px;
+  aspect-ratio: auto;
+}
+
+.real-kiosk .product-grid.six-products .product-copy small {
+  display: none;
+}
+
+.real-kiosk .product-grid.six-products .product-card .text-art {
+  width: 46px;
+  height: 46px;
+  font-size: 1.1rem;
+}

@@ -21,8 +21,8 @@ const requiredFiles = [
 const requiredSnippets = [
   "이상한 키오스크 월드",
   "3초 뒤 사라지는 주문 키오스크",
-  "HARD_TIMER_SECONDS = 2;",
-  "EXTREME_TIMER_SECONDS = 1.8",
+  "HARD_TIMER_SECONDS = 1.8;",
+  "EXTREME_TIMER_SECONDS = 1.6",
   "새우버거, 콘샐러드, 레몬에이드(M), 얼음 중간, 쿠폰만 사용",
   "더 어려운 모드",
   "더블패티버거, 버팔로윙, 제로환타(L), 얼음 많이, 모바일 상품권 결제",

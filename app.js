@@ -1,5 +1,5 @@
-const HARD_TIMER_SECONDS = 2;
-const EXTREME_TIMER_SECONDS = 1.8;
+const HARD_TIMER_SECONDS = 1.8;
+const EXTREME_TIMER_SECONDS = 1.6;
 
 const stations = [
   {
@@ -443,6 +443,8 @@ const productImages = {
   "ice-less": "assets/menu/ice-less.png",
   "ice-normal": "assets/menu/ice-normal.png",
   "ice-more": "assets/menu/ice-more.png",
+  "ice-extra": "assets/menu/ice-more.png",
+  "ice-half": "assets/menu/ice-less.png",
   "double-patty": "assets/menu/double-patty-burger.png",
   bacon: "assets/menu/bacon-burger.png",
   "chicken-burger": "assets/menu/chicken-burger.png",
@@ -1193,6 +1195,35 @@ function renderTimerStation(root, mode) {
         }
       ];
 
+  // 어려운 모드(중간 단계)는 일반 모드 목록에 비슷한 선택지 2개씩을 더해 단계마다 6개를 보여 줍니다.
+  if (isHard) {
+    const hardExtras = {
+      menu: [
+        { id: "bacon", label: "베이컨버거", desc: "훈제 베이컨", price: 6300 },
+        { id: "teriyaki", label: "데리버거", desc: "데리야끼 소스", price: 4300 }
+      ],
+      side: [
+        { id: "yangnyeom-potato", label: "양념감자", desc: "시즈닝 감자", price: 500 },
+        { id: "onion-ring", label: "어니언링", desc: "바삭한 양파", price: 700 }
+      ],
+      drink: [
+        { id: "fanta", label: "환타(M)", desc: "오렌지 탄산", price: 0 },
+        { id: "iced-tea", label: "아이스티(M)", desc: "복숭아 홍차", price: 300 }
+      ],
+      ice: [
+        { id: "ice-extra", label: "얼음 아주 많이", desc: "컵 가득 채우기", price: 0, mark: "가" },
+        { id: "ice-half", label: "얼음 반만", desc: "기본의 절반", price: 0, mark: "반" }
+      ],
+      payment: [
+        { id: "hard-cocoa-pay", label: "코코아페이", desc: "간편 결제", price: 0, mark: "코" },
+        { id: "hard-gift-pay", label: "모바일 상품권", desc: "바코드 스캔", price: 0, mark: "상" }
+      ]
+    };
+    steps.forEach((step) => {
+      step.items = [...step.items, ...(hardExtras[step.key] || [])];
+    });
+  }
+
   const order = {};
   let step = 0;
   let timeLeft = isKind ? 0 : timeLimit;
@@ -1226,7 +1257,7 @@ function renderTimerStation(root, mode) {
           <span class="category-tab">추천</span>
           <span class="category-tab">할인</span>
         </div>
-        <div class="product-grid${isExtreme ? " mega-products" : ""}">
+        <div class="product-grid${isExtreme ? " mega-products" : isHard ? " six-products" : ""}">
           ${current.items.map((item) => productCard(item, `data-product="${item.id}"`, isKind ? "comfortable" : "pressure-card")).join("")}
         </div>
       `
