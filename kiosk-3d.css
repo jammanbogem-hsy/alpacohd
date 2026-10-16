@@ -1,0 +1,227 @@
+/* 실제 키오스크 외형: 본체·상단 간판·화면 베젤·카드 리더/영수증 모듈 + 손가락 터치 이펙트
+   화면 안 UI와 클릭/드래그 판정은 그대로 두고, 3D 회전 없이 그라데이션·그림자로만 입체감을 냅니다. */
+
+.kiosk-stage {
+  background:
+    radial-gradient(ellipse 46% 26px at 50% calc(100% - 10px), rgba(32, 35, 49, 0.22), transparent 70%);
+}
+
+.kiosk-hardware {
+  position: relative;
+  grid-template-rows: auto auto auto;
+  gap: 10px;
+  padding: 12px 18px 16px;
+  border: 4px solid #25293a;
+  border-radius: 28px 28px 16px 16px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(32, 35, 49, 0.2) 0%,
+      rgba(255, 255, 255, 0) 7%,
+      rgba(255, 255, 255, 0.6) 20%,
+      rgba(255, 255, 255, 0) 38%,
+      rgba(255, 255, 255, 0) 82%,
+      rgba(32, 35, 49, 0.24) 100%
+    ),
+    linear-gradient(180deg, #f6f7f9 0%, #e1e4ea 60%, #d3d7df 100%);
+  box-shadow:
+    9px 9px 0 #25293a,
+    inset 0 3px 0 #ffffff,
+    inset 0 -8px 0 rgba(32, 35, 49, 0.08);
+}
+
+/* 상단 간판 + 카메라 */
+.kiosk-hardware::before {
+  content: "TOUCH ORDER";
+  display: grid;
+  place-items: center;
+  height: 26px;
+  border: 3px solid #25293a;
+  border-radius: 12px 12px 6px 6px;
+  background:
+    radial-gradient(circle at calc(100% - 16px) 50%, #6f86ff 0 2px, #0b0d14 3px 5px, transparent 6px),
+    linear-gradient(180deg, #2d3246 0%, #171a25 100%);
+  box-shadow: inset 0 0 14px rgba(255, 191, 47, 0.32);
+  color: #ffd56a;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.32em;
+  text-shadow: 0 0 6px rgba(255, 191, 47, 0.7);
+}
+
+/* 화면 베젤 */
+.kiosk-device-screen {
+  border: 10px solid #14161d;
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 3px #25293a,
+    0 0 0 5px rgba(255, 255, 255, 0.55);
+}
+
+/* 하단 결제 모듈: 카드 리더(초록 LED) + 영수증 출력구 */
+.kiosk-hardware-slot {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  justify-self: stretch;
+  width: auto;
+  height: 50px;
+  padding: 0 16px;
+  border: 3px solid #25293a;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #eceef2 0%, #c8ccd5 100%);
+  box-shadow:
+    inset 0 2px 0 #ffffff,
+    inset 0 -4px 0 rgba(32, 35, 49, 0.12);
+}
+
+.kiosk-hardware-slot::before {
+  content: "";
+  height: 22px;
+  border: 3px solid #25293a;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at calc(100% - 10px) 50%, #6dff9b 0 3px, rgba(109, 255, 155, 0.35) 4px 6px, transparent 7px),
+    linear-gradient(180deg, #0d0f15 0%, #2f3442 100%);
+  box-shadow: inset 0 4px 0 rgba(0, 0, 0, 0.45);
+}
+
+.kiosk-hardware-slot::after {
+  content: "";
+  height: 12px;
+  border: 3px solid #25293a;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #050608 0%, #2a2e3a 100%);
+  box-shadow: 0 7px 0 -3px #fffdf5;
+}
+
+/* 키오스크 화면 안 버튼: 손가락으로 누른 듯 살짝 눌림 */
+.kiosk-device-screen button:active,
+.kiosk-device-screen [role="button"]:active {
+  filter: brightness(0.94);
+  transform: translateY(1px) scale(0.97);
+  transition: transform 0.05s ease, filter 0.05s ease;
+}
+
+/* 손가락 터치 이펙트 (app.js의 spawnTouchEffect가 생성) */
+.touch-fx {
+  position: fixed;
+  z-index: 5000;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.touch-fx-ring,
+.touch-fx-finger {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.touch-fx-ring {
+  width: 72px;
+  height: 72px;
+  border: 3px solid rgba(76, 167, 232, 0.85);
+  background: radial-gradient(circle, rgba(76, 167, 232, 0.28) 0%, rgba(76, 167, 232, 0) 70%);
+  animation: touch-ring 0.5s ease-out forwards;
+}
+
+.touch-fx-finger {
+  width: 30px;
+  height: 36px;
+  border: 2px solid rgba(122, 72, 52, 0.45);
+  background:
+    radial-gradient(ellipse 40% 30% at 50% 22%, rgba(255, 255, 255, 0.55), transparent 70%),
+    radial-gradient(ellipse at 50% 60%, rgba(255, 205, 175, 0.92) 0%, rgba(241, 168, 133, 0.85) 70%);
+  box-shadow: 0 6px 12px rgba(32, 35, 49, 0.28);
+  animation: touch-finger 0.45s ease-out forwards;
+}
+
+@keyframes touch-ring {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes touch-finger {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -62%) scale(1.25);
+  }
+  30% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  60% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -62%) scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .touch-fx-ring,
+  .touch-fx-finger {
+    animation-duration: 0.01s;
+  }
+}
+
+/* 조작 중(집중 모드): 화면 높이를 우선, 하드웨어는 얇게 */
+body.kiosk-focus-mode .kiosk-hardware {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 6px;
+  padding: 8px 12px 10px;
+}
+
+body.kiosk-focus-mode .kiosk-hardware::before {
+  height: 20px;
+  font-size: 0.6rem;
+}
+
+body.kiosk-focus-mode .kiosk-device-screen {
+  border-width: 7px;
+}
+
+body.kiosk-focus-mode .kiosk-hardware-slot {
+  height: 34px;
+  border-width: 3px;
+}
+
+body.kiosk-focus-mode .kiosk-hardware-slot::before {
+  height: 16px;
+}
+
+body.kiosk-focus-mode .kiosk-hardware-slot::after {
+  height: 9px;
+}
+
+@media (max-width: 720px) {
+  .kiosk-hardware {
+    padding: 8px 8px 10px;
+    border-width: 3px;
+    border-radius: 20px 20px 12px 12px;
+    box-shadow:
+      5px 5px 0 #25293a,
+      inset 0 2px 0 #ffffff;
+  }
+
+  .kiosk-device-screen {
+    border-width: 6px;
+  }
+
+  .kiosk-hardware-slot {
+    height: 38px;
+  }
+}

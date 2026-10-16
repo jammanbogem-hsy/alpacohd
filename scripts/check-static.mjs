@@ -6,6 +6,7 @@ const requiredFiles = [
   "hard-alien.css",
   "hard-payment.css",
   "chromebook.css",
+  "kiosk-3d.css",
   "app.js",
   "bias.html",
   "bias.css",

@@ -336,17 +336,24 @@ function showCompletion(root, message, options = {}) {
       `;
 
   root.innerHTML = `
-    <div class="kiosk-screen completion-screen">
-      <div class="celebration-layer" aria-hidden="true">
-        ${celebrationParticles()}
-      </div>
-      <div class="completion-panel">
-        <p class="completion-kicker">${options.kicker || "미션 해결"}</p>
-        <h3>${options.title || `${station.title} 완료`}</h3>
-        <p>${message}</p>
-        <p class="completion-lesson">마무리: ${station.closing}</p>
-        ${completionRecord}
-        ${completionActions}
+    <div class="kiosk-stage">
+      <div class="kiosk-hardware">
+        <div class="kiosk-device-screen">
+          <div class="kiosk-screen completion-screen">
+            <div class="celebration-layer" aria-hidden="true">
+              ${celebrationParticles()}
+            </div>
+            <div class="completion-panel">
+              <p class="completion-kicker">${options.kicker || "미션 해결"}</p>
+              <h3>${options.title || `${station.title} 완료`}</h3>
+              <p>${message}</p>
+              <p class="completion-lesson">마무리: ${station.closing}</p>
+              ${completionRecord}
+              ${completionActions}
+            </div>
+          </div>
+        </div>
+        <div class="kiosk-hardware-slot" aria-hidden="true"></div>
       </div>
     </div>
   `;
@@ -2871,6 +2878,21 @@ els.kindMode.addEventListener("click", () => {
   state.kioskStarted = false;
   renderStation();
 });
+
+// 키오스크 화면을 누르면 손가락이 닿는 듯한 이펙트를 띄웁니다. pointer-events: none이라 클릭·드래그 판정에는 영향이 없습니다.
+function spawnTouchEffect(event) {
+  if (event.pointerType === "mouse" && event.button !== 0) return;
+  if (!event.target.closest?.(".kiosk-device-screen")) return;
+  const fx = document.createElement("span");
+  fx.className = "touch-fx";
+  fx.style.left = `${event.clientX}px`;
+  fx.style.top = `${event.clientY}px`;
+  fx.innerHTML = '<span class="touch-fx-ring"></span><span class="touch-fx-finger"></span>';
+  document.body.appendChild(fx);
+  window.setTimeout(() => fx.remove(), 600);
+}
+
+document.addEventListener("pointerdown", spawnTouchEffect, { capture: true, passive: true });
 
 els.chromebookToggle.addEventListener("click", () => {
   setChromebookMode(!document.body.classList.contains("chromebook-mode"));
