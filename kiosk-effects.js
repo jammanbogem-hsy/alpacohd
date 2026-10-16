@@ -298,6 +298,16 @@
       tone(ctx, { freq: 1500, start: t, length: 0.045, type: "triangle", gain: 0.1, attack: 0.002, slideTo: 900 });
       noiseBurst(ctx, t, 0.02, 4000, 0.05);
     },
+    // 명예의 전당 팡파르: 도-미-솔-도 상승 후 화음
+    fanfare(ctx, t) {
+      [523.25, 659.25, 783.99].forEach((freq, index) => {
+        tone(ctx, { freq, start: t + index * 0.13, length: 0.18, type: "triangle", gain: 0.09, attack: 0.006 });
+      });
+      [1046.5, 1318.5, 1568].forEach((freq) => {
+        tone(ctx, { freq, start: t + 0.42, length: 1.1, type: "triangle", gain: 0.06, attack: 0.01 });
+        tone(ctx, { freq: freq * 2, start: t + 0.42, length: 0.6, type: "sine", gain: 0.012, attack: 0.01 });
+      });
+    },
     // 승인 "띵동": 높은 음 → 낮은 음
     approve(ctx, t) {
       tone(ctx, { freq: 1318.5, start: t, length: 0.45, type: "sine", gain: 0.12, attack: 0.008 });

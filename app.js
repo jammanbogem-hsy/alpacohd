@@ -1,5 +1,6 @@
 const HARD_TIMER_SECONDS = 1.8;
 const EXTREME_TIMER_SECONDS = 1.6;
+const INSANE_TIMER_SECONDS = 1.4;
 
 const stations = [
   {
@@ -18,7 +19,10 @@ const stations = [
     hardMission: "새우버거, 콘샐러드, 레몬에이드(M), 얼음 중간, 쿠폰만 사용까지 완료해 보세요.",
     extremeLabel: `더 어려운 모드 (${EXTREME_TIMER_SECONDS}초)`,
     extremeTitle: `${EXTREME_TIMER_SECONDS}초 뒤 사라지는 주문 키오스크`,
-    extremeMission: "더블패티버거, 버팔로윙, 제로환타(L), 얼음 많이, 모바일 상품권 결제까지 완료해 보세요."
+    extremeMission: "더블패티버거, 버팔로윙, 제로환타(L), 얼음 많이, 모바일 상품권 결제까지 완료해 보세요.",
+    insaneLabel: `극악 모드 (${INSANE_TIMER_SECONDS}초)`,
+    insaneTitle: `${INSANE_TIMER_SECONDS}초 극악 주문 키오스크`,
+    insaneMission: "매콤치킨버거(토마토 추가·피클 빼기), 닭강정, 제로사이다(L), 얼음 적게, 코코아페이 결제, 영수증 출력까지 완료해 보세요."
   },
   {
     id: "alien",
@@ -226,7 +230,7 @@ function renderStation() {
   if (!station) return;
 
   els.stationKicker.textContent = station.kicker;
-  const tier = state.mode === "extreme" && station.extremeTitle ? "extreme" : state.mode === "hard" && station.hardTitle ? "hard" : "";
+  const tier = ["insane", "extreme", "hard"].find((name) => state.mode === name && station[`${name}Title`]) || "";
   els.stationTitle.textContent = tier ? station[`${tier}Title`] : station.title;
   els.stationMission.textContent = tier ? station[`${tier}Mission`] : station.mission;
   els.insightText.textContent = station.insight;
@@ -303,6 +307,7 @@ function celebrationParticles() {
 function nextHarderMode(station, mode) {
   if (mode === "challenge" && station.hardTitle) return "hard";
   if (mode === "hard" && station.extremeTitle) return "extreme";
+  if (mode === "extreme" && station.insaneTitle) return "insane";
   return null;
 }
 
@@ -445,6 +450,17 @@ const productImages = {
   "ice-more": "assets/menu/ice-more.png",
   "ice-extra": "assets/menu/ice-more.png",
   "ice-half": "assets/menu/ice-less.png",
+  "spicy-chicken": "assets/menu/spicy-chicken-burger.png",
+  "avocado-burger": "assets/menu/avocado-burger.png",
+  "opt-tomato": "assets/menu/topping-tomato.png",
+  "opt-onion": "assets/menu/topping-onion.png",
+  "opt-no-onion": "assets/menu/topping-onion.png",
+  "opt-no-pickle": "assets/menu/topping-pickle.png",
+  "opt-pickle": "assets/menu/topping-pickle.png",
+  "opt-cheese": "assets/menu/topping-cheese.png",
+  "opt-no-lettuce": "assets/menu/topping-lettuce.png",
+  "opt-jalapeno": "assets/menu/topping-jalapeno.png",
+  "opt-patty": "assets/menu/topping-patty.png",
   "double-patty": "assets/menu/double-patty-burger.png",
   bacon: "assets/menu/bacon-burger.png",
   "chicken-burger": "assets/menu/chicken-burger.png",
@@ -988,12 +1004,121 @@ function fxTimeoutNotice(root) {
   );
 }
 
+const HALL_OF_FAME_KEY = "alpaco-hall-of-fame";
+
+function readHallOfFame() {
+  try {
+    const list = JSON.parse(window.localStorage.getItem(HALL_OF_FAME_KEY) || "[]");
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeHallOfFame(list) {
+  try {
+    window.localStorage.setItem(HALL_OF_FAME_KEY, JSON.stringify(list));
+  } catch {
+    // 저장이 막힌 환경에서도 이번 화면에는 기록이 보입니다.
+  }
+}
+
+function hallOfFameRows(list, highlightAt) {
+  if (!list.length) return `<li class="hof-empty">첫 번째 주인공이 되어 보세요!</li>`;
+  return list
+    .slice(0, 5)
+    .map(
+      (entry, index) => `
+        <li class="${entry.at === highlightAt ? "is-me" : ""}">
+          <b>${index + 1}</b><span>${entry.name}</span><em>${entry.seconds.toFixed(1)}초 · 실수 ${entry.mistakes}</em>
+        </li>
+      `
+    )
+    .join("");
+}
+
+// 극악 모드 성공 화면: 금빛 조명·트로피·팡파르와 함께 이 기기의 기록 순위를 보여 줍니다.
+function showHallOfFame({ seconds, mistakes }) {
+  document.querySelector(".hof-overlay")?.remove();
+  const overlay = document.createElement("div");
+  overlay.className = "hof-overlay";
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
+  overlay.setAttribute("aria-label", "명예의 전당");
+  const sparkles = Array.from({ length: 28 }, (_, index) => `<i style="--i:${index}"></i>`).join("");
+  overlay.innerHTML = `
+    <div class="hof-rays" aria-hidden="true"></div>
+    <div class="hof-sparkles" aria-hidden="true">${sparkles}</div>
+    <section class="hof-card">
+      <div class="hof-trophy" aria-hidden="true">
+        <img src="assets/menu/hall-of-fame-trophy.png" alt="" onerror="this.remove()">
+        <span>🏆</span>
+      </div>
+      <p class="hof-kicker">HALL OF FAME</p>
+      <h2>명예의 전당</h2>
+      <p class="hof-sub">${INSANE_TIMER_SECONDS}초 극악 모드 정복!</p>
+      <div class="hof-stats">
+        <span>걸린 시간 <b>${seconds.toFixed(1)}초</b></span>
+        <span>실수 <b>${mistakes}번</b></span>
+      </div>
+      <form class="hof-form" data-hof-form="true">
+        <input type="text" maxlength="10" placeholder="이름 또는 별명" aria-label="명예의 전당 이름" data-hof-name="true" />
+        <button type="submit">이름 올리기</button>
+      </form>
+      <ol class="hof-list" data-hof-list="true">${hallOfFameRows(readHallOfFame())}</ol>
+      <button class="hof-close" type="button" data-hof-close="true">키오스크 선택으로</button>
+    </section>
+  `;
+  document.body.appendChild(overlay);
+  window.KioskFX?.sound?.("fanfare");
+
+  const form = overlay.querySelector("[data-hof-form]");
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const input = overlay.querySelector("[data-hof-name]");
+    const name = input.value.trim().replace(/[<>&"']/g, "").slice(0, 10) || "익명";
+    const entry = { name, seconds, mistakes, at: Date.now() };
+    const list = [...readHallOfFame(), entry].sort((a, b) => a.seconds - b.seconds || a.mistakes - b.mistakes).slice(0, 20);
+    writeHallOfFame(list);
+    overlay.querySelector("[data-hof-list]").innerHTML = hallOfFameRows(list, entry.at);
+    form.remove();
+    window.KioskFX?.sound?.("approve");
+  });
+  overlay.querySelector("[data-hof-close]").addEventListener("click", () => {
+    overlay.remove();
+    returnHome();
+  });
+  overlay.querySelector("[data-hof-name]").focus();
+}
+
 function renderTimerStation(root, mode) {
   const isKind = mode === "kind";
   const isHard = mode === "hard";
   const isExtreme = mode === "extreme";
-  const timeLimit = isExtreme ? EXTREME_TIMER_SECONDS : isHard ? HARD_TIMER_SECONDS : 3;
-  const target = isExtreme
+  const isInsane = mode === "insane";
+  // 극악 모드는 더 어려운 모드의 큰 메뉴판을 바탕으로 메뉴·옵션·영수증 단계를 더합니다.
+  const isMega = isExtreme || isInsane;
+  const timeLimit = isInsane ? INSANE_TIMER_SECONDS : isExtreme ? EXTREME_TIMER_SECONDS : isHard ? HARD_TIMER_SECONDS : 3;
+  const target = isInsane
+    ? {
+        menu: "spicy-chicken",
+        options: ["opt-tomato", "opt-no-pickle"],
+        side: "dakgangjeong",
+        drink: "zero-cider",
+        size: "cup-large",
+        ice: "ice-less",
+        payment: "pay-cocoa",
+        receipt: "receipt-print",
+        menuLabel: "매콤치킨버거",
+        optionsLabel: "토마토 추가·피클 빼기",
+        sideLabel: "닭강정",
+        drinkLabel: "제로사이다",
+        sizeLabel: "L",
+        iceLabel: "얼음 적게",
+        paymentLabel: "코코아페이 결제",
+        receiptLabel: "영수증 출력"
+      }
+    : isExtreme
     ? {
         menu: "double-patty",
         side: "buffalo-wing",
@@ -1034,7 +1159,9 @@ function renderTimerStation(root, mode) {
           paymentLabel: "카드 결제"
         };
   const drinkSummary = target.sizeLabel ? `${target.drinkLabel}(${target.sizeLabel})` : target.drinkLabel;
-  const targetSummary = `${target.menuLabel}, ${target.sideLabel}, ${drinkSummary}, ${target.iceLabel}, ${target.paymentLabel}`;
+  const targetSummary = isInsane
+    ? `${target.menuLabel}(${target.optionsLabel}), ${target.sideLabel}, ${drinkSummary}, ${target.iceLabel}, ${target.paymentLabel}, ${target.receiptLabel}`
+    : `${target.menuLabel}, ${target.sideLabel}, ${drinkSummary}, ${target.iceLabel}, ${target.paymentLabel}`;
   const timeLabel = `${timeLimit}초`;
   const iceStep = {
     label: "얼음",
@@ -1049,7 +1176,7 @@ function renderTimerStation(root, mode) {
       { id: "ice-more", label: "얼음 많이", desc: "가득 넣기", price: 0, mark: "많" }
     ]
   };
-  const steps = isExtreme
+  const steps = isMega
     ? [
         {
           label: "메뉴",
@@ -1224,6 +1351,56 @@ function renderTimerStation(root, mode) {
     });
   }
 
+  if (isInsane) {
+    const menuStep = steps.find((item) => item.key === "menu");
+    menuStep.items = [
+      ...menuStep.items.slice(0, 6),
+      { id: "spicy-chicken", label: "매콤치킨버거", desc: "매운 치킨 패티", price: 6600 },
+      ...menuStep.items.slice(6),
+      { id: "avocado-burger", label: "아보카도버거", desc: "아보카도 슬라이스", price: 7200 }
+    ];
+    const optionStep = {
+      label: "옵션",
+      key: "options",
+      multi: true,
+      title: "재료를 추가하거나 빼 주세요",
+      subtitle: `${target.optionsLabel}를 모두 고른 뒤 선택 완료를 누릅니다.`,
+      correct: target.options,
+      items: [
+        { id: "opt-tomato", label: "토마토 추가", desc: "+300원", price: 300, mark: "토" },
+        { id: "opt-onion", label: "양파 추가", desc: "+300원", price: 300, mark: "양" },
+        { id: "opt-no-onion", label: "양파 빼기", desc: "0원", price: 0, mark: "양" },
+        { id: "opt-no-pickle", label: "피클 빼기", desc: "0원", price: 0, mark: "피" },
+        { id: "opt-pickle", label: "피클 추가", desc: "+200원", price: 200, mark: "피" },
+        { id: "opt-cheese", label: "치즈 추가", desc: "+500원", price: 500, mark: "치" },
+        { id: "opt-no-lettuce", label: "양상추 빼기", desc: "0원", price: 0, mark: "상" },
+        { id: "opt-jalapeno", label: "할라피뇨 추가", desc: "+300원", price: 300, mark: "할" },
+        { id: "opt-patty", label: "패티 추가", desc: "+1,500원", price: 1500, mark: "패" },
+        { id: "opt-done", label: "선택 완료", desc: "다음 단계", price: 0, mark: "✓" }
+      ]
+    };
+    const receiptStep = {
+      label: "영수증",
+      key: "receipt",
+      title: "영수증을 받으시겠어요?",
+      subtitle: `${target.receiptLabel}을 선택하면 주문이 끝납니다.`,
+      correct: target.receipt,
+      items: [
+        { id: "receipt-skip", label: "출력 안 함", desc: "종이 절약", price: 0, mark: "안" },
+        { id: "receipt-mobile", label: "모바일 영수증", desc: "문자로 받기", price: 0, mark: "폰" },
+        { id: "receipt-print", label: "영수증 출력", desc: "종이 영수증", price: 0, mark: "출" },
+        { id: "receipt-number", label: "번호표만", desc: "주문번호만", price: 0, mark: "번" }
+      ]
+    };
+    steps.splice(1, 0, optionStep);
+    steps.push(receiptStep);
+  }
+
+  // 극악 모드 기록: 첫 화면부터 영수증을 받을 때까지 걸린 시간과 실수 횟수
+  const insaneStartedAt = performance.now();
+  const insaneBarrierStart = state.barriers.length;
+  const optionPicks = new Set();
+
   const order = {};
   let step = 0;
   let timeLeft = isKind ? 0 : timeLimit;
@@ -1242,7 +1419,7 @@ function renderTimerStation(root, mode) {
       title: current.title,
       subtitle: current.subtitle,
       mode,
-      status: isKind ? "천천히 주문" : isHard || isExtreme ? `${timeLabel} 자동 초기화` : "자동 초기화",
+      status: isKind ? "천천히 주문" : isHard || isMega ? `${timeLabel} 자동 초기화` : "자동 초기화",
       timer: isKind ? "" : `${timeLeft.toFixed(1)}초`,
       steps: steps.map((item) => item.label),
       activeStep: step,
@@ -1257,8 +1434,8 @@ function renderTimerStation(root, mode) {
           <span class="category-tab">추천</span>
           <span class="category-tab">할인</span>
         </div>
-        <div class="product-grid${isExtreme ? " mega-products" : isHard ? " six-products" : ""}">
-          ${current.items.map((item) => productCard(item, `data-product="${item.id}"`, isKind ? "comfortable" : "pressure-card")).join("")}
+        <div class="product-grid${isMega ? ` mega-products${current.items.length > 12 ? " fourteen-products" : ""}${current.multi ? " option-products" : ""}` : isHard ? " six-products" : ""}">
+          ${current.items.map((item) => productCard(item, `data-product="${item.id}"`, `${isKind ? "comfortable" : "pressure-card"}${optionPicks.has(item.id) ? " is-picked" : ""}`)).join("")}
         </div>
       `
     });
@@ -1267,7 +1444,26 @@ function renderTimerStation(root, mode) {
       button.addEventListener("click", () => {
         const selected = current.items.find((item) => item.id === button.dataset.product);
         if (!selected) return;
-        if (selected.id !== current.correct) {
+        // 옵션 단계: 필요한 재료 옵션을 모두 누른 뒤 '선택 완료'를 눌러야 넘어갑니다. 맞는 옵션을 누를 때마다 시간이 다시 채워집니다.
+        if (current.multi && selected.id !== "opt-done") {
+          if (!current.correct.includes(selected.id)) {
+            fxReject(root, button, "주문 내용과 다른 옵션이에요. 다시 확인해 주세요.");
+            recordBarrier("비슷한 재료 옵션(추가/빼기)을 헷갈려 잘못 눌렀습니다.");
+            return;
+          }
+          optionPicks.add(selected.id);
+          button.classList.add("is-picked");
+          fxSound("beep");
+          timeLeft = timeLimit;
+          updateUrgency();
+          return;
+        }
+        if (current.multi && !current.correct.every((id) => optionPicks.has(id))) {
+          fxReject(root, button, "필요한 옵션을 아직 다 고르지 않았어요.");
+          recordBarrier("필요한 재료 옵션을 다 고르기 전에 선택 완료를 눌렀습니다.");
+          return;
+        }
+        if (!current.multi && selected.id !== current.correct) {
           fxReject(root, button, "주문 내용과 다른 메뉴예요. 다시 확인해 주세요.");
           recordBarrier(isKind ? "원하는 조건과 다른 항목입니다. 설명을 다시 확인해 보세요." : "빨리 고르려다 엉뚱한 메뉴를 눌렀습니다.");
           return;
@@ -1276,13 +1472,23 @@ function renderTimerStation(root, mode) {
         fxSound("beep");
         const snapshot = fxSnapshot(button);
         const previousTotal = selectedCartItems(order).reduce((sum, item) => sum + (item.price || 0), 0);
-        order[current.key] = selected;
+        if (current.multi) {
+          const picked = current.items.filter((item) => optionPicks.has(item.id));
+          order[current.key] = {
+            id: "options",
+            label: `옵션: ${picked.map((item) => item.label).join("·")}`,
+            price: picked.reduce((sum, item) => sum + (item.price || 0), 0)
+          };
+        } else if (current.key !== "receipt") {
+          order[current.key] = selected;
+        }
         window.clearInterval(timer);
         if (step === steps.length - 1) {
-          if (isExtreme) {
+          if (isInsane) {
+            finishInsane();
+          } else if (isExtreme) {
             completeStation(`더 어려운 ${timeLabel} 미션까지 완료했습니다.`);
-            showCompletion(root, `${timeLabel} 안에 더 복잡한 주문 조건까지 완료했습니다. 잠시 뒤 키오스크 선택 화면으로 돌아갑니다.`, {
-              autoReturn: true,
+            showCompletion(root, `${timeLabel} 안에 메뉴판이 큰 주문까지 해냈습니다. 마지막으로 재료 옵션과 영수증까지 있는 ${INSANE_TIMER_SECONDS}초 극악 모드에 도전해 보세요.`, {
               kicker: "최종 미션 해결",
               title: "더 어려운 모드 완료"
             });
@@ -1346,6 +1552,7 @@ function renderTimerStation(root, mode) {
         recordBarrier("생각할 시간이 부족해 주문 화면이 처음으로 돌아갔습니다.");
         step = 0;
         Object.keys(order).forEach((key) => delete order[key]);
+        optionPicks.clear();
         timeLeft = timeLimit;
         draw();
         fxStepEnter(root, "back");
@@ -1353,6 +1560,38 @@ function renderTimerStation(root, mode) {
         startClock();
       }
     }, 100);
+  }
+
+  // 극악 모드 마지막: 출력구에서 영수증이 나오고, 뜯어 가면 명예의 전당이 열립니다.
+  async function finishInsane() {
+    const seconds = (performance.now() - insaneStartedAt) / 1000;
+    // 기록은 최신 항목이 앞에 쌓이므로, 극악 모드 시작 이후 늘어난 앞부분만 셉니다.
+    const mistakes = state.barriers
+      .slice(0, state.barriers.length - insaneBarrierStart)
+      .filter((entry) => !entry.success).length;
+    const items = Object.values(order).map((item) => ({ label: item.label, price: item.price || 0 }));
+    const total = items.reduce((sum, item) => sum + item.price, 0);
+    const printer = root.querySelector(".hw-receipt-printer");
+    if (typeof window.KioskFX?.printReceipt === "function") {
+      try {
+        await window.KioskFX.printReceipt(printer, {
+          store: "모두버거",
+          title: "영수증",
+          items,
+          discounts: [],
+          payments: [{ label: "코코아페이", amount: total }],
+          total,
+          approval: String(Math.floor(10000000 + Math.random() * 89999999)),
+          time: new Date().toLocaleString("ko-KR"),
+          footer: "극악 모드 정복을 축하합니다!"
+        });
+      } catch {
+        // 영수증 효과가 실패해도 명예의 전당은 보여 줍니다.
+      }
+    }
+    if (disposed) return;
+    completeStation(`${INSANE_TIMER_SECONDS}초 극악 모드까지 정복했습니다.`);
+    showHallOfFame({ seconds, mistakes });
   }
 
   draw();
