@@ -1,4 +1,5 @@
-const HARD_TIMER_SECONDS = 2;
+const HARD_TIMER_SECONDS = 2.2;
+const EXTREME_TIMER_SECONDS = 2;
 
 const stations = [
   {
@@ -12,8 +13,12 @@ const stations = [
     principle: "시간을 넉넉하게",
     summary: "화면 제한 시간을 늘리고, 연장 버튼과 뒤로 가기 버튼을 함께 둡니다.",
     closing: "사용자가 늦은 것이 아니라, 충분히 생각할 시간을 주는 화면이 필요합니다.",
+    hardLabel: `어려운 모드 (${HARD_TIMER_SECONDS}초)`,
     hardTitle: `${HARD_TIMER_SECONDS}초 뒤 사라지는 주문 키오스크`,
-    hardMission: "더블패티버거, 버팔로윙, 제로환타(L), 얼음 많이, 모바일 상품권 결제까지 완료해 보세요."
+    hardMission: "새우버거, 콘샐러드, 레몬에이드(M), 얼음 중간, 쿠폰만 사용까지 완료해 보세요.",
+    extremeLabel: `더 어려운 모드 (${EXTREME_TIMER_SECONDS}초)`,
+    extremeTitle: `${EXTREME_TIMER_SECONDS}초 뒤 사라지는 주문 키오스크`,
+    extremeMission: "더블패티버거, 버팔로윙, 제로환타(L), 얼음 많이, 모바일 상품권 결제까지 완료해 보세요."
   },
   {
     id: "alien",
@@ -221,11 +226,11 @@ function renderStation() {
   if (!station) return;
 
   els.stationKicker.textContent = station.kicker;
-  const isHardStation = state.mode === "hard" && Boolean(station.hardTitle);
-  els.stationTitle.textContent = isHardStation ? station.hardTitle : station.title;
-  els.stationMission.textContent = isHardStation ? station.hardMission : station.mission;
+  const tier = state.mode === "extreme" && station.extremeTitle ? "extreme" : state.mode === "hard" && station.hardTitle ? "hard" : "";
+  els.stationTitle.textContent = tier ? station[`${tier}Title`] : station.title;
+  els.stationMission.textContent = tier ? station[`${tier}Mission`] : station.mission;
   els.insightText.textContent = station.insight;
-  els.challengeMode.classList.toggle("is-active", state.mode === "challenge" || state.mode === "hard");
+  els.challengeMode.classList.toggle("is-active", state.mode !== "kind");
   els.kindMode.classList.toggle("is-active", state.mode === "kind");
   renderBarrierLog();
 
@@ -294,12 +299,19 @@ function celebrationParticles() {
   }).join("");
 }
 
+// 일반(challenge) → 어려운(hard) → 더 어려운(extreme) 순서로, 스테이션에 정의된 단계까지만 이어집니다.
+function nextHarderMode(station, mode) {
+  if (mode === "challenge" && station.hardTitle) return "hard";
+  if (mode === "hard" && station.extremeTitle) return "extreme";
+  return null;
+}
+
 function showCompletion(root, message, options = {}) {
   const station = currentStation();
   const stationRecords = state.barriers
     .filter((entry) => entry.stationId === station.id && !entry.success)
     .slice(0, 3);
-  const canTryHarder = Boolean(station.hardTitle) && state.mode === "challenge" && !options.autoReturn;
+  const nextMode = options.autoReturn ? null : nextHarderMode(station, state.mode);
   const completionRecord = stationRecords.length
     ? `
       <div class="completion-record">
@@ -314,8 +326,10 @@ function showCompletion(root, message, options = {}) {
         <div class="completion-actions">
           <button class="next-button" type="button" data-return-home="true">키오스크 선택으로</button>
           ${
-            canTryHarder
-              ? `<button class="next-button harder-button" type="button" data-try-hard="true">더 어려운 모드</button>`
+            nextMode
+              ? `<button class="next-button harder-button" type="button" data-try-hard="true">${
+                  station[`${nextMode}Label`] || "더 어려운 모드"
+                }</button>`
               : ""
           }
         </div>
@@ -338,7 +352,7 @@ function showCompletion(root, message, options = {}) {
   `;
   root.querySelector("[data-return-home]")?.addEventListener("click", returnHome);
   root.querySelector("[data-try-hard]")?.addEventListener("click", () => {
-    state.mode = "hard";
+    state.mode = nextMode;
     state.kioskStarted = true;
     renderStation();
   });
@@ -752,8 +766,9 @@ function renderKioskStart(root, station, mode) {
 function renderTimerStation(root, mode) {
   const isKind = mode === "kind";
   const isHard = mode === "hard";
-  const timeLimit = isHard ? HARD_TIMER_SECONDS : 3;
-  const target = isHard
+  const isExtreme = mode === "extreme";
+  const timeLimit = isExtreme ? EXTREME_TIMER_SECONDS : isHard ? HARD_TIMER_SECONDS : 3;
+  const target = isExtreme
     ? {
         menu: "double-patty",
         side: "buffalo-wing",
@@ -768,21 +783,34 @@ function renderTimerStation(root, mode) {
         iceLabel: "얼음 많이",
         paymentLabel: "모바일 상품권 결제"
       }
-    : {
-        menu: "cheese-set",
-        side: "fries",
-        drink: "cola",
-        ice: "ice-less",
-        payment: "card",
-        menuLabel: "치즈버거",
-        sideLabel: "감자튀김",
-        drinkLabel: "콜라(M)",
-        iceLabel: "얼음 적게",
-        paymentLabel: "카드 결제"
-      };
+    : isHard
+      ? {
+          menu: "shrimp",
+          side: "corn",
+          drink: "ade",
+          ice: "ice-normal",
+          payment: "coupon",
+          menuLabel: "새우버거",
+          sideLabel: "콘샐러드",
+          drinkLabel: "레몬에이드(M)",
+          iceLabel: "얼음 중간",
+          paymentLabel: "쿠폰만 사용"
+        }
+      : {
+          menu: "cheese-set",
+          side: "fries",
+          drink: "cola",
+          ice: "ice-less",
+          payment: "card",
+          menuLabel: "치즈버거",
+          sideLabel: "감자튀김",
+          drinkLabel: "콜라(M)",
+          iceLabel: "얼음 적게",
+          paymentLabel: "카드 결제"
+        };
   const drinkSummary = target.sizeLabel ? `${target.drinkLabel}(${target.sizeLabel})` : target.drinkLabel;
   const targetSummary = `${target.menuLabel}, ${target.sideLabel}, ${drinkSummary}, ${target.iceLabel}, ${target.paymentLabel}`;
-  const timeLabel = isHard ? `${HARD_TIMER_SECONDS}초` : "3초";
+  const timeLabel = `${timeLimit}초`;
   const iceStep = {
     label: "얼음",
     key: "ice",
@@ -796,7 +824,7 @@ function renderTimerStation(root, mode) {
       { id: "ice-more", label: "얼음 많이", desc: "가득 넣기", price: 0, mark: "많" }
     ]
   };
-  const steps = isHard
+  const steps = isExtreme
     ? [
         {
           label: "메뉴",
@@ -960,7 +988,7 @@ function renderTimerStation(root, mode) {
       title: current.title,
       subtitle: current.subtitle,
       mode,
-      status: isKind ? "천천히 주문" : isHard ? `${timeLabel} 자동 초기화` : "자동 초기화",
+      status: isKind ? "천천히 주문" : isHard || isExtreme ? `${timeLabel} 자동 초기화` : "자동 초기화",
       timer: isKind ? "" : `${timeLeft.toFixed(1)}초`,
       steps: steps.map((item) => item.label),
       activeStep: step,
@@ -975,7 +1003,7 @@ function renderTimerStation(root, mode) {
           <span class="category-tab">추천</span>
           <span class="category-tab">할인</span>
         </div>
-        <div class="product-grid${isHard ? " mega-products" : ""}">
+        <div class="product-grid${isExtreme ? " mega-products" : ""}">
           ${current.items.map((item) => productCard(item, `data-product="${item.id}"`, isKind ? "comfortable" : "pressure-card")).join("")}
         </div>
       `
@@ -993,12 +1021,18 @@ function renderTimerStation(root, mode) {
         order[current.key] = selected;
         window.clearInterval(timer);
         if (step === steps.length - 1) {
-          if (isHard) {
+          if (isExtreme) {
             completeStation(`더 어려운 ${timeLabel} 미션까지 완료했습니다.`);
             showCompletion(root, `${timeLabel} 안에 더 복잡한 주문 조건까지 완료했습니다. 잠시 뒤 키오스크 선택 화면으로 돌아갑니다.`, {
               autoReturn: true,
               kicker: "최종 미션 해결",
               title: "더 어려운 모드 완료"
+            });
+          } else if (isHard) {
+            completeStation(`어려운 ${timeLabel} 미션을 완료했습니다.`);
+            showCompletion(root, `${timeLabel} 안에도 주문을 마쳤습니다. 이번에는 메뉴가 훨씬 많은 ${EXTREME_TIMER_SECONDS}초 미션에 도전해 보세요.`, {
+              kicker: "어려운 모드 해결",
+              title: "어려운 모드 완료"
             });
           } else {
             completeStation("짧은 제한 시간은 주문을 포기하게 만들 수 있습니다.");
