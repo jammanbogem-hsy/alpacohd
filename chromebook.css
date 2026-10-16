@@ -153,7 +153,7 @@ body.chromebook-mode .start-device-screen {
 body.chromebook-mode .start-hero {
   grid-template-columns: minmax(0, 1fr) 84px;
   gap: 14px;
-  padding: 14px 20px;
+  padding: 12px 20px;
 }
 
 body.chromebook-mode .start-copy h3 {
@@ -175,8 +175,8 @@ body.chromebook-mode .start-device-screen .kiosk-homebar {
 }
 
 body.chromebook-mode .start-panel {
-  gap: 8px;
-  padding: 14px 20px;
+  gap: 6px;
+  padding: 10px 20px;
 }
 
 body.chromebook-mode .start-password-form input {

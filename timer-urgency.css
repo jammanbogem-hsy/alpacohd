@@ -1,0 +1,88 @@
+/* 3초 키오스크 타이머: 남은 시간 비율(--time-ratio)과 단계(data-urgency)에 따라 점점 강하게 강조 */
+
+#timerReadout[data-urgency] {
+  position: relative;
+  min-width: 108px;
+  padding: 6px 14px;
+  border: 3px solid #25293a;
+  border-radius: 999px;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      90deg,
+      var(--urgency-fill) 0 calc(var(--time-ratio, 1) * 100%),
+      #ffffff calc(var(--time-ratio, 1) * 100%) 100%
+    );
+  color: #25293a;
+  font-size: 1.45rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  text-align: center;
+  line-height: 1.1;
+  transition: background 0.1s linear;
+}
+
+#timerReadout[data-urgency="calm"] {
+  --urgency-fill: #7ed38a;
+}
+
+#timerReadout[data-urgency="warn"] {
+  --urgency-fill: #ffbf2f;
+  font-size: 1.6rem;
+}
+
+#timerReadout[data-urgency="danger"] {
+  --urgency-fill: #ff5d7d;
+  border-color: #d6283f;
+  color: #25293a;
+  font-size: 1.75rem;
+  text-shadow: 0 0 4px #ffffff, 0 0 2px #ffffff;
+  animation: timer-danger-pulse 0.4s ease-in-out infinite alternate;
+}
+
+/* 화면 테두리도 시간이 줄수록 붉게 */
+.real-kiosk[data-urgency="warn"] {
+  box-shadow: inset 0 0 0 4px rgba(255, 191, 47, 0.75);
+}
+
+.real-kiosk[data-urgency="danger"] {
+  animation: kiosk-danger-glow 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes timer-danger-pulse {
+  from {
+    box-shadow: 0 0 0 0 rgba(255, 93, 125, 0.7);
+  }
+  to {
+    box-shadow: 0 0 0 7px rgba(255, 93, 125, 0);
+  }
+}
+
+@keyframes kiosk-danger-glow {
+  from {
+    box-shadow: inset 0 0 0 4px rgba(255, 93, 125, 0.55);
+  }
+  to {
+    box-shadow: inset 0 0 0 7px rgba(255, 93, 125, 0.95), inset 0 0 28px rgba(255, 93, 125, 0.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #timerReadout[data-urgency="danger"],
+  .real-kiosk[data-urgency="danger"] {
+    animation: none;
+  }
+}
+
+@media (max-width: 560px) {
+  #timerReadout[data-urgency] {
+    min-width: 76px;
+    padding: 4px 10px;
+    font-size: 1.15rem;
+  }
+
+  #timerReadout[data-urgency="warn"],
+  #timerReadout[data-urgency="danger"] {
+    font-size: 1.25rem;
+  }
+}

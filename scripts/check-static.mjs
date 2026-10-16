@@ -7,6 +7,8 @@ const requiredFiles = [
   "hard-payment.css",
   "chromebook.css",
   "kiosk-3d.css",
+  "kiosk-store.css",
+  "timer-urgency.css",
   "app.js",
   "bias.html",
   "bias.css",

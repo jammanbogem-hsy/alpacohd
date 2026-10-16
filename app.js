@@ -353,7 +353,7 @@ function showCompletion(root, message, options = {}) {
             </div>
           </div>
         </div>
-        <div class="kiosk-hardware-slot" aria-hidden="true"></div>
+        ${kioskHardwareSlot()}
       </div>
     </div>
   `;
@@ -541,7 +541,7 @@ function cartPanel(items, actionLabel = "결제하기") {
 
   return `
     <aside class="order-cart" aria-label="주문 내역">
-      <h4>주문 내역</h4>
+      <h4>주문 내역 <em class="cart-count">${items.length}</em></h4>
       <div class="cart-list">${rows}</div>
       <div class="cart-total">
         <span>합계</span>
@@ -552,9 +552,40 @@ function cartPanel(items, actionLabel = "결제하기") {
   `;
 }
 
-function kioskShell({ brand, title, subtitle, mode, status, timer, steps, activeStep, body, cartItems, guide, className = "" }) {
+// 기계 아래 결제 모듈. 카드 리더기와 영수증 출력구는 결제 키오스크의 실제 투입/수령 위치로도 동작합니다.
+function kioskHardwareSlot() {
+  return `
+    <div class="kiosk-hardware-slot">
+      <span class="hw-card-reader" data-barcode-target="card" data-card-target="slot" data-hardware="card" aria-label="카드 리더기"></span>
+      <span class="hw-receipt-printer" data-barcode-target="receipt" data-hardware="receipt" aria-label="영수증 출력구"></span>
+    </div>
+  `;
+}
+
+// 매장 키오스크 상단 광고 배너. 이미지가 없으면 kiosk-store.css의 그라데이션만 보입니다.
+const kioskBanners = {
+  모두버거: { id: "burger", kicker: "MODU BURGER", headline: "갓 구운 버거 세트", copy: "주문 후 바로 조리해요" },
+  모두티: { id: "tea", kicker: "MODU TEA", headline: "따뜻한 차 한 잔", copy: "오늘의 차를 골라 보세요" },
+  모두페이: { id: "pay", kicker: "MODU PAY", headline: "할인·적립 한 번에", copy: "간편하게 결제해요" }
+};
+
+function kioskBanner(banner) {
+  if (!banner) return "";
+  return `
+    <div class="kiosk-banner kiosk-banner-${banner.id}" aria-hidden="true">
+      <div class="kiosk-banner-copy">
+        <small>${banner.kicker}</small>
+        <b>${banner.headline}</b>
+        <span>${banner.copy}</span>
+      </div>
+    </div>
+  `;
+}
+
+function kioskShell({ brand, title, subtitle, mode, status, timer, steps, activeStep, body, cartItems, guide, className = "", banner }) {
   const modeLabel = mode === "kind" ? "개선 모드" : "어려운 모드";
   const stageClass = ["kiosk-stage", mode === "challenge" ? "challenge" : ""].filter(Boolean).join(" ");
+  const bannerInfo = banner === undefined ? kioskBanners[brand] : banner;
   return `
     <div class="${stageClass}">
       <div class="kiosk-hardware">
@@ -573,6 +604,7 @@ function kioskShell({ brand, title, subtitle, mode, status, timer, steps, active
                 ${timer ? `<strong id="timerReadout">${timer}</strong>` : ""}
               </div>
             </header>
+            ${kioskBanner(bannerInfo)}
             <section class="kiosk-order-main">
               <div class="order-board">
                 <div class="order-heading">
@@ -594,7 +626,7 @@ function kioskShell({ brand, title, subtitle, mode, status, timer, steps, active
             </footer>
           </div>
         </div>
-        <div class="kiosk-hardware-slot" aria-hidden="true"></div>
+        ${kioskHardwareSlot()}
       </div>
     </div>
   `;
@@ -710,11 +742,12 @@ function renderKioskStart(root, station, mode) {
   const hero = kioskHeroFor(station.id);
   const modeLabel = mode === "kind" ? "개선 모드" : "어려운 모드";
   const inputId = `stationPassword-${station.id}`;
+  const heroBanner = kioskBanners[hero.brand];
   root.innerHTML = `
     <div class="kiosk-stage">
       <div class="kiosk-hardware start-hardware">
         <div class="kiosk-device-screen start-device-screen">
-          <header class="start-hero">
+          <header class="start-hero${heroBanner ? ` start-hero-${heroBanner.id}` : ""}">
             <div class="start-copy">
               <p>${hero.title}</p>
               <h3>${hero.name}</h3>
@@ -739,7 +772,7 @@ function renderKioskStart(root, station, mode) {
             <span>도움말</span>
           </footer>
         </div>
-        <div class="kiosk-hardware-slot" aria-hidden="true"></div>
+        ${kioskHardwareSlot()}
       </div>
     </div>
   `;
@@ -1059,13 +1092,32 @@ function renderTimerStation(root, mode) {
     });
   }
 
+  // 남은 시간 비율에 따라 타이머와 화면 테두리를 점점 강하게 강조합니다 (timer-urgency.css).
+  function updateUrgency() {
+    const readout = root.querySelector("#timerReadout");
+    if (!readout) return;
+    const ratio = Math.max(timeLeft, 0) / timeLimit;
+    const urgency = ratio > 0.6 ? "calm" : ratio > 0.3 ? "warn" : "danger";
+    readout.textContent = `${Math.max(timeLeft, 0).toFixed(1)}초`;
+    readout.style.setProperty("--time-ratio", ratio.toFixed(3));
+    readout.dataset.urgency = urgency;
+    // 1초 단위가 바뀔 때마다 숫자가 툭 튀어 오르게 합니다.
+    const wholeSecond = Math.ceil(Math.max(timeLeft, 0));
+    if (readout.dataset.second && readout.dataset.second !== String(wholeSecond)) {
+      readout.animate?.([{ transform: "scale(1.28)" }, { transform: "scale(1)" }], { duration: 240, easing: "ease-out" });
+    }
+    readout.dataset.second = String(wholeSecond);
+    const kiosk = root.querySelector(".real-kiosk");
+    if (kiosk) kiosk.dataset.urgency = urgency;
+  }
+
   function startClock() {
     window.clearInterval(timer);
+    updateUrgency();
     timer = window.setInterval(() => {
       if (disposed) return;
       timeLeft -= 0.1;
-      const readout = root.querySelector("#timerReadout");
-      if (readout) readout.textContent = `${Math.max(timeLeft, 0).toFixed(1)}초`;
+      updateUrgency();
       if (timeLeft <= 0) {
         window.clearInterval(timer);
         recordBarrier("생각할 시간이 부족해 주문 화면이 처음으로 돌아갔습니다.");

@@ -1,0 +1,739 @@
+/* 실제 매장 키오스크 레이아웃: 세로형 기계 + 상단 브랜드바·광고 배너·카테고리 탭·정사각 메뉴 타일·하단 주문 바
+   화면 비율과 배치만 바꾸고, 각 키오스크 단계의 마크업·동작은 그대로 둡니다. */
+
+/* ---------- 기계: 세로형 비율 ---------- */
+
+.kiosk-hardware {
+  width: min(100%, 520px);
+}
+
+/* 조작 중에는 높이에 맞춘 세로형(약 3:4) 기계. 좁은 화면에서는 폭이 먼저 줄어듭니다. */
+body.kiosk-focus-mode .kiosk-hardware {
+  width: auto;
+  max-width: 100%;
+  aspect-ratio: 3 / 4.1;
+}
+
+/* ---------- 브랜드바 ---------- */
+
+.real-kiosk .kiosk-brandbar {
+  flex: none;
+  border-bottom: 3px solid var(--line);
+}
+
+.real-kiosk .store-logo {
+  border-radius: 50%;
+  background: #e8483f;
+  color: #ffffff;
+}
+
+.real-kiosk:has(.kiosk-banner-tea) .store-logo {
+  background: #3f9a62;
+}
+
+.real-kiosk:has(.kiosk-banner-pay) .store-logo {
+  background: #3a6df0;
+}
+
+/* ---------- 광고 배너 (이미지가 없으면 그라데이션만) ---------- */
+
+.kiosk-banner {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: 118px;
+  padding: 0 16px;
+  overflow: hidden;
+  border-bottom: 3px solid var(--line);
+  background-color: #e8483f;
+  background-position: right center, center;
+  background-repeat: no-repeat;
+  background-size: cover, cover;
+  color: #ffffff;
+}
+
+.kiosk-banner-burger {
+  background-image:
+    url("assets/menu/banner-burger.png"),
+    linear-gradient(120deg, #e8483f 0%, #ff8a3d 58%, #ffbf2f 100%);
+}
+
+.kiosk-banner-tea {
+  background-color: #3f9a62;
+  background-image:
+    url("assets/menu/banner-tea.png"),
+    linear-gradient(120deg, #2f7d50 0%, #5fb377 55%, #cfe9a8 100%);
+}
+
+.kiosk-banner-pay {
+  background-color: #3a6df0;
+  background-image:
+    url("assets/menu/banner-pay.png"),
+    linear-gradient(120deg, #2c4fc9 0%, #3a6df0 52%, #7fc8ff 100%);
+}
+
+/* 배너 왼쪽(이미지의 빈 영역)에 광고 문구 */
+.kiosk-banner-copy {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  max-width: 52%;
+}
+
+.kiosk-banner-copy small {
+  justify-self: start;
+  padding: 1px 8px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--sun);
+  color: var(--ink);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-shadow: none;
+}
+
+.kiosk-banner-copy b {
+  font-size: clamp(1.1rem, 2.4vw, 1.5rem);
+  line-height: 1.15;
+  -webkit-text-stroke: 4px #25293a;
+  paint-order: stroke fill;
+  text-shadow: 2px 3px 0 #25293a;
+}
+
+.kiosk-banner-copy span {
+  justify-self: start;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(37, 41, 58, 0.78);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+/* 외계어 키오스크는 읽을 수 없어야 하므로 한국어 광고 문구를 숨김 */
+.alien-kiosk .kiosk-banner-copy b,
+.alien-kiosk .kiosk-banner-copy span {
+  display: none;
+}
+
+/* 휴대폰·카드·키패드·팝업처럼 한 가지 조작에 집중하는 결제 단계에서는 배너를 내림 */
+.phone-focus-kiosk .kiosk-banner,
+.barcode-scan-kiosk .kiosk-banner,
+.hardware-focus-kiosk .kiosk-banner,
+.upsell-focus-kiosk .kiosk-banner,
+.pin-focus-kiosk .kiosk-banner {
+  display: none;
+}
+
+/* ---------- 주문 영역: 화면 전체 폭 ---------- */
+
+.real-kiosk .kiosk-order-main,
+body.kiosk-focus-mode .real-kiosk .kiosk-order-main {
+  gap: 0;
+  padding: 0;
+}
+
+.real-kiosk .order-board {
+  border: 0;
+  border-radius: 0;
+  background: #f7f7f2;
+}
+
+.real-kiosk .order-heading h3 {
+  font-size: 1.08rem;
+}
+
+/* 카테고리 탭: 매장 키오스크처럼 화면 폭을 나눠 쓰는 탭 막대 */
+.real-kiosk .category-tabs {
+  flex-wrap: nowrap;
+  gap: 4px;
+  border-bottom: 3px solid var(--line);
+}
+
+.real-kiosk .category-tab {
+  flex: 1 1 auto;
+  min-height: 36px;
+  border: 2px solid #c8d0de;
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background: #ffffff;
+}
+
+.real-kiosk .category-tab.is-active {
+  border-color: var(--line);
+  background: #e8483f;
+  color: #ffffff;
+}
+
+.real-kiosk .category-tab.is-complete {
+  border-color: var(--grass);
+  background: #e9ffe6;
+  color: var(--ink);
+}
+
+.friendly-kiosk .category-tab.is-active {
+  background: var(--grass);
+}
+
+.alien-kiosk .category-tab.is-active {
+  background: #7b5cff;
+}
+
+/* ---------- 메뉴 타일: 큰 그림 위, 이름·가격 아래 ---------- */
+
+.real-kiosk .product-grid:not(.payment-options):not(.mega-products) {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.real-kiosk .product-grid:not(.payment-options):not(.mega-products) > .product-card:not(.no-art) {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  min-height: 0;
+  padding: 10px 6px 10px;
+  border: 3px solid #d7dce8;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.real-kiosk .product-grid:not(.payment-options):not(.mega-products) > .product-card:not(.no-art) .product-image-frame {
+  width: 100%;
+  max-width: 96px;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.real-kiosk .product-grid:not(.payment-options):not(.mega-products) > .product-card:not(.no-art) .product-copy {
+  justify-items: center;
+  gap: 2px;
+}
+
+.real-kiosk .product-grid:not(.payment-options):not(.mega-products) > .product-card:not(.no-art) .product-copy b {
+  font-size: 0.9rem;
+}
+
+.real-kiosk .product-grid:not(.payment-options):not(.mega-products) > .product-card:not(.no-art) .product-copy small {
+  font-size: 0.7rem;
+  line-height: 1.2;
+}
+
+.real-kiosk .product-grid:not(.payment-options) > .product-card:hover,
+.real-kiosk .product-grid:not(.payment-options) > .product-card:focus-visible {
+  border-color: var(--line);
+}
+
+/* 글자만 있는 메뉴(외계어 키오스크)도 같은 높이의 타일로 */
+.real-kiosk .product-grid.compact-products:not(.payment-options):not(.mega-products):not(:has(.product-card:not(.no-art))) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.real-kiosk .compact-products > .product-card.no-art {
+  min-height: 78px;
+  align-content: center;
+  border-width: 3px;
+  border-radius: 12px;
+}
+
+/* 더 어려운 모드 12칸 메뉴 */
+.real-kiosk .mega-products {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.real-kiosk .mega-products .product-card {
+  gap: 2px;
+  padding: 4px 3px;
+  border-radius: 10px;
+}
+
+.real-kiosk .mega-products .product-image-frame {
+  width: 100%;
+  max-width: 54px;
+  height: 40px;
+}
+
+.real-kiosk .mega-products .product-copy b {
+  font-size: 0.72rem;
+  line-height: 1.15;
+}
+
+.real-kiosk .mega-products .product-copy small {
+  display: none;
+}
+
+/* ---------- 하단 주문 바 ---------- */
+
+.real-kiosk .order-cart {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  padding: 8px 10px;
+  border: 0;
+  border-top: 3px solid var(--line);
+  border-radius: 0;
+  background: #ffffff;
+}
+
+/* 1줄: 주문 내역(개수) ··· 합계 / 2줄: 담은 메뉴 칩 / 오른쪽: 큰 결제 버튼 */
+.real-kiosk .order-cart h4 {
+  grid-row: 1;
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.86rem;
+}
+
+.cart-count {
+  display: inline-grid;
+  min-width: 22px;
+  height: 22px;
+  place-items: center;
+  padding: 0 6px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--sun);
+  color: var(--ink);
+  font-size: 0.74rem;
+  font-style: normal;
+}
+
+/* 담은 메뉴는 가로로 넘기는 한 줄 칩으로 (주문 바 높이 고정) */
+.real-kiosk .cart-list {
+  grid-row: 2;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  max-height: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.real-kiosk .cart-row {
+  flex: none;
+  gap: 6px;
+  white-space: nowrap;
+  padding: 2px 8px;
+  border: 2px solid #d7dce8;
+  border-radius: 999px;
+  background: #f7f7f2;
+  font-size: 0.72rem;
+}
+
+.real-kiosk .empty-cart {
+  width: 100%;
+  padding: 4px 8px;
+  border-width: 2px;
+  font-size: 0.74rem;
+}
+
+.real-kiosk .cart-total {
+  grid-row: 1;
+  justify-self: end;
+  align-items: baseline;
+  padding-top: 0;
+  border-top: 0;
+  font-size: 0.86rem;
+}
+
+.real-kiosk .cart-total strong {
+  color: #d6474d;
+  font-size: 1.05rem;
+}
+
+.real-kiosk .checkout-button {
+  grid-row: 1 / 3;
+  min-width: 128px;
+  border-radius: 12px;
+  font-size: 1.12rem;
+}
+
+/* ---------- 하단 메뉴 막대 ---------- */
+
+.real-kiosk .kiosk-homebar,
+.start-device-screen .kiosk-homebar {
+  flex: none;
+  border-top: 0;
+  background: #25293a;
+}
+
+.real-kiosk .kiosk-homebar span,
+.start-device-screen .kiosk-homebar span {
+  color: #dfe5f2;
+}
+
+.real-kiosk .kiosk-homebar span + span,
+.start-device-screen .kiosk-homebar span + span {
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* ---------- 시작 화면: 배너 사진을 첫 화면 광고로 ---------- */
+
+.start-hardware {
+  width: min(100%, 520px);
+}
+
+.start-hero.start-hero-burger,
+.start-hero.start-hero-tea,
+.start-hero.start-hero-pay {
+  grid-template-columns: minmax(0, 1fr) 120px;
+  background-position: center, right center;
+  background-repeat: no-repeat;
+  background-size: cover, cover;
+}
+
+.start-hero-burger {
+  background-image:
+    linear-gradient(90deg, rgba(20, 33, 61, 0.92) 0%, rgba(20, 33, 61, 0.72) 48%, rgba(20, 33, 61, 0.15) 100%),
+    url("assets/menu/banner-burger.png");
+}
+
+.start-hero-tea {
+  background-image:
+    linear-gradient(90deg, rgba(20, 33, 61, 0.92) 0%, rgba(20, 33, 61, 0.72) 48%, rgba(20, 33, 61, 0.15) 100%),
+    url("assets/menu/banner-tea.png");
+}
+
+.start-hero-pay {
+  background-image:
+    linear-gradient(90deg, rgba(20, 33, 61, 0.92) 0%, rgba(20, 33, 61, 0.72) 48%, rgba(20, 33, 61, 0.15) 100%),
+    url("assets/menu/banner-pay.png");
+}
+
+.start-hardware .start-copy h3 {
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
+}
+
+.start-hardware .start-copy span {
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+}
+
+.start-hardware .start-art .hero-product-image {
+  width: 112px;
+  height: 112px;
+}
+
+/* ---------- 조작 중(집중 모드): 한 화면에 들어가게 압축 ---------- */
+
+body.kiosk-focus-mode .real-kiosk .kiosk-brandbar {
+  min-height: 46px;
+  padding: 5px 10px;
+}
+
+body.kiosk-focus-mode .kiosk-banner {
+  height: clamp(58px, 10.5vh, 96px);
+}
+
+body.kiosk-focus-mode .real-kiosk .order-board {
+  gap: 7px;
+  padding: 8px 10px;
+}
+
+body.kiosk-focus-mode .real-kiosk .real-help {
+  padding: 7px 10px;
+  font-size: 0.8rem;
+}
+
+body.kiosk-focus-mode .real-kiosk .order-cart {
+  padding: 6px 10px;
+}
+
+body.kiosk-focus-mode .real-kiosk .checkout-button {
+  min-height: 0;
+}
+
+body.kiosk-focus-mode .real-kiosk .kiosk-homebar {
+  min-height: 32px;
+}
+
+/* 높이가 낮은 화면(크롬북 등) */
+@media (max-height: 820px) {
+  body.kiosk-focus-mode .real-kiosk .order-board {
+    gap: 6px;
+    padding: 6px 10px;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .order-heading p {
+    margin-top: 2px;
+    font-size: 0.76rem;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .order-steps {
+    gap: 2px;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .order-steps li {
+    min-width: 36px;
+    gap: 2px;
+    font-size: 0.56rem;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .order-steps span {
+    width: 21px;
+    height: 21px;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .real-help {
+    padding: 5px 8px;
+    font-size: 0.74rem;
+    line-height: 1.3;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .category-tab {
+    min-height: 32px;
+    padding: 4px 10px;
+  }
+
+  body.kiosk-focus-mode .kiosk-banner-copy span {
+    display: none;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .product-grid:not(.payment-options):not(.mega-products) > .product-card:not(.no-art) {
+    padding: 6px 4px;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .product-grid:not(.payment-options):not(.mega-products) > .product-card:not(.no-art) .product-image-frame {
+    max-width: 78px;
+  }
+}
+
+/* ---------- 휴대폰 ---------- */
+
+@media (max-width: 720px) {
+  /* 휴대폰에서도 브랜드바는 한 줄 */
+  .real-kiosk .kiosk-brandbar {
+    display: flex;
+    gap: 8px;
+  }
+
+  .real-kiosk .brand-stack {
+    gap: 6px;
+  }
+
+  .real-kiosk .brand-stack b,
+  .real-kiosk .brand-stack small,
+  .real-kiosk .kiosk-status span {
+    white-space: nowrap;
+  }
+
+  .real-kiosk .store-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .real-kiosk .kiosk-status {
+    flex: 0 1 auto;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .real-kiosk .kiosk-status span {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 22px;
+  }
+
+  .real-kiosk .kiosk-status span,
+  .real-kiosk .kiosk-status strong {
+    min-height: 30px;
+    padding: 3px 8px;
+    font-size: 0.74rem;
+  }
+
+  .real-kiosk .kiosk-status strong {
+    min-width: 64px;
+  }
+
+  .real-kiosk .product-grid:not(.payment-options):not(.mega-products) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .real-kiosk .product-grid:not(.payment-options):not(.mega-products) > .product-card:not(.no-art) {
+    padding: 6px 3px;
+  }
+
+  .real-kiosk .product-grid:not(.payment-options):not(.mega-products) > .product-card:not(.no-art) .product-copy b {
+    font-size: 0.76rem;
+  }
+
+  .real-kiosk .product-grid:not(.payment-options):not(.mega-products) > .product-card:not(.no-art) .product-copy small {
+    display: none;
+  }
+
+  .real-kiosk .product-grid.compact-products:not(.payment-options):not(.mega-products) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .real-kiosk .mega-products {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .real-kiosk .order-cart {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .real-kiosk .checkout-button {
+    grid-column: 2 / 3;
+    grid-row: 1 / 3;
+    min-width: 104px;
+    min-height: 0;
+  }
+
+  .kiosk-banner {
+    height: 92px;
+    padding: 0 12px;
+  }
+
+  .start-hero.start-hero-burger,
+  .start-hero.start-hero-tea,
+  .start-hero.start-hero-pay {
+    grid-template-columns: minmax(0, 1fr) 96px;
+  }
+}
+
+/* 세로형 화면에서는 휴대폰 인증 패널을 위아래로 쌓음 */
+body.kiosk-focus-mode .real-kiosk .phone-focus-flow .affiliate-phone-panel,
+body.kiosk-focus-mode .real-kiosk .phone-focus-flow .reward-phone-panel {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  padding: 8px;
+}
+
+/* 앱 아이콘을 4칸으로 펼쳐 휴대폰 높이를 줄임 */
+body.kiosk-focus-mode .real-kiosk .phone-focus-flow .phone-app-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+body.kiosk-focus-mode .real-kiosk .phone-focus-flow .phone-app-button {
+  padding: 4px 2px;
+}
+
+body.kiosk-focus-mode .real-kiosk .phone-focus-flow .phone-screen {
+  gap: 6px;
+  padding: 8px;
+}
+
+body.kiosk-focus-mode .real-kiosk .phone-focus-flow .phone-panel-copy {
+  text-align: center;
+}
+
+body.kiosk-focus-mode .real-kiosk .phone-focus-flow .phone-mock {
+  width: min(100%, 320px);
+  padding: 8px;
+}
+
+/* 바코드 인식 단계: 세로형 화면에 맞게 휴대폰 높이를 내용만큼만 */
+@media (min-width: 721px) {
+  body.kiosk-focus-mode .real-kiosk .scan-payment-layout {
+    grid-template-columns: minmax(160px, 0.8fr) minmax(0, 1fr);
+  }
+}
+
+body.kiosk-focus-mode .real-kiosk .scan-phone-mock .phone-screen {
+  min-height: 0;
+}
+
+body.kiosk-focus-mode .real-kiosk .scan-phone-mock .membership-card {
+  gap: 4px;
+  padding: 8px;
+}
+
+body.kiosk-focus-mode .real-kiosk .scan-phone-mock .membership-card small {
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+body.kiosk-focus-mode .real-kiosk .scan-phone-mock .barcode-visual {
+  height: 42px;
+}
+
+/* 학생번호 입력 단계 */
+body.kiosk-focus-mode .real-kiosk .has-student-entry .student-id-card {
+  gap: 4px;
+  padding: 8px;
+}
+
+body.kiosk-focus-mode .real-kiosk .student-id-entry {
+  gap: 6px;
+  padding: 8px 10px;
+}
+
+body.kiosk-focus-mode .real-kiosk .student-id-entry input {
+  min-height: 42px;
+  padding: 6px 10px;
+}
+
+body.kiosk-focus-mode .real-kiosk .scan-payment-section {
+  gap: 6px;
+  padding: 8px;
+}
+
+body.kiosk-focus-mode .real-kiosk .scan-payment-hint {
+  font-size: 0.76rem;
+  line-height: 1.3;
+}
+
+/* 카드 투입 단계: 세로형 화면에서 카드 그림을 줄여 투입구까지 한 화면에 */
+body.kiosk-focus-mode .real-kiosk .hardware-focus-flow .payment-card-hand {
+  width: min(300px, 68%);
+}
+
+@media (max-height: 820px) {
+  body.kiosk-focus-mode .real-kiosk .phone-focus-flow .phone-app-button {
+    padding: 3px 2px;
+  }
+}
+
+/* 휴대폰: 바코드 휴대폰과 인식하는 곳을 나란히 두어 끌어다 놓는 거리를 한 화면 안에 */
+@media (max-width: 720px) {
+  body.kiosk-focus-mode .real-kiosk .scan-payment-layout {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .scan-phone-mock {
+    width: 100%;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .scan-payment-flow .hardware-actions {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .scan-payment-flow .hardware-button {
+    min-height: 0;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .scan-payment-flow .hardware-device-group {
+    gap: 3px;
+    padding: 6px 4px;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .scan-payment-flow .hardware-image {
+    height: 30px;
+  }
+
+  /* 위 안내 문장과 같은 내용이라 좁은 화면에서는 생략 */
+  body.kiosk-focus-mode .real-kiosk .scan-payment-flow .payment-hardware-hint {
+    display: none;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .scan-payment-flow .payment-hardware {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  body.kiosk-focus-mode .real-kiosk .scan-phone-mock .membership-card small {
+    display: none;
+  }
+}
