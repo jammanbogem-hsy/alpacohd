@@ -1,5 +1,5 @@
-const HARD_TIMER_SECONDS = 2.2;
-const EXTREME_TIMER_SECONDS = 2;
+const HARD_TIMER_SECONDS = 2;
+const EXTREME_TIMER_SECONDS = 1.8;
 
 const stations = [
   {
@@ -32,7 +32,7 @@ const stations = [
     summary: "외래어와 줄임말을 줄이고, 쉬운 설명과 그림 단서를 제공합니다.",
     closing: "낯선 말은 주문을 막을 수 있으므로 쉬운 말과 그림 단서가 함께 있어야 합니다.",
     hardTitle: "읽는 방향까지 낯선 외계어 키오스크",
-    hardMission: "차가운 유자차, 포장, 설탕 없음, 리유저블 컵까지 골라 보세요."
+    hardMission: "차가운 유자차, 포장, 설탕 없음, 재사용이 가능한 컵까지 골라 보세요."
   },
   {
     id: "tiny",
@@ -337,7 +337,7 @@ function showCompletion(root, message, options = {}) {
 
   root.innerHTML = `
     <div class="kiosk-stage">
-      <div class="kiosk-hardware">
+      <div class="kiosk-hardware" data-sign="${kioskSignText(stationBrands[station.id])}">
         <div class="kiosk-device-screen">
           <div class="kiosk-screen completion-screen">
             <div class="celebration-layer" aria-hidden="true">
@@ -563,11 +563,18 @@ function kioskHardwareSlot() {
 }
 
 // 매장 키오스크 상단 광고 배너. 이미지가 없으면 kiosk-store.css의 그라데이션만 보입니다.
+const stationBrands = { timer: "모두버거", alien: "모두티", tiny: "모두페이" };
+
 const kioskBanners = {
   모두버거: { id: "burger", kicker: "MODU BURGER", headline: "갓 구운 버거 세트", copy: "주문 후 바로 조리해요" },
   모두티: { id: "tea", kicker: "MODU TEA", headline: "따뜻한 차 한 잔", copy: "오늘의 차를 골라 보세요" },
   모두페이: { id: "pay", kicker: "MODU PAY", headline: "할인·적립 한 번에", copy: "간편하게 결제해요" }
 };
+
+// 기계 상단 간판 문구 (kiosk-3d.css에서 attr(data-sign)으로 표시)
+function kioskSignText(brand) {
+  return kioskBanners[brand] ? `${kioskBanners[brand].kicker} · TOUCH ORDER` : "TOUCH ORDER";
+}
 
 function kioskBanner(banner) {
   if (!banner) return "";
@@ -588,7 +595,7 @@ function kioskShell({ brand, title, subtitle, mode, status, timer, steps, active
   const bannerInfo = banner === undefined ? kioskBanners[brand] : banner;
   return `
     <div class="${stageClass}">
-      <div class="kiosk-hardware">
+      <div class="kiosk-hardware" data-sign="${kioskSignText(brand)}">
         <div class="kiosk-device-screen">
           <div class="real-kiosk ${className}">
             <header class="kiosk-brandbar">
@@ -745,7 +752,7 @@ function renderKioskStart(root, station, mode) {
   const heroBanner = kioskBanners[hero.brand];
   root.innerHTML = `
     <div class="kiosk-stage">
-      <div class="kiosk-hardware start-hardware">
+      <div class="kiosk-hardware start-hardware" data-sign="${kioskSignText(hero.brand)}">
         <div class="kiosk-device-screen start-device-screen">
           <header class="start-hero${heroBanner ? ` start-hero-${heroBanner.id}` : ""}">
             <div class="start-copy">
@@ -2577,7 +2584,7 @@ function renderAlienStation(root, mode) {
       guide: isKind
         ? "따뜻한 보리차, 포장, 설탕 없음을 쉬운 말과 설명으로 확인합니다."
         : isHard
-          ? "차가운 유자차, 포장, 설탕 없음, 리유저블 컵을 글자만 보고 찾아봅니다."
+          ? "차가운 유자차, 포장, 설탕 없음, 재사용이 가능한 컵을 글자만 보고 찾아봅니다."
           : `따뜻한 보리차, 포장, 설탕 없음을 ${currentLanguage.name} 메뉴와 짧은 안내만 보고 찾아봅니다.`,
       cartItems,
       className: isKind ? "friendly-kiosk" : isHard ? "alien-kiosk alien-hard-kiosk" : "alien-kiosk",

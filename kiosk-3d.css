@@ -32,7 +32,7 @@
 
 /* 상단 간판 + 카메라 */
 .kiosk-hardware::before {
-  content: "TOUCH ORDER";
+  content: attr(data-sign);
   display: grid;
   place-items: center;
   height: 26px;
