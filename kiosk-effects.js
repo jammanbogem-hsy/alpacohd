@@ -818,9 +818,70 @@
     });
   }
 
+  /* ---------- 카드 투입 확대 연출 (화면 맨 위 레이어) ---------- */
+
+  // 카드 리더기를 가까이서 본 장면을 띄우고 카드가 투입구로 들어가는 모습을 보여 줍니다.
+  // outcome: "ok"(인식 완료) | "error"(IC 인식 오류로 카드가 다시 나옴)
+  async function cardCinematic(options = {}) {
+    const outcome = options.outcome === "error" ? "error" : "ok";
+    const cardSrc = options.cardSrc || "assets/menu/card-face.png";
+    document.querySelectorAll(".kfx-cinema").forEach((el) => el.remove());
+    const root = document.createElement("div");
+    root.className = "kfx-overlay kfx-cinema";
+    root.setAttribute("role", "status");
+    root.innerHTML = `
+      <div class="kfx-cinema-stage">
+        <div class="kfx-cinema-panel">
+          <img class="kfx-cinema-photo" src="assets/menu/card-reader-closeup.png" alt="" onerror="this.remove()">
+          <div class="kfx-cinema-slot"><i class="kfx-cinema-led"></i></div>
+          <div class="kfx-cinema-clip"><img class="kfx-cinema-card" src="${escapeHtml(cardSrc)}" alt=""></div>
+        </div>
+        <p class="kfx-cinema-caption">카드를 투입구에 넣고 있어요</p>
+      </div>
+    `;
+    document.body.appendChild(root);
+    const card = root.querySelector(".kfx-cinema-card");
+    const caption = root.querySelector(".kfx-cinema-caption");
+    const setLed = (state) => {
+      root.dataset.led = state;
+    };
+    const slide = (keyframes, ms, easing) =>
+      card.animate
+        ? card.animate(keyframes, { duration: dur(ms, 120), easing, fill: "forwards" }).finished.catch(() => null)
+        : Promise.resolve();
+
+    setLed("idle");
+    await wait(dur(260, 60));
+    sound("insert");
+    await Promise.race([
+      slide([{ transform: "translateY(-125%)" }, { transform: "translateY(-30%)", offset: 0.55 }, { transform: "translateY(105%)" }], 760, "cubic-bezier(0.5, 0, 0.8, 0.6)"),
+      wait(900)
+    ]);
+    setLed("busy");
+    caption.textContent = "카드를 읽는 중… 카드를 빼지 마세요";
+    await wait(dur(700, 200));
+
+    if (outcome === "error") {
+      setLed("error");
+      sound("error");
+      caption.textContent = "IC 칩을 인식하지 못했어요";
+      await Promise.race([slide([{ transform: "translateY(105%)" }, { transform: "translateY(-45%)" }], 460, "cubic-bezier(0.2, 0.9, 0.3, 1.2)"), wait(600)]);
+      await wait(dur(650, 200));
+    } else {
+      setLed("ok");
+      sound("beep");
+      caption.textContent = "카드 인식 완료";
+      await wait(dur(450, 150));
+    }
+    root.classList.add("is-leaving");
+    await wait(dur(240, 60));
+    root.remove();
+  }
+
   /* ---------- 정리 ---------- */
 
   function clear() {
+    document.querySelectorAll(".kfx-cinema").forEach((el) => el.remove());
     Array.from(document.querySelectorAll(".kfx-overlay")).forEach(removeOverlay);
     overlays.clear();
     stopVoices();
@@ -837,6 +898,7 @@
     wait,
     scan,
     insertCard,
+    cardCinematic,
     readerState,
     processing,
     approve,

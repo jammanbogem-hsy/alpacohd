@@ -1063,19 +1063,21 @@ function drawPrize() {
   return PRIZES.find((item) => (roll -= item.weight) < 0) || PRIZES[0];
 }
 
-function prizeCardMarkup(prize) {
+// theme "pay": 결제 키오스크 전용(파랑·보라 카드, 신용카드 뒷면, 승인번호 표시)
+function prizeCardMarkup(prize, theme = "", receipt = null) {
+  const isPay = theme === "pay";
   return `
-    <div class="hof-prize" data-prize-tone="${prize.tone}">
+    <div class="hof-prize${isPay ? " prize-theme-pay" : ""}" data-prize-tone="${prize.tone}">
       <p class="hof-prize-title">선물 카드 뽑기</p>
       <div class="prize-card" data-prize-card="true" aria-live="polite">
         <div class="prize-card-inner">
           <div class="prize-face prize-back" aria-label="선물 카드 뒷면">
-            <img src="assets/menu/card-back.png" alt="" onerror="this.remove()">
+            <img src="assets/menu/${isPay ? "card-back-pay.png" : "card-back.png"}" alt="" onerror="this.remove()">
             <span class="prize-back-mark" aria-hidden="true">🏆</span>
             <b>HALL OF FAME</b>
           </div>
           <div class="prize-face prize-front prize-tone-${prize.tone}" aria-label="선물 카드 앞면">
-            <small>명예의 전당 선물 카드</small>
+            <small>${isPay ? "MODU PAY · 극악 결제 선물 카드" : "명예의 전당 선물 카드"}</small>
             <em class="prize-rank">${prize.rank}</em>
             <div class="prize-art">
               <img src="${prize.image}" alt="" onerror="this.remove()">
@@ -1084,6 +1086,7 @@ function prizeCardMarkup(prize) {
             <strong>${prize.title}</strong>
             <p>${prize.detail}</p>
             <span class="prize-owner" data-prize-owner="true">이름을 올려 주세요</span>
+            ${isPay && receipt ? `<span class="prize-approval">승인번호 ${receipt.approval} · ${receipt.time}</span>` : ""}
           </div>
         </div>
       </div>
@@ -1095,7 +1098,7 @@ function prizeCardMarkup(prize) {
   `;
 }
 
-function bindPrizeCard(overlay, prize, getRecord) {
+function bindPrizeCard(overlay, prize, getRecord, theme = "", receipt = null) {
   const card = overlay.querySelector("[data-prize-card]");
   const flip = overlay.querySelector("[data-prize-flip]");
   const save = overlay.querySelector("[data-prize-save]");
@@ -1124,7 +1127,7 @@ function bindPrizeCard(overlay, prize, getRecord) {
     card.classList.toggle("show-back");
   });
   card.addEventListener("click", () => flip.click());
-  save.addEventListener("click", () => savePrizeCardPng(prize, getRecord()));
+  save.addEventListener("click", () => savePrizeCardPng(prize, getRecord(), theme, receipt));
 }
 
 function loadImage(src) {
@@ -1147,14 +1150,21 @@ function roundRectPath(ctx, x, y, width, height, radius) {
 }
 
 // 선물 카드 앞면(+작게 뒷면)을 캔버스로 다시 그려 PNG로 내려받습니다.
-async function savePrizeCardPng(prize, record) {
+async function savePrizeCardPng(prize, record, theme = "", receipt = null) {
+  const isPay = theme === "pay";
   const tones = {
     miss: ["#e9ebf0", "#b9bec8"],
     candy: ["#ffe1ec", "#ff8fb4"],
     jelly: ["#eaffd6", "#9fe07a"],
     all: ["#fff2b3", "#ffb84d"]
   };
-  const [light, deep] = tones[prize.tone] || tones.miss;
+  const payTones = {
+    miss: ["#e6e9f7", "#9aa3c7"],
+    candy: ["#f3e3ff", "#c58cff"],
+    jelly: ["#dff4ff", "#6fc3ff"],
+    all: ["#fff2b3", "#ffb84d"]
+  };
+  const [light, deep] = (isPay ? payTones : tones)[prize.tone] || tones.miss;
   const canvas = document.createElement("canvas");
   canvas.width = 600;
   canvas.height = 840;
@@ -1181,10 +1191,10 @@ async function savePrizeCardPng(prize, record) {
   ctx.textAlign = "center";
   ctx.fillStyle = "#8a5a00";
   ctx.font = font(22);
-  ctx.fillText("HALL OF FAME", 300, 82);
+  ctx.fillText(isPay ? "MODU PAY · HALL OF FAME" : "HALL OF FAME", 300, 82);
   ctx.fillStyle = "#25293a";
   ctx.font = font(34);
-  ctx.fillText("명예의 전당 선물 카드", 300, 128);
+  ctx.fillText(isPay ? "극악 결제 선물 카드" : "명예의 전당 선물 카드", 300, 128);
 
   ctx.fillStyle = "#25293a";
   roundRectPath(ctx, 230, 150, 140, 46, 23);
@@ -1219,6 +1229,11 @@ async function savePrizeCardPng(prize, record) {
   ctx.fillStyle = "#5b6072";
   ctx.font = font(22, 800);
   ctx.fillText(`${record.seconds.toFixed(1)}초 · 실수 ${record.mistakes}번 · ${new Date().toLocaleDateString("ko-KR")}`, 300, 770);
+  if (isPay && receipt) {
+    ctx.fillStyle = "#3b3f52";
+    ctx.font = `700 18px ui-monospace, "SFMono-Regular", Menlo, monospace`;
+    ctx.fillText(`승인번호 ${receipt.approval} · ${receipt.time}`, 300, 805);
+  }
 
   canvas.toBlob((blob) => {
     if (!blob) return;
@@ -1238,7 +1253,9 @@ function showHallOfFame({
   mistakes,
   storageKey = HALL_OF_FAME_KEY,
   subtitle = `${INSANE_TIMER_SECONDS}초 극악 모드 정복!`,
-  label = `${INSANE_TIMER_SECONDS}초 극악 모드 정복`
+  label = `${INSANE_TIMER_SECONDS}초 극악 모드 정복`,
+  theme = "",
+  receipt = null
 }) {
   document.querySelector(".hof-overlay")?.remove();
   const prize = drawPrize();
@@ -1272,7 +1289,7 @@ function showHallOfFame({
       <ol class="hof-list" data-hof-list="true">${hallOfFameRows(readHallOfFame(storageKey))}</ol>
       <button class="hof-close" type="button" data-hof-close="true">키오스크 선택으로</button>
       </div>
-      ${prizeCardMarkup(prize)}
+      ${prizeCardMarkup(prize, theme, receipt)}
     </section>
   `;
   document.body.appendChild(overlay);
@@ -1280,7 +1297,7 @@ function showHallOfFame({
   bindPrizeCard(overlay, prize, () => {
     const typed = overlay.querySelector("[data-hof-name]")?.value.trim();
     return { name: (typed || submittedName || "익명").replace(/[<>&"']/g, "").slice(0, 10), seconds, mistakes, label };
-  });
+  }, theme, receipt);
 
   const form = overlay.querySelector("[data-hof-form]");
   // 이름을 입력하는 대로 선물 카드 앞면에도 이름이 찍힙니다.
@@ -1904,6 +1921,8 @@ function randomApprovalNumber() {
 
 // 결제 키오스크 1단계(어려운 결제): 예전 ALPACO VIP 인증 → SNU 클래스 적립 → 카드 → 영수증 흐름. 항상 challenge 모드로만 쓰입니다.
 function renderLegacyPayStation(root, mode) {
+  let legacyCardBusy = false;
+  addCleanup(() => window.KioskFX?.clear?.());
   const isKind = mode === "kind";
   const isHard = mode === "hard";
   const picks = {};
@@ -2573,17 +2592,32 @@ function renderLegacyPayStation(root, mode) {
           return;
         }
 
-        hardware.card = true;
-        if (isHard) {
-          hardPay.pinValue = "";
-          hardPay.pinKeys = shuffledPinKeys();
-          draw();
-          return;
-        }
-        flowModalMessage = "영수증을 챙겨주세요";
-        focusGroupAfterModal = "";
-        modalAnchorGroup = "";
-        draw({ preserveScroll: true });
+        // 카드 리더기 확대 장면 → 결제 중 → 승인 순서로 실제 기계처럼 반응한 뒤 영수증 안내를 띄웁니다.
+        if (legacyCardBusy) return;
+        legacyCardBusy = true;
+        (async () => {
+          const fx = window.KioskFX || {};
+          const screen = root.querySelector(".kiosk-device-screen");
+          const reader = document.querySelector(".hw-card-reader");
+          await fx.cardCinematic?.({ outcome: "ok" });
+          fx.readerState?.(reader, "busy");
+          await fx.processing?.(screen, { title: "결제 중입니다", detail: "카드를 빼지 마세요", ms: 1400 });
+          await fx.approve?.(screen, { title: "승인되었습니다", detail: "카드 결제 완료" });
+          fx.readerState?.(reader, "ok");
+          legacyCardBusy = false;
+          if (!root.isConnected) return;
+          hardware.card = true;
+          if (isHard) {
+            hardPay.pinValue = "";
+            hardPay.pinKeys = shuffledPinKeys();
+            draw();
+            return;
+          }
+          flowModalMessage = "영수증을 챙겨주세요";
+          focusGroupAfterModal = "";
+          modalAnchorGroup = "";
+          draw({ preserveScroll: true });
+        })();
       };
 
       moveGhost(lastX, lastY);
@@ -3680,7 +3714,9 @@ function renderTinyStation(root, mode) {
         mistakes,
         storageKey: "alpaco-hall-of-fame-pay",
         subtitle: "극악 결제 키오스크 정복!",
-        label: "극악 결제 정복"
+        label: "극악 결제 정복",
+        theme: "pay",
+        receipt: { approval: pay.approval, time: (pay.time || receiptTimestamp()).slice(-8, -3) || pay.time }
       });
       return;
     }
@@ -3862,16 +3898,14 @@ function renderTinyStation(root, mode) {
         // 화면의 카드 넣는 곳에 놓아도 실제 기계 아래 카드 리더기로 카드가 들어갑니다.
         card.classList.add("is-inserted");
         runBusy(async () => {
-          await fx("insertCard", cardReader());
+          // 화면 맨 위 레이어에 카드 리더기 확대 장면을 띄워 카드가 들어가는 모습을 보여 줍니다.
+          // 극악 모드: 첫 번째 투입은 IC 칩 인식 오류가 나서 카드가 다시 나오고, 다시 꽂아야 합니다.
+          const failFirst = isInsane && !insane.cardRetried;
+          await fx("cardCinematic", { outcome: failFirst ? "error" : "ok" });
           if (disposed) return;
-          fx("readerState", cardReader(), "busy");
-          // 극악 모드: 첫 번째 투입은 IC 칩 인식 오류가 나서 다시 꽂아야 합니다.
-          if (isInsane && !insane.cardRetried) {
+          fx("readerState", cardReader(), failFirst ? "error" : "busy");
+          if (failFirst) {
             insane.cardRetried = true;
-            await fx("wait", 700);
-            if (disposed) return;
-            fx("readerState", cardReader(), "error");
-            fx("sound", "error");
             flowModalMessage = "IC 칩을 인식하지 못했습니다";
             flowModalNote = "카드를 빼서 칩이 위로 오도록 다시 꽂아 주세요.";
             flowModalNext = "다음: 카드를 카드 리더기에 다시 넣으세요.";

@@ -494,3 +494,185 @@ body.chromebook-mode .kfx-processing-title {
     transition-duration: 0.15s;
   }
 }
+
+/* ---------- 카드 투입 확대 연출 ---------- */
+.kfx-cinema {
+  position: fixed;
+  inset: 0;
+  z-index: 4300;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(14, 16, 26, 0.62);
+  pointer-events: auto;
+  animation: kfx-cinema-in 0.22s ease-out both;
+}
+
+.kfx-cinema.is-leaving {
+  animation: kfx-cinema-out 0.24s ease-in both;
+}
+
+.kfx-cinema-stage {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: min(560px, 88vw);
+  animation: kfx-cinema-pop 0.32s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+
+.kfx-cinema-panel {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  border: 5px solid #25293a;
+  border-radius: 18px;
+  background:
+    linear-gradient(90deg, rgba(32, 35, 49, 0.22), rgba(255, 255, 255, 0) 12%, rgba(255, 255, 255, 0.55) 30%, rgba(255, 255, 255, 0) 50%, rgba(32, 35, 49, 0.22)),
+    linear-gradient(180deg, #eef0f4, #c3c8d1);
+  box-shadow: 8px 8px 0 #25293a, 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.kfx-cinema-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 투입구(사진이 있어도 그 위에 정확히 겹쳐 그림) */
+.kfx-cinema-slot {
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  top: 55%;
+  height: 7%;
+  border: 4px solid #25293a;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #030407, #2c303c);
+  box-shadow: inset 0 6px 0 rgba(0, 0, 0, 0.6);
+  z-index: 3;
+}
+
+.kfx-cinema-led {
+  position: absolute;
+  right: -34px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border: 3px solid #25293a;
+  border-radius: 50%;
+  background: #6dff9b;
+  transform: translateY(-50%);
+  box-shadow: 0 0 10px rgba(109, 255, 155, 0.9);
+}
+
+.kfx-cinema[data-led="busy"] .kfx-cinema-led {
+  background: #ffb02e;
+  box-shadow: 0 0 14px rgba(255, 176, 46, 1);
+  animation: kfx-led-blink 0.28s steps(2) infinite;
+}
+
+.kfx-cinema[data-led="ok"] .kfx-cinema-led {
+  background: #4dff86;
+  box-shadow: 0 0 22px rgba(77, 255, 134, 1);
+}
+
+.kfx-cinema[data-led="error"] .kfx-cinema-led {
+  background: #ff3b5c;
+  box-shadow: 0 0 20px rgba(255, 59, 92, 1);
+  animation: kfx-led-blink 0.2s steps(2) infinite;
+}
+
+/* 카드가 투입구 위쪽에서 내려와 투입구 선에서 잘려 사라짐 */
+.kfx-cinema-clip {
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  top: 0;
+  height: 58.5%;
+  overflow: hidden;
+  z-index: 4;
+}
+
+.kfx-cinema-card {
+  position: absolute;
+  left: 8%;
+  bottom: 0;
+  width: 84%;
+  border-radius: 6%;
+  transform: translateY(-125%);
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.35));
+}
+
+.kfx-cinema-caption {
+  margin: 0;
+  padding: 8px 16px;
+  border: 3px solid #25293a;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #25293a;
+  font-weight: 900;
+  box-shadow: 4px 4px 0 #25293a;
+}
+
+.kfx-cinema[data-led="error"] .kfx-cinema-caption {
+  background: #ffe3e8;
+  color: #d6283f;
+}
+
+.kfx-cinema[data-led="ok"] .kfx-cinema-caption {
+  background: #e9ffe6;
+}
+
+@keyframes kfx-cinema-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes kfx-cinema-out {
+  to { opacity: 0; }
+}
+
+@keyframes kfx-cinema-pop {
+  from { transform: scale(0.7) translateY(40px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes kfx-led-blink {
+  50% { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kfx-cinema,
+  .kfx-cinema-stage,
+  .kfx-cinema-led {
+    animation: none !important;
+  }
+}
+
+/* 리더기 사진(card-reader-closeup.png)이 있으면 사진 속 투입구·LED 위치에 정확히 맞춤 */
+.kfx-cinema-panel:has(.kfx-cinema-photo) .kfx-cinema-slot {
+  left: 23.4%;
+  right: 26.5%;
+  top: 53.1%;
+  height: 6.7%;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.kfx-cinema-panel:has(.kfx-cinema-photo) .kfx-cinema-led {
+  right: calc(-14.4% - 20px);
+  top: calc(50% + 3px);
+  width: 21px;
+  height: 21px;
+  border-width: 2px;
+}
+
+.kfx-cinema-panel:has(.kfx-cinema-photo) .kfx-cinema-clip {
+  left: 23.4%;
+  right: 26.5%;
+  height: 56.4%;
+}

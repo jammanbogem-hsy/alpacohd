@@ -949,3 +949,32 @@
   color: #25293a;
   font-size: 0.86rem;
 }
+
+/* ---------- 결제 키오스크 전용 선물 카드 ---------- */
+.prize-theme-pay .prize-back {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(160, 200, 255, 0.35), transparent 55%),
+    linear-gradient(160deg, #1c2f7a, #4a2a8c);
+}
+
+.prize-theme-pay .prize-back-mark {
+  font-size: 3.6rem;
+}
+
+.prize-theme-pay .prize-tone-miss { background: linear-gradient(180deg, #eef0fb, #a9b1d6); }
+.prize-theme-pay .prize-tone-candy { background: linear-gradient(180deg, #f6eaff, #c995ff); }
+.prize-theme-pay .prize-tone-jelly { background: linear-gradient(180deg, #e6f6ff, #7ccaff); }
+.prize-theme-pay .prize-tone-all {
+  background: linear-gradient(180deg, #fff6c4, #ffbe55);
+}
+
+.prize-theme-pay .prize-front small {
+  color: #2b3a8f;
+}
+
+.prize-approval {
+  color: #3b3f52;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
