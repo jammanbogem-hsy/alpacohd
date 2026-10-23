@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="지역말을 지원하는 주문 키오스크와 표준어에 최적화한 주문 키오스크 비교 체험"
+      content="키오스크 두 대를 직접 써 보며 다양성·정확성, 심미성·접근성, 공정성·비용을 비교하는 밸런스 게임"
     />
     <meta name="theme-color" content="#eeefed" />
     <title>말맛식당 · 주문 키오스크</title>
@@ -13,12 +13,19 @@
     <link rel="stylesheet" href="/balance.css" />
     <link rel="stylesheet" href="/balance-surface.css" />
     <link rel="stylesheet" href="/balance-hardware.css" />
+    <link rel="stylesheet" href="/balance-card.css" />
+    <link rel="stylesheet" href="/balance-themes.css" />
+    <link rel="stylesheet" href="/balance-stages.css" />
+    <script src="/balance-card.js" defer></script>
     <script src="/balance.js" defer></script>
   </head>
   <body>
     <button id="overviewBack" class="overview-back" type="button" hidden>
       <span aria-hidden="true">←</span> 돌아가기
     </button>
+    <nav id="stageNav" class="stage-nav" aria-label="밸런스 게임 단계"></nav>
+    <section id="stageGate" class="stage-gate" hidden></section>
+    <aside id="mission" class="mission-card" aria-label="주문 미션"></aside>
     <main class="kiosk-stage" aria-label="주문 키오스크 두 대">
       <article
         id="kioskA"

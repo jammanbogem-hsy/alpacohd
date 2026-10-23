@@ -180,21 +180,7 @@ body {
   border-radius: 10px;
   box-shadow: none;
   background: transparent;
-  pointer-events: auto;
-}
-.physical-reader:disabled {
-  opacity: 1;
-  cursor: default;
-}
-.physical-reader:not(:disabled) {
-  cursor: pointer;
-}
-.physical-reader:not(:disabled):hover {
-  background: #ffffff0b;
-}
-.physical-reader:focus-visible {
-  outline: 3px solid #3e8bc9;
-  outline-offset: 4px;
+  pointer-events: none;
 }
 .reader-active-light {
   display: none;
@@ -207,7 +193,7 @@ body {
   background: #7aff4a;
   box-shadow: 0 0 7px #95ff6c;
 }
-.physical-reader:not(:disabled) .reader-active-light {
+.physical-reader.is-ready .reader-active-light {
   display: block;
 }
 .terminal[hidden],

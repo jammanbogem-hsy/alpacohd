@@ -1229,3 +1229,167 @@ button:active:not(:disabled) {
   border-radius: 3px;
   padding: 5px 7px;
 }
+
+/* Order mission: shared target for both devices, a strip above the kiosks. */
+.mission-card {
+  position: relative;
+  z-index: 90;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  width: min(1040px, calc(100% - 32px));
+  margin: 12px auto 0;
+  padding: 10px 18px;
+  border: 1px solid #d6d9d5;
+  border-radius: 14px;
+  background: #fffffff2;
+  box-shadow: 0 3px 12px #252a2512;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #29312e;
+}
+body[data-kiosk-focus] .mission-card {
+  width: min(1040px, calc(100% - 340px));
+  margin-left: max(170px, calc((100% - 1040px) / 2));
+}
+.mission-card h2 {
+  margin: 0;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.mission-card > p {
+  display: none;
+}
+.mission-card ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: mission;
+}
+.mission-card li {
+  counter-increment: mission;
+  padding: 2px 9px;
+  border-radius: 12px;
+  background: #eef2ef;
+  white-space: nowrap;
+}
+.mission-card li::before {
+  content: counter(mission) ". ";
+  color: #6b716d;
+}
+.mission-card ol small {
+  color: #6b716d;
+}
+.mission-card dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0 0 0 auto;
+}
+.mission-card dl > div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.mission-card dt {
+  font-size: 11px;
+  color: #6b716d;
+  white-space: nowrap;
+}
+.mission-card dd {
+  margin: 0;
+}
+.mission-status {
+  font-weight: 600;
+}
+.mission-status small {
+  font-weight: 400;
+}
+.mission-status.is-pending { color: #8a908c; }
+.mission-status.is-good { color: #1f7a4d; }
+.mission-status.is-warn { color: #a3630e; }
+.mission-status.is-bad { color: #b3392f; }
+.mission-faults {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: #fbe3e0;
+  color: #b3392f;
+  font-size: 11px;
+}
+@media (max-width: 760px) {
+  body[data-kiosk-focus] .mission-card {
+    width: calc(100% - 32px);
+    margin: 64px auto 0;
+  }
+}
+
+/* Scripted system errors on A's regional locales. */
+.terminal .screen-overlay.fault-overlay {
+  background: #1c222acc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.terminal .fault-overlay .fault-panel {
+  flex: none;
+  min-height: 0;
+  width: calc(100% - 28px);
+  max-width: 420px;
+  border: 2px solid #c5463a;
+  background: #fff;
+  box-shadow: 0 10px 30px #0006;
+  text-align: center;
+}
+.fault-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #c5463a;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 800;
+}
+.fault-code {
+  margin: 10px 0 4px;
+  font: 600 12px ui-monospace, Menlo, monospace;
+  color: #c5463a;
+  letter-spacing: 0.05em;
+}
+.terminal .fault-overlay .fault-panel h2 {
+  color: #8f2a20;
+  margin-bottom: 10px;
+}
+.fault-body {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #3c4348;
+  margin: 0 0 12px;
+}
+.fault-note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #6d5731;
+  background: #fff3dd;
+  border: 1px solid #e6d3ad;
+  padding: 8px 10px;
+  margin: 0 0 12px;
+  text-align: left;
+}
+.fault-countdown {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c5463a;
+  margin: 0 0 12px;
+}
+.terminal .fault-overlay .fault-panel .primary {
+  flex: none;
+  min-width: 140px;
+  padding: 10px 24px;
+}

@@ -3,9 +3,13 @@
 
   // Equal-budget classroom scenario: language coverage vs interface optimization.
   // Performance and billing faults belong to product A, regardless of locale.
+  // A's regional locales also hit scripted system errors (see faultCopy): the
+  // budget spent on language coverage left little for error handling.
   // These are classroom simulation conditions, not properties of regional languages.
   const LEGACY_DELAYS = [1000, 1500, 900, 2100, 1200, 1700];
   const LEGACY_FRAME_MS = 150;
+  const RECEIPT_PRINT_MS = 1800;
+  const FAULT_RESET_SECONDS = 4;
   const products = [
     { id: "bulgogi", price: 8900, category: "meal", position: "0% 0%" },
     { id: "bibimbap", price: 8500, category: "meal", position: "50% 0%" },
@@ -56,6 +60,8 @@
       yes: "취소하기",
       no: "돌아가기",
       soldMax: "한 메뉴는 20개까지 주문할 수 있습니다",
+      popular: "인기",
+      won: "원",
       names: [
         "불고기덮밥",
         "비빔밥",
@@ -247,6 +253,228 @@
         "청포도영 탄산 넣은 마실 거우다",
       ],
     },
+    // Stage 3: the translation kiosk's foreign-language screens.
+    en: {
+      language: "English",
+      status: "Now ordering",
+      chooseLanguage: "Language",
+      categories: ["All", "Meals", "Sides", "Drinks"],
+      menuTitle: "Please choose your menu",
+      here: "Eat here",
+      takeout: "Take out",
+      basket: "Your order",
+      empty: "Please choose your menu",
+      clear: "Cancel all",
+      remove: "Remove",
+      quantity: "Quantity",
+      minus: "Decrease quantity",
+      plus: "Increase quantity",
+      total: "Total",
+      checkout: "Pay",
+      cancel: "Cancel",
+      close: "Close",
+      back: "Back",
+      add: "Add",
+      ice: "Ice",
+      iceLabels: ["Regular", "Less", "No ice"],
+      sum: "Order total",
+      review: "Check your order",
+      checkOrder: "Please check your order",
+      card: "Pay by card",
+      cardPrompt: "Please insert your card",
+      cardWait: "Do not remove your card until payment is complete",
+      insert: "Insert card",
+      paying: "Processing payment",
+      wait: "Please wait",
+      complete: "Your order is complete",
+      number: "Order number",
+      receipt: "Receipt",
+      receiptPrompt: "Please take your receipt",
+      done: "Home",
+      confirmClear: "Cancel all items?",
+      yes: "Cancel all",
+      no: "Go back",
+      soldMax: "You can order up to 20 of each item",
+      popular: "Best",
+      won: "KRW",
+      names: ["Bulgogi Rice Bowl", "Bibimbap", "Pork Cutlet", "Tteokbokki", "Fried Dumplings", "Green Grape Ade"],
+      details: [
+        "Sweet bulgogi beef over warm rice",
+        "Fresh vegetables with sesame oil",
+        "Thick, crispy fried pork cutlet",
+        "Chewy rice cakes in spicy sauce",
+        "Six pan-fried dumplings",
+        "Green grape with sparkling water",
+      ],
+    },
+    zh: {
+      language: "中文",
+      status: "正在点餐",
+      chooseLanguage: "语言",
+      categories: ["全部", "主食", "小吃", "饮料"],
+      menuTitle: "请选择菜单",
+      here: "堂食",
+      takeout: "打包",
+      basket: "已选菜单",
+      empty: "请选择菜单",
+      clear: "全部取消",
+      remove: "删除",
+      quantity: "数量",
+      minus: "减少数量",
+      plus: "增加数量",
+      total: "合计",
+      checkout: "结账",
+      cancel: "取消",
+      close: "关闭",
+      back: "返回",
+      add: "加入",
+      ice: "冰块",
+      iceLabels: ["正常", "少冰", "去冰"],
+      sum: "订单金额",
+      review: "确认订单",
+      checkOrder: "请确认所选菜单",
+      card: "刷卡支付",
+      cardPrompt: "请插入银行卡",
+      cardWait: "支付完成前请勿拔出银行卡",
+      insert: "插入银行卡",
+      paying: "正在支付",
+      wait: "请稍候",
+      complete: "点餐完成",
+      number: "取餐号",
+      receipt: "收据",
+      receiptPrompt: "请取走收据",
+      done: "返回首页",
+      confirmClear: "要取消全部菜单吗？",
+      yes: "全部取消",
+      no: "返回",
+      soldMax: "每种菜单最多可点20份",
+      popular: "人气",
+      won: "韩元",
+      names: ["烤肉盖饭", "拌饭", "炸猪排", "炒年糕", "煎饺", "青葡萄气泡饮"],
+      details: [
+        "甜烤牛肉配热米饭",
+        "新鲜蔬菜配香油",
+        "厚切酥脆炸猪排",
+        "Q弹年糕配辣酱",
+        "六个香煎饺子",
+        "青葡萄加气泡水",
+      ],
+    },
+    ja: {
+      language: "日本語",
+      status: "ご注文受付中",
+      chooseLanguage: "言語",
+      categories: ["すべて", "お食事", "サイド", "ドリンク"],
+      menuTitle: "メニューをお選びください",
+      here: "店内",
+      takeout: "持ち帰り",
+      basket: "選んだメニュー",
+      empty: "メニューをお選びください",
+      clear: "すべて取消",
+      remove: "削除",
+      quantity: "数量",
+      minus: "数量を減らす",
+      plus: "数量を増やす",
+      total: "合計",
+      checkout: "お会計",
+      cancel: "キャンセル",
+      close: "閉じる",
+      back: "戻る",
+      add: "追加",
+      ice: "氷",
+      iceLabels: ["普通", "少なめ", "なし"],
+      sum: "ご注文金額",
+      review: "ご注文の確認",
+      checkOrder: "選んだメニューをご確認ください",
+      card: "カード払い",
+      cardPrompt: "カードを入れてください",
+      cardWait: "お支払いが終わるまでカードを抜かないでください",
+      insert: "カードを入れる",
+      paying: "お支払い中です",
+      wait: "少々お待ちください",
+      complete: "ご注文が完了しました",
+      number: "注文番号",
+      receipt: "レシート",
+      receiptPrompt: "レシートをお取りください",
+      done: "最初に戻る",
+      confirmClear: "すべて取り消しますか？",
+      yes: "すべて取消",
+      no: "戻る",
+      soldMax: "1つのメニューは20個までご注文いただけます",
+      popular: "人気",
+      won: "ウォン",
+      names: ["プルコギ丼", "ビビンバ", "とんかつ", "トッポッキ", "焼き餃子", "マスカットエード"],
+      details: [
+        "甘いプルコギを温かいご飯にのせて",
+        "新鮮な野菜とごま油",
+        "厚切りでサクサクのとんかつ",
+        "もちもちのお餅と辛いタレ",
+        "こんがり焼いた餃子6個",
+        "マスカットと炭酸の爽やかな味",
+      ],
+    },
+  };
+  const DIALECTS = ["standard", "jeolla", "gyeongsang", "jeju"];
+  const TRANSLATIONS = ["standard", "en", "zh", "ja"];
+  const LANG_ATTR = { en: "en", zh: "zh", ja: "ja" };
+
+  // Stage 3's foreign-tourist role: Korean screens appear in a script the
+  // visitor cannot read. Digits stay so prices remain legible.
+  const unreadable = (value) =>
+    Array.isArray(value)
+      ? value.map(unreadable)
+      : String(value).replace(/[가-힣]/g, (ch) => {
+          const code = ch.charCodeAt(0);
+          return String.fromCharCode(0x10d0 + (code % 33), 0x10d0 + ((code >> 3) % 33));
+        });
+  const unreadableCopy = Object.fromEntries(
+    Object.entries(copy.standard).map(([key, value]) => [key, unreadable(value)]),
+  );
+
+  const STAGES = {
+    1: {
+      title: "다양성 vs 정확성",
+      left: "사투리도 알아듣는 기기",
+      right: "표준어만 정확한 기기",
+      key: "1t5g4lv",
+    },
+    2: {
+      title: "심미성 vs 접근성",
+      left: "예쁜 디자인 기기",
+      right: "잘 보이는 기기",
+      key: "15ohe0q",
+    },
+    3: {
+      title: "공정성 vs 비용",
+      left: "번역 기능에 예산을 쓴 기기",
+      right: "음성 안내에 예산을 쓴 기기",
+      key: "1jiaydn",
+    },
+  };
+  // Classroom pacing only: hashed so the next password is not readable at a glance.
+  const passKey = (value) => {
+    let h = 0x811c9dc5;
+    for (const ch of value.replace(/\s/g, "").normalize("NFC")) {
+      h ^= ch.codePointAt(0);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h.toString(36);
+  };
+  const store = {
+    get(key) {
+      try { return sessionStorage.getItem(key); } catch { return null; }
+    },
+    set(key, value) {
+      try { sessionStorage.setItem(key, value); } catch {}
+    },
+  };
+  const unlocked = new Set((store.get("balance-unlocked") || "").split(",").filter((n) => STAGES[n]).map(Number));
+  let stage = 0;
+  let vision = "low";
+  let role = "foreign";
+  const roleCopy = {
+    foreign: { label: "외국인 관광객", note: "한글을 읽지 못하고 영어는 읽을 수 있어요." },
+    blind: { label: "시각장애인 손님", note: "화면이 보이지 않아요. 손으로 눌러 보세요." },
   };
   const $ = (s) => document.querySelector(s);
   const html = (value) =>
@@ -262,6 +490,8 @@
         })[c],
     );
   const money = (value) => value.toLocaleString("ko-KR");
+  // Kiosk-screen currency unit; dialect copies fall back to the standard "원".
+  const won = (side) => html(t(side).won || "원");
   const fresh = (locale) => ({
     locale,
     pendingLocale: null,
@@ -278,13 +508,62 @@
     calculationCount: 0,
     totalError: 0,
     receipt: null,
+    receiptTaken: false,
+    receiptGone: false,
+    cardInserted: false,
+    fault: null,
     alert: "",
   });
   const machines = { A: fresh("jeolla"), B: fresh("standard") };
   const serial = { A: 100, B: 200 };
+
+  // The same order mission on both devices so students can compare outcomes.
+  const mission = {
+    dining: "takeout",
+    items: [
+      { id: "bulgogi", qty: 1 },
+      { id: "dumpling", qty: 1 },
+      { id: "ade", qty: 1, ice: "less" },
+    ],
+  };
+  // Keyed by stage (and stage 3's role) so switching back keeps earlier results.
+  const missionResults = {};
+  const resultKey = (side) => `${stage}:${stage === 3 ? role : ""}:${side}`;
+
+  // Scripted per order run in A's regional locales: the 2nd add, the 1st order
+  // review and the 1st payment fail. Counters survive the payment reset so the
+  // order can still be finished, and clear when a completed order restarts.
+  const faults = { add: 0, checkout: 0, pay: 0, seen: 0 };
+  const faultCopy = {
+    add: {
+      code: "E-102",
+      title: "메뉴를 담지 못했습니다",
+      body: "지역말 메뉴 정보를 불러오는 중 문제가 생겼습니다. 메뉴를 다시 담아 주세요.",
+    },
+    checkout: {
+      code: "E-204",
+      title: "주문 확인 화면을 열 수 없습니다",
+      body: "지역말 화면을 만드는 중 응답이 없습니다. 결제하기를 다시 눌러 주세요.",
+    },
+    pay: {
+      code: "E-503",
+      title: "결제 오류로 주문이 취소되었습니다",
+      body: "카드 승인 결과를 처리하지 못했습니다. 담은 메뉴가 모두 지워지고 처음 화면으로 돌아갑니다.",
+      reset: true,
+    },
+  };
+  const FAULT_NOTE =
+    "이 기기는 한정된 개발비를 지역말 지원에 먼저 써서, 오류를 처리하는 기능을 충분히 만들지 못했습니다.";
+  // Stage 1's left kiosk is the slow, error-prone legacy product.
+  const legacy = (side) => stage === 1 && side === "A";
+  const dialect = (side) => legacy(side) && machines.A.locale !== "standard";
+  const voiceMode = (side) => stage === 3 && role === "blind" && side === "B";
   let activeSide = null;
   let overviewScroll = 0;
-  const t = (side) => copy[machines[side].locale];
+  const t = (side) =>
+    stage === 3 && role === "foreign" && machines[side].locale === "standard"
+      ? unreadableCopy
+      : copy[machines[side].locale];
   const product = (id) => products.find((p) => p.id === id);
   const name = (side, id) =>
     t(side).names[products.findIndex((p) => p.id === id)];
@@ -292,11 +571,11 @@
     t(side).details[products.findIndex((p) => p.id === id)];
   const total = (machine) =>
     machine.cart.reduce((sum, row) => sum + product(row.id).price * row.qty, 0);
-  const billedTotal = (side) => total(machines[side]) + (side === "A" ? machines.A.totalError : 0);
+  const billedTotal = (side) => total(machines[side]) + (legacy(side) ? machines.A.totalError : 0);
 
   function recalculate(side, machine) {
     machine.totalError = 0;
-    if (side !== "A" || !machine.cart.length) return;
+    if (!legacy(side) || !machine.cart.length) return;
     // Reproducible faults: the 2nd, 5th, 8th… nonempty cart edits are incorrect.
     // Rows stay intact; the same mistaken total carries through to the receipt.
     const calculation = ++machine.calculationCount;
@@ -313,7 +592,7 @@
     legacyScroll.touchTarget = null;
   }
   function legacyScroller(target) {
-    if (activeSide !== "A" || machines.A.busy || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
+    if (activeSide !== "A" || !legacy("A") || machines.A.busy || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
     const scroller = target.closest(".menu-scroll, .basket-list, .product-detail, .review-content, .complete-panel");
     return scroller && scroller.scrollHeight > scroller.clientHeight + 1 ? scroller : null;
   }
@@ -386,32 +665,38 @@
       );
     }
     if (side) $("#overviewBack").focus({ preventScroll: true });
+    if (side && voiceMode(side)) speak(screenSpeech(side));
+    else if (!side) stopVoice();
     else root.querySelector(".kiosk-focus-target")?.focus({ preventScroll: true });
   }
 
   function renderLanguage(side) {
-    if (side === "B")
-      return '<span class="fixed-language" aria-label="표준어">한국어</span>';
     const m = machines[side], c = t(side);
     const selected = m.pendingLocale || m.locale;
-    return `<section class="locale-panel"><p class="locale-caption">${html(c.chooseLanguage)}</p><div class="locale-buttons" role="group" aria-label="${html(c.chooseLanguage)}">${Object.keys(copy).map((locale) => button("locale", `<span>${copy[locale].language}</span><i aria-hidden="true">${selected === locale ? "✓" : ""}</i>`, `data-value="${locale}" aria-pressed="${selected === locale}" ${m.busy ? "disabled" : ""}`)).join("")}</div></section>`;
+    if (legacy(side))
+      return `<section class="locale-panel"><p class="locale-caption">${html(c.chooseLanguage)}</p><div class="locale-buttons" role="group" aria-label="${html(c.chooseLanguage)}">${DIALECTS.map((locale) => button("locale", `<span>${copy[locale].language}</span><i aria-hidden="true">${selected === locale ? "✓" : ""}</i>`, `data-value="${locale}" aria-pressed="${selected === locale}" ${m.busy ? "disabled" : ""}`)).join("")}</div></section>`;
+    if (stage === 3 && side === "A")
+      return `<div class="translate-buttons" role="group" aria-label="Language">${TRANSLATIONS.map((locale) => button("locale", locale === "standard" ? "한국어" : copy[locale].language, `data-value="${locale}" aria-pressed="${selected === locale}" ${LANG_ATTR[locale] ? `lang="${LANG_ATTR[locale]}"` : 'lang="ko"'}`)).join("")}</div>`;
+    if (stage === 3 && side === "B")
+      return `<span class="voice-badge" aria-label="음성 안내 지원"><span aria-hidden="true">🔊</span>음성 안내</span>`;
+    return '<span class="fixed-language" aria-label="표준어">한국어</span>';
   }
 
   function renderHeader(side) {
-    const modern = side === "B";
+    const modern = !legacy(side);
     return `<header class="store-header"><div class="store-logo">${restaurantMark}<span class="store-brand"><strong>말맛식당</strong>${modern ? '<small>정성으로 차린 한 끼</small>' : ""}</span></div>${modern ? renderLanguage(side) : `<span class="legacy-state"><i aria-hidden="true"></i>${html(t(side).status)}</span>`}</header>`;
   }
 
   function renderNavigation(side) {
-    const m = machines[side], c = t(side), modern = side === "B";
+    const m = machines[side], c = t(side), modern = !legacy(side);
     const choice = (type, label) => modern ? `${icon(type)}<span>${html(label)}</span>` : html(label);
     return `<div class="dining-bar" role="group" aria-label="${html(c.here)} / ${html(c.takeout)}">${button("dining", choice("here", c.here), `data-value="here" aria-pressed="${m.dining === "here"}"`)}${button("dining", choice("takeout", c.takeout), `data-value="takeout" aria-pressed="${m.dining === "takeout"}"`)}</div><nav class="menu-tabs" aria-label="${html(c.menuTitle)}">${["all", "meal", "side", "drink"].map((category, index) => button("category", choice(category, c.categories[index]), `data-value="${category}" aria-pressed="${m.category === category}"`)).join("")}</nav>${modern ? "" : `<div class="legacy-menu-caption">${html(c.menuTitle)}</div>`}`;
   }
 
   function renderMenu(side) {
-    const m = machines[side], modern = side === "B";
+    const m = machines[side], modern = !legacy(side);
     const filtered = products.filter((p) => m.category === "all" || p.category === m.category);
-    return `<div class="menu-scroll" tabindex="0" aria-label="${html(t(side).menuTitle)}"><div class="menu-grid">${filtered.map((p) => `<button type="button" class="menu-product ${p.id === "bulgogi" ? "is-popular" : ""}" data-action="product" data-id="${p.id}">${photo(p.id)}${modern && p.id === "bulgogi" ? '<span class="product-badge">인기</span>' : ""}<span class="product-text"><strong>${html(name(side, p.id))}</strong><small>${html(detail(side, p.id))}</small><b>${money(p.price)}<span>원</span></b></span>${modern ? '<span class="product-order-sign" aria-hidden="true">＋</span>' : ""}</button>`).join("")}</div></div>`;
+    return `<div class="menu-scroll" tabindex="0" aria-label="${html(t(side).menuTitle)}"><div class="menu-grid">${filtered.map((p) => `<button type="button" class="menu-product ${p.id === "bulgogi" ? "is-popular" : ""}" data-action="product" data-id="${p.id}">${photo(p.id)}${modern && p.id === "bulgogi" ? `<span class="product-badge">${html(t(side).popular || "인기")}</span>` : ""}<span class="product-text"><strong>${html(name(side, p.id))}</strong><small>${html(detail(side, p.id))}</small><b>${money(p.price)}<span>${won(side)}</span></b></span>${modern ? '<span class="product-order-sign" aria-hidden="true">＋</span>' : ""}</button>`).join("")}</div></div>`;
   }
 
   function renderCart(side) {
@@ -420,17 +705,17 @@
     const rows = m.cart
       .map(
         (row, index) =>
-          `<div class="basket-row">${side === "B" ? `<span class="basket-thumb">${photo(row.id)}</span>` : ""}<span class="basket-name">${html(name(side, row.id))}${row.id === "ade" ? `<small>${html(iceLabel(side, row.ice))}</small>` : ""}</span><div class="stepper">${button("decrease", "−", `data-index="${index}" aria-label="${html(c.minus)}"`)}<output>${row.qty}</output>${button("increase", "＋", `data-index="${index}" aria-label="${html(c.plus)}"`)}</div><span class="line-price">${money(product(row.id).price * row.qty)}</span>${button("remove", "×", `class="remove" data-index="${index}" aria-label="${html(c.remove)}"`)}</div>`,
+          `<div class="basket-row">${!legacy(side) ? `<span class="basket-thumb">${photo(row.id)}</span>` : ""}<span class="basket-name">${html(name(side, row.id))}${row.id === "ade" ? `<small>${html(iceLabel(side, row.ice))}</small>` : ""}</span><div class="stepper">${button("decrease", "−", `data-index="${index}" aria-label="${html(c.minus)}"`)}<output>${row.qty}</output>${button("increase", "＋", `data-index="${index}" aria-label="${html(c.plus)}"`)}</div><span class="line-price">${money(product(row.id).price * row.qty)}</span>${button("remove", "×", `class="remove" data-index="${index}" aria-label="${html(c.remove)}"`)}</div>`,
       )
       .join("");
-    return `<section class="basket ${m.cart.length ? "" : "is-empty"}" aria-label="${html(c.basket)}"><div class="basket-head"><strong>${html(c.basket)} <span>${count(m)}</span></strong>${button("clear", html(c.clear), m.cart.length ? "" : "disabled")}</div><div class="basket-list">${rows || `<p class="empty-basket">${html(c.empty)}</p>`}</div></section><div class="checkout-bar"><div><span>${html(c.total)}</span><strong>${money(billedTotal(side))}<small>원</small></strong></div>${button("checkout", `${html(c.checkout)} <span aria-hidden="true">›</span>`, `class="checkout" ${m.cart.length ? "" : "disabled"}`)}</div>`;
+    return `<section class="basket ${m.cart.length ? "" : "is-empty"}" aria-label="${html(c.basket)}"><div class="basket-head"><strong>${html(c.basket)} <span>${count(m)}</span></strong>${button("clear", html(c.clear), m.cart.length ? "" : "disabled")}</div><div class="basket-list">${rows || `<p class="empty-basket">${html(c.empty)}</p>`}</div></section><div class="checkout-bar"><div><span>${html(c.total)}</span><strong>${money(billedTotal(side))}<small>${won(side)}</small></strong></div>${button("checkout", `${html(c.checkout)} <span aria-hidden="true">›</span>`, `class="checkout" ${m.cart.length ? "" : "disabled"}`)}</div>`;
   }
 
   function orderRows(side, rows) {
     return rows
       .map(
         (row) =>
-          `<div class="review-row"><span>${side === "B" ? `<span class="review-thumb">${photo(row.id)}</span>` : ""}<span>${html(name(side, row.id))}<small>${row.id === "ade" ? html(iceLabel(side, row.ice)) : ""}</small></span></span><b>× ${row.qty}</b><span>${money(product(row.id).price * row.qty)}원</span></div>`,
+          `<div class="review-row"><span>${!legacy(side) ? `<span class="review-thumb">${photo(row.id)}</span>` : ""}<span>${html(name(side, row.id))}<small>${row.id === "ade" ? html(iceLabel(side, row.ice)) : ""}</small></span></span><b>× ${row.qty}</b><span>${money(product(row.id).price * row.qty)}${won(side)}</span></div>`,
       )
       .join("");
   }
@@ -442,22 +727,225 @@
     let content = "";
     if (m.phase === "product") {
       const p = product(m.selected);
-      content = `<header class="overlay-heading"><h2 tabindex="-1">${html(name(side, p.id))}</h2>${button("back", "×", `class="icon-close" aria-label="${html(c.close)}"`)}</header><div class="product-detail">${photo(p.id)}<p>${html(detail(side, p.id))}</p><strong class="detail-price">${money(p.price)}<small>원</small></strong><div class="option-row"><span>${html(c.quantity)}</span><div class="stepper">${button("draft-minus", "−", `aria-label="${html(c.minus)}" ${m.draftQty === 1 ? "disabled" : ""}`)}<output>${m.draftQty}</output>${button("draft-plus", "＋", `aria-label="${html(c.plus)}" ${m.draftQty === 20 ? "disabled" : ""}`)}</div></div>${p.id === "ade" ? `<fieldset class="ice-options"><legend>${html(c.ice)}</legend>${["normal", "less", "none"].map((ice) => button("draft-ice", html(iceLabel(side, ice)), `data-value="${ice}" aria-pressed="${m.draftIce === ice}"`)).join("")}</fieldset>` : ""}</div><footer class="overlay-actions">${button("back", html(c.cancel), 'class="secondary"')}${button("add", `${html(c.add)} <b>${money(p.price * m.draftQty)}원</b>`, 'class="primary"')}</footer>`;
+      content = `<header class="overlay-heading"><h2 tabindex="-1">${html(name(side, p.id))}</h2>${button("back", "×", `class="icon-close" aria-label="${html(c.close)}"`)}</header><div class="product-detail">${photo(p.id)}<p>${html(detail(side, p.id))}</p><strong class="detail-price">${money(p.price)}<small>${won(side)}</small></strong><div class="option-row"><span>${html(c.quantity)}</span><div class="stepper">${button("draft-minus", "−", `aria-label="${html(c.minus)}" ${m.draftQty === 1 ? "disabled" : ""}`)}<output>${m.draftQty}</output>${button("draft-plus", "＋", `aria-label="${html(c.plus)}" ${m.draftQty === 20 ? "disabled" : ""}`)}</div></div>${p.id === "ade" ? `<fieldset class="ice-options"><legend>${html(c.ice)}</legend>${["normal", "less", "none"].map((ice) => button("draft-ice", html(iceLabel(side, ice)), `data-value="${ice}" aria-pressed="${m.draftIce === ice}"`)).join("")}</fieldset>` : ""}</div><footer class="overlay-actions">${button("back", html(c.cancel), 'class="secondary"')}${button("add", `${html(c.add)} <b>${money(p.price * m.draftQty)}${won(side)}</b>`, 'class="primary"')}</footer>`;
     } else if (m.phase === "clear") {
       content = `<div class="centered-panel"><h2 tabindex="-1">${html(c.confirmClear)}</h2><div class="clear-actions">${button("back", html(c.no), 'class="secondary"')}${button("clear-confirm", html(c.yes), 'class="primary"')}</div></div>`;
     } else if (m.phase === "checkout") {
-      content = `<header class="overlay-heading"><h2 tabindex="-1">${html(c.review)}</h2>${button("back", "×", `class="icon-close" aria-label="${html(c.close)}"`)}</header><div class="review-content"><p class="review-help">${html(c.checkOrder)}</p><div class="dining-summary">${html(m.dining === "here" ? c.here : c.takeout)}</div>${orderRows(side, m.cart)}<div class="review-total"><span>${html(c.sum)}</span><strong>${money(billedTotal(side))}원</strong></div></div><footer class="overlay-actions">${button("back", html(c.back), 'class="secondary"')}${button("payment", html(c.card), 'class="primary"')}</footer>`;
+      content = `<header class="overlay-heading"><h2 tabindex="-1">${html(c.review)}</h2>${button("back", "×", `class="icon-close" aria-label="${html(c.close)}"`)}</header><div class="review-content"><p class="review-help">${html(c.checkOrder)}</p><div class="dining-summary">${html(m.dining === "here" ? c.here : c.takeout)}</div>${orderRows(side, m.cart)}<div class="review-total"><span>${html(c.sum)}</span><strong>${money(billedTotal(side))}${won(side)}</strong></div></div><footer class="overlay-actions">${button("back", html(c.back), 'class="secondary"')}${button("payment", html(c.card), 'class="primary"')}</footer>`;
     } else if (m.phase === "payment") {
-      content = `<div class="centered-panel payment-panel"><h2 tabindex="-1">${html(c.cardPrompt)}</h2><strong class="payment-total">${money(billedTotal(side))}<small>원</small></strong>${button("pay", `<span class="payment-card-art" aria-hidden="true"><i></i><b>▥</b></span><span>${html(c.insert)} ↓</span>`, 'class="insert-card"')}<p>${html(c.cardWait)}</p>${button("checkout", html(c.back), 'class="secondary payment-back"')}</div>`;
+      content = `<div class="centered-panel payment-panel"><h2 tabindex="-1">${html(c.cardPrompt)}</h2><strong class="payment-total">${money(billedTotal(side))}<small>${won(side)}</small></strong><div class="insert-card"><span class="payment-card-art" aria-hidden="true"><i></i><b>▥</b></span><span>${html(c.insert)} ↓</span></div><p>${html(c.cardWait)}</p>${button("checkout", html(c.back), `class="secondary payment-back" ${m.cardInserted ? "disabled" : ""}`)}</div>`;
+    } else if (m.phase === "fault") {
+      const f = faultCopy[m.fault.kind];
+      content = `<div class="centered-panel fault-panel"><span class="fault-mark" aria-hidden="true">!</span><p class="fault-code">시스템 오류 ${f.code}</p><h2 tabindex="-1">${html(f.title)}</h2><p class="fault-body">${html(f.body)}</p><p class="fault-note">${html(FAULT_NOTE)}</p>${f.reset ? `<p class="fault-countdown" aria-live="polite">${m.fault.seconds}초 뒤 처음 화면으로 돌아갑니다</p>` : ""}${button("fault-ok", f.reset ? "처음으로" : "확인", 'class="primary"')}</div>`;
     } else if (m.phase === "complete") {
       const r = m.receipt;
-      content = `<div class="centered-panel complete-panel"><span class="success-mark" aria-hidden="true">✓</span><h2 tabindex="-1">${html(c.complete)}</h2><p>${html(c.number)}</p><strong class="order-number">${r.number}</strong><div class="receipt-preview"><strong>말맛식당</strong><small>${html(m.dining === "here" ? c.here : c.takeout)}</small>${orderRows(side, r.cart)}<div class="review-total"><span>${html(c.total)}</span><b>${money(r.total)}원</b></div></div><p class="receipt-prompt">${html(c.receiptPrompt)}</p>${button("restart", html(c.done), 'class="primary complete-done"')}</div>`;
+      content = `<div class="centered-panel complete-panel"><span class="success-mark" aria-hidden="true">✓</span><h2 tabindex="-1">${html(c.complete)}</h2><p>${html(c.number)}</p><strong class="order-number">${r.number}</strong><div class="receipt-preview"><strong>말맛식당</strong><small>${html(m.dining === "here" ? c.here : c.takeout)}</small>${orderRows(side, r.cart)}<div class="review-total"><span>${html(c.total)}</span><b>${money(r.total)}${won(side)}</b></div></div><p class="receipt-prompt">${html(c.receiptPrompt)}</p>${button("restart", html(c.done), 'class="primary complete-done"')}</div>`;
     }
+    if (m.phase === "fault")
+      return `<section class="screen-overlay fault-overlay" role="alertdialog" aria-label="시스템 오류">${content}</section>`;
     return `<section class="screen-overlay" role="dialog" aria-label="${html(m.phase === "product" ? name(side, m.selected) : m.phase === "complete" ? c.complete : c.review)}">${content}</section>`;
   }
 
+  function renderReceipt(side) {
+    const m = machines[side],
+      c = t(side),
+      r = m.receipt;
+    if (m.phase !== "complete" || !r || m.receiptGone) return "";
+    // Re-renders keep the feed animation where it was instead of restarting it.
+    const elapsed = Date.now() - r.printedAt;
+    const printing = elapsed < RECEIPT_PRINT_MS;
+    const rows = r.cart
+      .map(
+        (row) =>
+          `<span class="receipt-paper-row"><span>${html(name(side, row.id))}${row.id === "ade" ? ` (${html(iceLabel(side, row.ice))})` : ""}</span><b>×${row.qty}</b><span>${money(product(row.id).price * row.qty)}</span></span>`,
+      )
+      .join("");
+    return `<button type="button" class="receipt-paper ${m.receiptTaken ? "is-taken" : ""}" data-action="take-receipt" data-printing="${printing}" style="--print-elapsed: -${printing ? elapsed : 0}ms" aria-label="${html(c.receipt)}"><span class="receipt-paper-head"><strong>말맛식당</strong><small>${html(m.dining === "here" ? c.here : c.takeout)}</small></span>${rows}<span class="receipt-paper-total"><span>${html(c.total)}</span><b>${money(r.total)}${won(side)}</b></span><span class="receipt-paper-number"><span>${html(c.number)}</span><strong>${r.number}</strong></span></button>`;
+  }
+
+  function renderMission() {
+    if (!stage) return;
+    const info = STAGES[stage];
+    const item = (row) => {
+      const index = products.findIndex((p) => p.id === row.id);
+      return `<li>${html(copy.standard.names[index])} ${row.qty}개${row.ice ? ` <small>(얼음 ${html(copy.standard.iceLabels[["normal", "less", "none"].indexOf(row.ice)])})</small>` : ""}</li>`;
+    };
+    const status = (side) => {
+      const r = missionResults[resultKey(side)];
+      if (!r) return '<span class="mission-status is-pending">주문 중</span>';
+      if (!r.matches)
+        return '<span class="mission-status is-bad">주문 내용이 미션과 달라요</span>';
+      if (r.billed !== r.expected)
+        return `<span class="mission-status is-warn">주문은 맞았지만 ${money(r.billed)}원이 결제됐어요 <small>(맞는 금액 ${money(r.expected)}원)</small></span>`;
+      return `<span class="mission-status is-good">미션 성공 · ${money(r.billed)}원</span>`;
+    };
+    let tools = "";
+    if (stage === 2)
+      tools = `<div class="mission-tools"><button type="button" data-mission="vision" aria-pressed="${vision === "low"}">어르신 눈으로 보기 <b>${vision === "low" ? "켜짐" : "꺼짐"}</b></button></div>`;
+    else if (stage === 3)
+      tools = `<div class="mission-tools" role="group" aria-label="손님 역할"><span>나는</span>${Object.entries(roleCopy).map(([key, r]) => `<button type="button" data-mission="role" data-value="${key}" aria-pressed="${role === key}">${r.label}</button>`).join("")}<small>${html(roleCopy[role].note)}</small></div>`;
+    $("#mission").innerHTML = `<h2>주문 미션</h2><ol><li>포장</li>${mission.items.map(item).join("")}<li>카드로 결제</li></ol>${tools}<dl><div><dt>왼쪽 · ${html(info.left)}</dt><dd>${status("A")}${stage === 1 && faults.seen ? `<small class="mission-faults">오류 ${faults.seen}번</small>` : ""}</dd></div><div><dt>오른쪽 · ${html(info.right)}</dt><dd>${status("B")}</dd></div></dl>`;
+  }
+
+  function scoreMission(side) {
+    const m = machines[side],
+      r = m.receipt;
+    const matches =
+      m.dining === mission.dining &&
+      r.cart.length === mission.items.length &&
+      mission.items.every((want) =>
+        r.cart.some(
+          (row) =>
+            row.id === want.id &&
+            row.qty === want.qty &&
+            (!want.ice || row.ice === want.ice),
+        ),
+      );
+    const expected = r.cart.reduce(
+      (sum, row) => sum + product(row.id).price * row.qty,
+      0,
+    );
+    missionResults[resultKey(side)] = { matches, billed: r.total, expected };
+    renderMission();
+  }
+
+  function setFault(order, kind) {
+    order.phase = "fault";
+    order.fault = { kind, seconds: FAULT_RESET_SECONDS };
+    order.alert = "";
+    faults.seen++;
+    renderMission();
+  }
+
+  function resetAfterFault(side) {
+    machines[side] = fresh(machines[side].locale);
+    render(side, true);
+  }
+
+  // The payment fault wipes the order and counts down back to the first screen.
+  function showResetFault(side, kind) {
+    const m = machines[side];
+    setFault(m, kind);
+    render(side, true);
+    const tick = () => {
+      if (machines[side] !== m || m.phase !== "fault") return;
+      if (--m.fault.seconds <= 0) return resetAfterFault(side);
+      render(side);
+      setTimeout(tick, 1000);
+    };
+    setTimeout(tick, 1000);
+  }
+
+  function pay(side) {
+    const m = machines[side];
+    if (m.busy || m.phase !== "payment" || activeSide !== side) return;
+    m.busy = true;
+    m.cardInserted = true;
+    const revision = ++m.revision;
+    render(side);
+    if (voiceMode(side)) speak(t(side).paying);
+    setTimeout(
+      () => {
+        if (machines[side] !== m || m.revision !== revision) return;
+        m.busy = false;
+        m.cardInserted = false;
+        if (dialect(side) && faults.pay++ === 0) {
+          showResetFault(side, "pay");
+          return;
+        }
+        m.receipt = {
+          number: ++serial[side],
+          cart: m.cart.map((row) => ({ ...row })),
+          total: billedTotal(side),
+          printedAt: Date.now(),
+        };
+        m.phase = "complete";
+        scoreMission(side);
+        render(side, true);
+        if (voiceMode(side)) speak(screenSpeech(side));
+        // Keep the printer slot in view so the receipt feed is visible.
+        if (activeSide === side)
+          $(`#kiosk${side} .receipt-output`).scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+      },
+      legacy(side) ? 3200 : 600,
+    );
+  }
+
+  // Stage 3's voice-guidance kiosk: the first touch reads a control aloud, a
+  // second touch on the same control activates it (as on screen-reader phones).
+  const voice = { key: null, at: 0, text: "" };
+  function speak(text) {
+    voice.text = text;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "ko-KR";
+      utterance.rate = 1.05;
+      window.speechSynthesis.speak(utterance);
+    } catch {}
+    const caption = $("#kioskB .voice-caption-text");
+    if (caption) caption.textContent = text;
+  }
+  function stopVoice() {
+    try { window.speechSynthesis.cancel(); } catch {}
+    voice.key = null;
+    voice.text = "";
+  }
+  const controlLabel = (control) =>
+    (control.getAttribute("aria-label") || control.innerText || "")
+      .replace(/[＋›×↓✓]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  function screenSpeech(side) {
+    const m = machines[side];
+    const items = m.cart.map((row) => `${name(side, row.id)} ${row.qty}개`).join(", ");
+    if (m.phase === "menu")
+      return m.cart.length
+        ? `메뉴 화면입니다. 담은 메뉴 ${count(m)}개, 합계 ${money(total(m))}원. 결제하기 버튼은 화면 맨 아래 오른쪽에 있어요.`
+        : "메뉴 화면입니다. 위쪽에 매장 식사와 포장 버튼, 가운데에 메뉴가 있어요. 한 번 누르면 읽어 주고, 같은 곳을 한 번 더 누르면 선택돼요.";
+    if (m.phase === "product") {
+      const p = product(m.selected);
+      return `${name(side, p.id)}, ${money(p.price)}원. 수량 ${m.draftQty}개.${p.id === "ade" ? " 가운데에 얼음 선택 버튼이 있어요." : ""} 맨 아래 왼쪽은 취소, 오른쪽은 담기 버튼이에요.`;
+    }
+    if (m.phase === "clear") return "담은 메뉴를 모두 취소할까요? 왼쪽은 돌아가기, 오른쪽은 취소하기예요.";
+    if (m.phase === "checkout")
+      return `주문 확인 화면입니다. ${m.dining === "here" ? "매장 식사" : "포장"}, ${items}. 합계 ${money(total(m))}원. 맨 아래 오른쪽 카드 결제 버튼을 눌러 주세요.`;
+    if (m.phase === "payment")
+      return `결제 금액 ${money(total(m))}원. 키오스크 오른쪽 아래 카드 투입구에 카드를 넣어 주세요.`;
+    if (m.phase === "complete")
+      return `주문이 완료되었습니다. 주문 번호 ${m.receipt.number}번. 영수증은 키오스크 왼쪽 아래에서 나와요.`;
+    return "";
+  }
+  function renderVoiceCaption(side) {
+    if (stage !== 3 || role !== "blind") return "";
+    if (side === "A")
+      return '<div class="voice-caption is-off"><span aria-hidden="true">🔇</span><span>음성 안내 없음 · 이 기기는 번역 기능에 예산을 썼어요</span></div>';
+    return `<div class="voice-caption"><span aria-hidden="true">🔊</span><span class="voice-caption-text">${html(voice.text || "화면을 눌러 보세요. 한 번 누르면 읽어 주고, 한 번 더 누르면 선택돼요.")}</span></div>`;
+  }
+  // Returns true when the touch should activate the control.
+  function exploreTouch(control) {
+    const d = control.dataset;
+    const key = [d.action, d.id, d.index, d.value].join("|");
+    if (voice.key === key && Date.now() - voice.at < 6000) {
+      voice.key = null;
+      return true;
+    }
+    voice.key = key;
+    voice.at = Date.now();
+    speak(`${controlLabel(control)}. 선택하려면 한 번 더 누르세요.`);
+    return false;
+  }
+  function announceResult(side, before, control) {
+    const m = machines[side];
+    if (m.phase !== before.phase) speak(screenSpeech(side));
+    else if (count(m) !== before.count)
+      speak(`담은 메뉴 ${count(m)}개, 합계 ${money(total(m))}원.`);
+    else if (m.draftQty !== before.qty) speak(`수량 ${m.draftQty}개.`);
+    else speak(`${controlLabel(control)}, 선택됨.`);
+  }
+
   function render(side, focus = false) {
-    if (side === "A") cancelLegacyScroll();
+    if (legacy(side)) cancelLegacyScroll();
     const isFocused = activeSide === side;
     const root = $(`#kiosk${side}`),
       m = machines[side],
@@ -476,24 +964,36 @@
     root.innerHTML = `
       <img class="terminal-photo" src="/assets/balance/kiosk-shell.png" alt="" aria-hidden="true" draggable="false" />
       <div class="screen-bezel" ${isFocused ? "" : "inert"}>
-        <div class="touchscreen" data-language="${m.locale}" aria-label="${side} ${html(c.language)} 주문 화면" aria-busy="${m.busy}">
+        <div class="touchscreen" data-language="${m.locale}" lang="${LANG_ATTR[m.locale] || "ko"}" aria-label="${side} ${html(c.language)} 주문 화면" aria-busy="${m.busy}">
           <div class="store-ui" ${m.phase !== "menu" ? "inert" : ""}>
-            ${renderHeader(side)}${side === "A" ? renderLanguage(side) : ""}${renderNavigation(side)}${renderMenu(side)}${renderCart(side)}
+            ${renderHeader(side)}${legacy(side) ? renderLanguage(side) : ""}${renderNavigation(side)}${renderMenu(side)}${renderCart(side)}
           </div>
           ${renderOverlay(side)}
           ${m.busy ? `<div class="busy-shade" role="status"><span class="loading-wheel" aria-hidden="true"></span><span>${html(m.phase === "payment" ? c.paying : c.wait)}</span></div>` : ""}
           ${m.alert ? `<div class="screen-alert" role="status">${html(m.alert)}</div>` : ""}
+          ${stage === 3 && role === "blind" ? '<div class="blind-cover" aria-hidden="true"><span>화면이 보이지 않는 상태예요</span></div>' : ""}
         </div>
       </div>
       <div class="hardware-layer" ${isFocused ? "" : "inert"}>
+        ${renderVoiceCaption(side)}
         <span class="receipt-caption" aria-hidden="true">${html(c.receipt)}</span>
-        <div class="receipt-output">${m.phase === "complete" ? `<div class="paper-slip"><span>${html(c.number)}</span><strong>${m.receipt.number}</strong></div>` : ""}</div>
+        <div class="receipt-output">${renderReceipt(side)}</div>
         <span class="card-caption" aria-hidden="true">${html(c.card)}</span>
-        ${button("pay", '<span class="reader-active-light" aria-hidden="true"></span>', `class="physical-reader" aria-label="${html(c.insert)}" title="${html(c.insert)}" ${m.phase !== "payment" || m.busy ? "disabled" : ""}`)}
+        <div class="physical-reader ${m.phase === "payment" && !m.busy ? "is-ready" : ""}" aria-hidden="true"><span class="reader-active-light"></span></div>
       </div>
       ${isFocused ? "" : `<button type="button" class="kiosk-focus-target" data-focus-kiosk="${side}" aria-label="${side === "A" ? "왼쪽" : "오른쪽"} 키오스크 확대" title="키오스크 확대"></button>`}`;
     root.querySelector(".menu-scroll").scrollTop = previous;
     root.querySelector(".basket-list").scrollTop = basketScroll;
+    window.BalanceCard?.sync(side, {
+      state:
+        isFocused && m.phase === "payment"
+          ? m.cardInserted
+            ? "inserted"
+            : "ready"
+          : "hidden",
+      slot: root.querySelector(".physical-reader"),
+      onInsert: () => pay(side),
+    });
     if (focus && isFocused) {
       const target =
         m.phase === "menu"
@@ -507,7 +1007,7 @@
   function transact(side, change, focus = false) {
     const m = machines[side];
     if (m.busy) return;
-    if (side === "B") {
+    if (!legacy(side)) {
       change(m);
       render(side, focus);
       return;
@@ -601,6 +1101,10 @@
             order.alert = t(side).soldMax;
             return;
           }
+          if (dialect(side) && ++faults.add === 2) {
+            setFault(order, "add");
+            return;
+          }
           if (row) row.qty += order.draftQty;
           else
             order.cart.push({
@@ -654,10 +1158,24 @@
       transact(
         side,
         (order) => {
-          order.phase = "checkout";
+          if (order.phase === "menu" && dialect(side) && faults.checkout++ === 0)
+            setFault(order, "checkout");
+          else order.phase = "checkout";
         },
         true,
       );
+    else if (action === "fault-ok" && m.phase === "fault") {
+      if (faultCopy[m.fault.kind].reset) resetAfterFault(side);
+      else
+        transact(
+          side,
+          (order) => {
+            order.phase = "menu";
+            order.fault = null;
+          },
+          true,
+        );
+    }
     else if (action === "payment" && m.cart.length)
       transact(
         side,
@@ -666,34 +1184,122 @@
         },
         true,
       );
-    else if (action === "pay" && m.phase === "payment") {
-      m.busy = true;
-      const revision = ++m.revision;
+    else if (action === "take-receipt" && m.receipt && !m.receiptTaken) {
+      m.receiptTaken = true;
       render(side);
-      setTimeout(
-        () => {
-          if (machines[side] !== m || m.revision !== revision) return;
-          m.busy = false;
-          m.receipt = {
-            number: ++serial[side],
-            cart: m.cart.map((row) => ({ ...row })),
-            total: billedTotal(side),
-          };
-          m.phase = "complete";
-          render(side, true);
-          if (activeSide === side && window.scrollY > 0)
-            window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
-        },
-        side === "A" ? 3200 : 600,
-      );
+      setTimeout(() => {
+        if (machines[side] !== m) return;
+        m.receiptGone = true;
+        render(side);
+      }, 700);
     } else if (action === "restart") {
+      if (legacy(side)) Object.assign(faults, { add: 0, checkout: 0, pay: 0 });
       machines[side] = fresh(m.locale);
       render(side, true);
     }
   }
 
+  function renderStageNav() {
+    $("#stageNav").innerHTML = Object.entries(STAGES)
+      .map(([n, info]) => {
+        const open = unlocked.has(Number(n));
+        return `<button type="button" data-stage="${n}" class="${open ? "" : "is-locked"}" aria-current="${stage === Number(n) ? "step" : "false"}"><b>${n}단계</b><span>${info.title}</span>${open ? "" : '<i aria-label="잠김">🔒</i>'}</button>`;
+      })
+      .join("");
+  }
+
+  let gateStage = 0;
+  function openGate(n) {
+    gateStage = n;
+    const gate = $("#stageGate");
+    gate.hidden = false;
+    gate.innerHTML = `<form class="stage-gate-panel" role="dialog" aria-modal="true" aria-labelledby="stageGateTitle"><p class="stage-gate-step">${n}단계</p><h1 id="stageGateTitle">${STAGES[n].title}</h1><p>선생님이 알려 준 비밀번호를 입력하세요.</p><input name="password" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="비밀번호" placeholder="비밀번호" /><p class="stage-gate-error" role="alert"></p><div class="stage-gate-actions">${stage ? '<button type="button" class="secondary" data-gate="cancel">닫기</button>' : ""}<button type="submit" class="primary">열기</button></div></form>`;
+    gate.querySelector("input").focus();
+  }
+  function closeGate() {
+    $("#stageGate").hidden = true;
+    $("#stageGate").innerHTML = "";
+    gateStage = 0;
+  }
+
+  function resetMachines() {
+    stopVoice();
+    machines.A = fresh(stage === 1 ? "jeolla" : "standard");
+    machines.B = fresh("standard");
+    Object.assign(faults, { add: 0, checkout: 0, pay: 0, seen: 0 });
+  }
+
+  function enterStage(n) {
+    if (activeSide) setKioskFocus(null);
+    stage = n;
+    store.set("balance-stage", String(n));
+    document.body.dataset.stage = n;
+    if (n === 2) document.body.dataset.vision = vision;
+    else delete document.body.dataset.vision;
+    $("#kioskA").className = `terminal ${n === 1 ? "terminal-legacy" : n === 2 ? "terminal-modern terminal-pretty" : "terminal-modern"}`;
+    $("#kioskB").className = `terminal terminal-modern${n === 2 ? " terminal-plain" : ""}`;
+    $("#kioskA").setAttribute("aria-label", `왼쪽 키오스크 · ${STAGES[n].left}`);
+    $("#kioskB").setAttribute("aria-label", `오른쪽 키오스크 · ${STAGES[n].right}`);
+    resetMachines();
+    renderStageNav();
+    renderMission();
+    render("A");
+    render("B");
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+
+  $("#stageNav").addEventListener("click", (event) => {
+    const target = event.target.closest("button[data-stage]");
+    if (!target) return;
+    const n = Number(target.dataset.stage);
+    if (unlocked.has(n)) {
+      if (n !== stage) enterStage(n);
+    } else openGate(n);
+  });
+  $("#stageGate").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const input = event.target.querySelector("input");
+    if (passKey(input.value) === STAGES[gateStage].key) {
+      const n = gateStage;
+      unlocked.add(n);
+      store.set("balance-unlocked", [...unlocked].join(","));
+      closeGate();
+      enterStage(n);
+      return;
+    }
+    const error = event.target.querySelector(".stage-gate-error");
+    error.textContent = "비밀번호가 맞지 않아요. 다시 입력해 주세요.";
+    event.target.classList.remove("is-wrong");
+    void event.target.offsetWidth;
+    event.target.classList.add("is-wrong");
+    input.select();
+  });
+  $("#stageGate").addEventListener("click", (event) => {
+    if (event.target.closest('[data-gate="cancel"]')) closeGate();
+  });
+  $("#mission").addEventListener("click", (event) => {
+    const control = event.target.closest("button[data-mission]");
+    if (!control) return;
+    if (control.dataset.mission === "vision") {
+      vision = vision === "low" ? "normal" : "low";
+      document.body.dataset.vision = vision;
+      renderMission();
+    } else if (control.dataset.mission === "role" && control.dataset.value !== role) {
+      role = control.dataset.value;
+      resetMachines();
+      renderMission();
+      render("A");
+      render("B");
+      if (activeSide && voiceMode(activeSide)) speak(screenSpeech(activeSide));
+    }
+  });
+
   $("#overviewBack").addEventListener("click", () => setKioskFocus(null));
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !$("#stageGate").hidden) {
+      if (stage) closeGate();
+      return;
+    }
     if (event.key === "Escape" && activeSide && !event.defaultPrevented && !event.target.matches("select")) {
       setKioskFocus(null);
     }
@@ -732,8 +1338,16 @@
       }
       if (activeSide !== side) return;
       const control = event.target.closest("button[data-action]");
-      if (control && !control.disabled && !control.closest("[inert]"))
+      if (!control || control.disabled || control.closest("[inert]")) return;
+      if (!voiceMode(side)) {
         handle(side, control);
+        return;
+      }
+      if (!exploreTouch(control)) return;
+      const m = machines[side];
+      const before = { phase: m.phase, count: count(m), qty: m.draftQty };
+      handle(side, control);
+      announceResult(side, before, control);
     });
     root.addEventListener("keydown", (event) => {
       if (
@@ -749,4 +1363,9 @@
     });
     render(side);
   }
+  renderStageNav();
+  const saved = Number(store.get("balance-stage"));
+  if (unlocked.has(saved)) enterStage(saved);
+  else if (unlocked.size) enterStage(Math.min(...unlocked));
+  else openGate(1);
 })();

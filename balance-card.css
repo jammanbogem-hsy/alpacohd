@@ -1,0 +1,236 @@
+@charset "UTF-8";
+
+/* Cards live under body, outside the articles replaced by balance.js. */
+.balance-card-layer {
+  position: absolute;
+  z-index: 90;
+  width: var(--balance-card-width, 120px);
+  height: var(--balance-card-height, 76px);
+  pointer-events: none;
+  isolation: isolate;
+}
+.balance-card-layer[hidden],
+.balance-card-hint[hidden] { display: none !important; }
+.balance-card-layer .balance-credit-card {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #c6e7e277;
+  border-radius: 7px;
+  color: #f9fffc;
+  background:
+    radial-gradient(ellipse at 100% 0, #c3eee155, transparent 65%),
+    linear-gradient(125deg, #244e4b, #112e35 58%, #1d4649);
+  box-shadow: 0 7px 13px #14262e38, inset 0 1px 0 #ffffff40;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  text-align: left;
+  transform-origin: center;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+}
+.balance-card-layer[data-side="B"] .balance-credit-card {
+  background:
+    radial-gradient(ellipse at 100% 0, #e1f4ed55, transparent 65%),
+    linear-gradient(125deg, #467b6d, #195348 60%, #376e5b);
+}
+.balance-card-layer .balance-credit-card:disabled { opacity: 1; cursor: default; }
+.balance-card-layer .balance-credit-card:focus-visible {
+  outline: 3px solid #087fca;
+  outline-offset: 5px;
+}
+.balance-card-layer[data-phase="ready"] .balance-credit-card:active {
+  cursor: grabbing;
+  box-shadow: 0 14px 22px #14262e4a, inset 0 1px 0 #ffffff55;
+}
+.balance-credit-card > span {
+  position: absolute;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.balance-credit-card-brand {
+  top: 12%; left: 10%;
+  font-size: calc(var(--balance-card-width) * .065);
+  letter-spacing: .12em;
+}
+.balance-credit-card-brand b { font-weight: 400; opacity: .65; }
+.balance-credit-card-chip {
+  top: 34%; left: 10%; width: 16%; height: 22%;
+  border: 1px solid #c7a559;
+  border-radius: 3px;
+  background:
+    linear-gradient(90deg, transparent 32%, #9d813e 33% 36%, transparent 37% 64%, #9d813e 65% 68%, transparent 69%),
+    linear-gradient(transparent 44%, #9d813e 45% 50%, transparent 51%),
+    linear-gradient(130deg, #f6e4ad, #bb9853 55%, #e8d499);
+}
+.balance-credit-card-number {
+  top: 60%; left: 10%; right: 8%;
+  font-size: calc(var(--balance-card-width) * .058);
+  letter-spacing: .04em;
+}
+.balance-credit-card-owner {
+  bottom: 11%; left: 10%;
+  font-size: calc(var(--balance-card-width) * .045);
+  letter-spacing: .12em;
+  opacity: .72;
+}
+.balance-credit-card-mark {
+  right: 10%; bottom: 10%; width: 12%; height: 17%;
+  border-radius: 50%; background: #e6c987e0;
+  box-shadow: -6px 0 0 #e7f5f1a8;
+}
+.balance-card-layer .balance-card-hint {
+  position: absolute;
+  display: block;
+  width: max-content;
+  max-width: min(210px, calc(100vw - 28px));
+  padding: 8px 11px;
+  border: 1px solid #d7e2dc;
+  border-radius: 12px;
+  color: #273f36;
+  background: #fffffff7;
+  box-shadow: 0 3px 12px #152d2414;
+  font: 600 clamp(11px, 1vw, 13px)/1.4 system-ui, sans-serif;
+  text-align: center;
+  transform: translateX(-50%);
+}
+.balance-card-hint::before {
+  content: "";
+  position: absolute;
+  top: -5px; left: calc(50% - 4px);
+  width: 8px; height: 8px;
+  border-top: 1px solid #d7e2dc;
+  border-left: 1px solid #d7e2dc;
+  background: #fff;
+  transform: rotate(45deg);
+}
+.terminal .physical-reader.balance-card-slot-ready::after {
+  content: "";
+  position: absolute;
+  left: 12%; right: 12%; bottom: 9%; height: 12%;
+  border: 1px solid #a5e9b4;
+  border-radius: 3px;
+  box-shadow: 0 0 0 3px #9be9ae26, 0 0 12px #a5e9b47a;
+  pointer-events: none;
+  animation: balance-slot-glow 1.6s ease-in-out infinite alternate;
+}
+.terminal .physical-reader.balance-card-slot-near::after {
+  border-color: #e6ffb9;
+  box-shadow: 0 0 0 4px #b7ff8e66, 0 0 18px #b7ff8e;
+  animation: none;
+}
+@keyframes balance-slot-glow { from { opacity: .35; } to { opacity: .95; } }
+
+/* Keep the display's own clipping; only the physical printer may overflow. */
+body .kiosk-stage,
+body .kiosk-stage .terminal,
+body .terminal .hardware-layer,
+body .terminal .receipt-output { overflow: visible; }
+body .terminal .receipt-output { pointer-events: none; }
+.terminal .receipt-output .receipt-paper {
+  position: absolute;
+  top: 0;
+  left: 4%;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: .65em;
+  width: 92%;
+  min-width: 0;
+  height: auto;
+  margin: 0;
+  padding: 12% 7% 17%;
+  border: 0;
+  border-radius: 0 0 2px 2px;
+  color: #34362f;
+  background: linear-gradient(90deg, #e4e3db, #fffef7 8%, #fffef9 85%, #e7e6dc);
+  box-shadow: 0 6px 9px #00000026, inset 0 3px 3px #00000015;
+  font-family: ui-monospace, "SFMono-Regular", "D2Coding", "Malgun Gothic", monospace;
+  font-size: clamp(6px, .65vw, 10px);
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+  box-sizing: border-box;
+  transform: perspective(500px) rotateX(-4deg) rotateZ(-.4deg);
+  transform-origin: center top;
+  /* Fine sawteeth along the lower edge, including the final printing frame. */
+  clip-path: polygon(0 0, 100% 0, 100% 97%, 95% 100%, 90% 97%, 85% 100%,
+    80% 97%, 75% 100%, 70% 97%, 65% 100%, 60% 97%, 55% 100%, 50% 97%,
+    45% 100%, 40% 97%, 35% 100%, 30% 97%, 25% 100%, 20% 97%, 15% 100%,
+    10% 97%, 5% 100%, 0 97%);
+  pointer-events: auto;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+.terminal .receipt-paper::after {
+  content: "";
+  position: absolute;
+  right: 0; bottom: 0; left: 0;
+  height: 12%;
+  background: linear-gradient(transparent, #8f8f7b18 45%, #fffff9aa 80%);
+  pointer-events: none;
+}
+.terminal .receipt-paper:focus-visible { outline: 3px solid #087fca; outline-offset: 4px; }
+.terminal .receipt-paper-head { display: grid; gap: .3em; text-align: center; }
+.terminal .receipt-paper-head strong { font-size: 1.35em; font-weight: 800; }
+.terminal .receipt-paper-head small { font-size: .85em; overflow-wrap: anywhere; }
+.terminal .receipt-paper-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: .35em;
+  align-items: start;
+}
+.terminal .receipt-paper-row > span:first-child { overflow-wrap: anywhere; }
+.terminal .receipt-paper-row > span:last-child { text-align: right; }
+.terminal .receipt-paper-row b { font-weight: 400; white-space: nowrap; }
+.terminal .receipt-paper-total {
+  display: flex; justify-content: space-between; gap: .3em;
+  padding-top: .65em; border-top: 1px dashed #7d8075;
+  font-weight: 700;
+}
+.terminal .receipt-paper-number {
+  display: grid; gap: .15em;
+  padding-top: .55em; border-top: 1px dashed #a0a294;
+  text-align: center;
+}
+.terminal .receipt-paper-number strong { font-size: 2.6em; line-height: 1.1; }
+.terminal .receipt-output .receipt-paper[data-printing="true"] {
+  animation: balance-receipt-print 1.8s steps(14, end) both;
+  animation-delay: var(--print-elapsed, 0ms);
+  cursor: progress;
+}
+.terminal .receipt-output .receipt-paper[data-printing="false"] { animation: none; }
+.terminal .receipt-output .receipt-paper.is-taken {
+  pointer-events: none;
+  animation: balance-receipt-take .42s cubic-bezier(.25,.65,.4,1) both;
+}
+@keyframes balance-receipt-print {
+  0% { transform: translateY(-98%) rotateZ(0); opacity: 0; clip-path: inset(98% 0 0); }
+  8% { opacity: 1; }
+  30% { transform: translateY(-70%) rotateZ(.7deg); clip-path: inset(70% 0 0); }
+  58% { transform: translateY(-42%) rotateZ(-.6deg); clip-path: inset(42% 0 0); }
+  82% { transform: translateY(-17%) rotateZ(.5deg); clip-path: inset(17% 0 0); }
+  99% { transform: translateY(0) rotateZ(-.4deg); clip-path: inset(0); }
+  100% { transform: perspective(500px) rotateX(-4deg) rotateZ(-.4deg); }
+}
+@keyframes balance-receipt-take {
+  0% { transform: translate(0, 0) rotateZ(-.4deg); opacity: 1; }
+  22% { transform: translate(3%, 5%) rotateZ(3deg); opacity: 1; }
+  100% { transform: translate(55%, -65%) rotateZ(24deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .terminal .physical-reader.balance-card-slot-ready::after { animation: none; opacity: .85; }
+  .terminal .receipt-output .receipt-paper[data-printing="true"] { animation: none; }
+  .terminal .receipt-output .receipt-paper.is-taken { animation: none; opacity: 0; }
+}

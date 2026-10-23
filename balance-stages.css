@@ -1,0 +1,285 @@
+@charset "UTF-8";
+/* Stage navigation, password gate and stage-specific kiosk add-ons. */
+
+/* Until a stage is unlocked only the gate is shown. */
+body:not([data-stage]) .kiosk-stage,
+body:not([data-stage]) .mission-card,
+body:not([data-stage]) .stage-nav {
+  visibility: hidden;
+}
+
+.stage-nav {
+  display: flex;
+  gap: 8px;
+  width: min(1040px, calc(100% - 32px));
+  margin: 12px auto 0;
+}
+body[data-kiosk-focus] .stage-nav {
+  width: min(1040px, calc(100% - 340px));
+  margin-left: max(170px, calc((100% - 1040px) / 2));
+}
+.stage-nav button {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 42px;
+  padding: 8px 14px;
+  border: 1px solid #d6d9d5;
+  border-radius: 12px;
+  background: #fffffff2;
+  color: #29312e;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.stage-nav button b {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #eef2ef;
+  font-size: 12px;
+}
+.stage-nav button span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.stage-nav button i {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 13px;
+}
+.stage-nav button[aria-current="step"] {
+  border-color: #29312e;
+  background: #29312e;
+  color: #fff;
+}
+.stage-nav button[aria-current="step"] b {
+  background: #fff;
+  color: #29312e;
+}
+.stage-nav button.is-locked {
+  color: #7d837f;
+  background: #f4f5f3;
+}
+.stage-nav button:focus-visible {
+  outline: 3px solid #b68848;
+  outline-offset: 2px;
+}
+
+.stage-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: #e8e7e3f2;
+}
+.stage-gate[hidden] {
+  display: none;
+}
+.stage-gate-panel {
+  width: min(420px, 100%);
+  padding: 28px 24px 22px;
+  border: 1px solid #d6d9d5;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 12px 36px #252a2526;
+  text-align: center;
+}
+.stage-gate-panel.is-wrong {
+  animation: stage-gate-shake 0.32s;
+}
+@keyframes stage-gate-shake {
+  25% { transform: translateX(-8px); }
+  50% { transform: translateX(7px); }
+  75% { transform: translateX(-4px); }
+}
+.stage-gate-step {
+  display: inline-block;
+  margin: 0;
+  padding: 3px 12px;
+  border-radius: 12px;
+  background: #eef2ef;
+  font-size: 13px;
+  font-weight: 700;
+}
+.stage-gate-panel h1 {
+  margin: 10px 0 6px;
+  font-size: 26px;
+  letter-spacing: -0.5px;
+}
+.stage-gate-panel > p:not([class]) {
+  margin: 0 0 16px;
+  color: #5d6460;
+  font-size: 14px;
+}
+.stage-gate-panel input {
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 14px;
+  border: 2px solid #c9cdc8;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 22px;
+  text-align: center;
+}
+.stage-gate-panel input:focus {
+  outline: none;
+  border-color: #29312e;
+}
+.stage-gate-error {
+  min-height: 20px;
+  margin: 8px 0 4px;
+  color: #b3392f;
+  font-size: 13px;
+}
+.stage-gate-actions {
+  display: flex;
+  gap: 8px;
+}
+.stage-gate-actions button {
+  flex: 1;
+  min-height: 48px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.stage-gate-actions .primary {
+  border: 0;
+  background: #29312e;
+  color: #fff;
+}
+.stage-gate-actions .secondary {
+  border: 1px solid #c9cdc8;
+  background: #fff;
+  color: #29312e;
+}
+
+/* Stage 2 vision toggle and stage 3 role switch inside the mission strip. */
+.mission-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+.mission-tools > span {
+  font-size: 12px;
+  color: #6b716d;
+}
+.mission-tools > small {
+  flex-basis: 100%;
+  color: #6b716d;
+}
+.mission-tools button {
+  min-height: 30px;
+  padding: 3px 12px;
+  border: 1px solid #c9cdc8;
+  border-radius: 15px;
+  background: #fff;
+  color: #29312e;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.mission-tools button[aria-pressed="true"] {
+  border-color: #29312e;
+  background: #29312e;
+  color: #fff;
+}
+.mission-tools button b {
+  margin-left: 4px;
+}
+
+/* Stage 3: translation buttons on the left kiosk, voice badge on the right. */
+.terminal .translate-buttons {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.terminal .translate-buttons button {
+  min-height: clamp(28px, 8cqw, 42px);
+  padding: 4px clamp(6px, 1.8cqw, 10px);
+  border: 1px solid #c2e5e2;
+  border-radius: 14px;
+  background: #ffffffd9;
+  color: #2c6d67;
+  font-size: clamp(10px, 3cqw, 16px);
+  white-space: nowrap;
+}
+.terminal .translate-buttons button[aria-pressed="true"] {
+  border-color: #16978c;
+  background: #16978c;
+  color: #fff;
+}
+.terminal .voice-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 16px;
+  background: #16978c;
+  color: #fff;
+  font-size: clamp(11px, 3.2cqw, 17px);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Visually impaired role: the screen is covered but still receives touches. */
+.touchscreen {
+  position: relative;
+}
+.blind-cover {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8%;
+  background: #050607;
+  pointer-events: none;
+}
+.blind-cover span {
+  color: #ffffff38;
+  font-size: clamp(10px, 3cqw, 15px);
+}
+.voice-caption {
+  position: absolute;
+  left: 22.65625%;
+  top: 68.4%;
+  width: 54.8828125%;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #16978c;
+  color: #fff;
+  font-size: clamp(9px, 0.85vw, 13px);
+  line-height: 1.45;
+  box-shadow: 0 4px 12px #0003;
+  z-index: 4;
+}
+.voice-caption.is-off {
+  background: #5d6460;
+}
+/* Zoomed in, the speaker caption stays in view at the bottom of the window. */
+body[data-kiosk-focus] .terminal.is-focused .voice-caption {
+  position: fixed;
+  left: 50%;
+  top: auto;
+  bottom: 16px;
+  width: min(640px, calc(100% - 32px));
+  transform: translateX(-50%);
+  padding: 12px 16px;
+  font-size: 16px;
+  z-index: 120;
+}
