@@ -436,19 +436,19 @@
       title: "다양성 vs 정확성",
       left: "사투리도 알아듣는 기기",
       right: "표준어만 정확한 기기",
-      key: "1t5g4lv",
+      keys: ["1t5g4lv"],
     },
     2: {
       title: "심미성 vs 접근성",
       left: "예쁜 디자인 기기",
       right: "잘 보이는 기기",
-      key: "15ohe0q",
+      keys: ["15ohe0q"],
     },
     3: {
       title: "공정성 vs 비용",
       left: "번역 기능에 예산을 쓴 기기",
       right: "음성 안내에 예산을 쓴 기기",
-      key: "1jiaydn",
+      keys: ["1jiaydn", "81q8oa"],
     },
   };
   // Classroom pacing only: hashed so the next password is not readable at a glance.
@@ -1260,7 +1260,7 @@
   $("#stageGate").addEventListener("submit", (event) => {
     event.preventDefault();
     const input = event.target.querySelector("input");
-    if (passKey(input.value) === STAGES[gateStage].key) {
+    if (STAGES[gateStage].keys.includes(passKey(input.value))) {
       const n = gateStage;
       unlocked.add(n);
       store.set("balance-unlocked", [...unlocked].join(","));
