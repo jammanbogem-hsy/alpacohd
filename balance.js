@@ -470,7 +470,7 @@
   };
   const unlocked = new Set((store.get("balance-unlocked") || "").split(",").filter((n) => STAGES[n]).map(Number));
   let stage = 0;
-  let vision = "low";
+  let vision = "normal";
   let role = "foreign";
   const roleCopy = {
     foreign: { label: "외국인 관광객", note: "한글을 읽지 못하고 영어는 읽을 수 있어요." },
@@ -1234,7 +1234,8 @@
     stage = n;
     store.set("balance-stage", String(n));
     document.body.dataset.stage = n;
-    if (n === 2) document.body.dataset.vision = vision;
+    // Stage 2 opens with normal vision; students switch the blur on afterwards.
+    if (n === 2) document.body.dataset.vision = vision = "normal";
     else delete document.body.dataset.vision;
     $("#kioskA").className = `terminal ${n === 1 ? "terminal-legacy" : n === 2 ? "terminal-modern terminal-pretty" : "terminal-modern"}`;
     $("#kioskB").className = `terminal terminal-modern${n === 2 ? " terminal-plain" : ""}`;

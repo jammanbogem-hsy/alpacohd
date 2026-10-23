@@ -283,3 +283,52 @@ body[data-kiosk-focus] .terminal.is-focused .voice-caption {
   font-size: 16px;
   z-index: 120;
 }
+
+/* Menu scrollbars stay visible on every kiosk so students can tell the menu
+   continues. Chromium/Safari draw ::-webkit-scrollbar only while the standard
+   scrollbar properties are auto; Firefox keeps the standard colors below. */
+.terminal .touchscreen .menu-scroll {
+  --bar-track: #e4e6e0;
+  --bar-thumb: #8c9488;
+  overflow-y: scroll;
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+.terminal.terminal-modern .touchscreen .menu-scroll { --bar-track: #cfe9e6; --bar-thumb: #2f9d93; }
+.terminal.terminal-legacy .touchscreen .menu-scroll { --bar-track: #dce0d2; --bar-thumb: #7f8a77; }
+body[data-stage="2"] .terminal.terminal-pretty .touchscreen .menu-scroll { --bar-track: #f3e6f5; --bar-thumb: #c9a3d3; scrollbar-width: auto; scrollbar-color: auto; }
+body[data-stage="2"] .terminal.terminal-plain .touchscreen .menu-scroll { --bar-track: #fff; --bar-thumb: #111; scrollbar-width: auto; scrollbar-color: auto; }
+.terminal .touchscreen .menu-scroll::-webkit-scrollbar {
+  width: clamp(8px, 2.6cqw, 14px);
+}
+.terminal .touchscreen .menu-scroll::-webkit-scrollbar-track {
+  background: var(--bar-track);
+  border-radius: 999px;
+}
+.terminal .touchscreen .menu-scroll::-webkit-scrollbar-thumb {
+  min-height: 40px;
+  border: 2px solid var(--bar-track);
+  border-radius: 999px;
+  background: var(--bar-thumb);
+}
+.terminal.terminal-legacy .touchscreen .menu-scroll::-webkit-scrollbar-track,
+.terminal.terminal-legacy .touchscreen .menu-scroll::-webkit-scrollbar-thumb,
+body[data-stage="2"] .terminal.terminal-plain .touchscreen .menu-scroll::-webkit-scrollbar-track,
+body[data-stage="2"] .terminal.terminal-plain .touchscreen .menu-scroll::-webkit-scrollbar-thumb {
+  border-radius: 0;
+}
+body[data-stage="2"] .terminal.terminal-plain .touchscreen .menu-scroll::-webkit-scrollbar-track {
+  border-left: 2px solid #111;
+}
+@supports not selector(::-webkit-scrollbar) {
+  .terminal .touchscreen .menu-scroll,
+  body[data-stage="2"] .terminal.terminal-pretty .touchscreen .menu-scroll,
+  body[data-stage="2"] .terminal.terminal-plain .touchscreen .menu-scroll {
+    scrollbar-color: var(--bar-thumb) var(--bar-track);
+  }
+}
+
+/* Large tab labels wrap between words, never mid-word ("전체 메/뉴"). */
+body[data-stage="2"] .terminal.terminal-plain .menu-tabs button {
+  word-break: keep-all;
+}
