@@ -418,19 +418,6 @@
   const TRANSLATIONS = ["standard", "en", "zh", "ja"];
   const LANG_ATTR = { en: "en", zh: "zh", ja: "ja" };
 
-  // Stage 3's foreign-tourist role: Korean screens appear in a script the
-  // visitor cannot read. Digits stay so prices remain legible.
-  const unreadable = (value) =>
-    Array.isArray(value)
-      ? value.map(unreadable)
-      : String(value).replace(/[가-힣]/g, (ch) => {
-          const code = ch.charCodeAt(0);
-          return String.fromCharCode(0x10d0 + (code % 33), 0x10d0 + ((code >> 3) % 33));
-        });
-  const unreadableCopy = Object.fromEntries(
-    Object.entries(copy.standard).map(([key, value]) => [key, unreadable(value)]),
-  );
-
   const STAGES = {
     1: {
       title: "다양성 vs 정확성",
@@ -473,7 +460,7 @@
   let vision = "normal";
   let role = "foreign";
   const roleCopy = {
-    foreign: { label: "외국인 관광객", note: "한글을 읽지 못하고 영어는 읽을 수 있어요." },
+    foreign: { label: "외국인 관광객", note: "한글을 읽지 못한다고 생각하고 주문해 보세요. 영어는 읽을 수 있어요." },
     blind: { label: "시각장애인 손님", note: "화면이 보이지 않아요. 손으로 눌러 보세요." },
   };
   const $ = (s) => document.querySelector(s);
@@ -560,10 +547,7 @@
   const voiceMode = (side) => stage === 3 && role === "blind" && side === "B";
   let activeSide = null;
   let overviewScroll = 0;
-  const t = (side) =>
-    stage === 3 && role === "foreign" && machines[side].locale === "standard"
-      ? unreadableCopy
-      : copy[machines[side].locale];
+  const t = (side) => copy[machines[side].locale];
   const product = (id) => products.find((p) => p.id === id);
   const name = (side, id) =>
     t(side).names[products.findIndex((p) => p.id === id)];
