@@ -16,6 +16,15 @@ const requiredFiles = [
   "bias.html",
   "bias.css",
   "bias.js",
+  "balance.html",
+  "balance.css",
+  "balance-surface.css",
+  "balance-hardware.css",
+  "balance.js",
+  "assets/balance/meal-menu.png",
+  "assets/balance/kiosk-shell.png",
+  "assets/balance/fonts/PretendardVariable.woff2",
+  "assets/balance/fonts/LICENSE.txt",
   "vercel.json"
 ];
 const requiredSnippets = [
@@ -41,6 +50,7 @@ await Promise.all(requiredFiles.map((file) => access(file)));
 
 const html = await readFile("index.html", "utf8");
 const biasHtml = await readFile("bias.html", "utf8");
+const balanceHtml = await readFile("balance.html", "utf8");
 const js = await readFile("app.js", "utf8");
 const biasJs = await readFile("bias.js", "utf8");
 const vercelConfig = JSON.parse(await readFile("vercel.json", "utf8"));
@@ -74,6 +84,13 @@ const hasBiasRewrite = vercelConfig.rewrites?.some(
 
 if (!hasBiasRewrite) {
   throw new Error("Vercel config is missing the /bias rewrite");
+}
+
+if (!balanceHtml.includes('href="/balance.css"') || !balanceHtml.includes('src="/balance.js"')) {
+  throw new Error("Balance route is missing its CSS or JS asset link");
+}
+if (!vercelConfig.rewrites?.some((rewrite) => rewrite.source === "/balance" && rewrite.destination === "/balance.html")) {
+  throw new Error("Vercel config is missing the /balance rewrite");
 }
 
 console.log("Static app check passed.");

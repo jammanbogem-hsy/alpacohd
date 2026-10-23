@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="지역말을 지원하는 주문 키오스크와 표준어에 최적화한 주문 키오스크 비교 체험"
+    />
+    <meta name="theme-color" content="#eeefed" />
+    <title>말맛식당 · 주문 키오스크</title>
+    <link rel="preload" href="/assets/balance/fonts/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/balance.css" />
+    <link rel="stylesheet" href="/balance-surface.css" />
+    <link rel="stylesheet" href="/balance-hardware.css" />
+    <script src="/balance.js" defer></script>
+  </head>
+  <body>
+    <button id="overviewBack" class="overview-back" type="button" hidden>
+      <span aria-hidden="true">←</span> 돌아가기
+    </button>
+    <main class="kiosk-stage" aria-label="주문 키오스크 두 대">
+      <article
+        id="kioskA"
+        class="terminal terminal-legacy"
+        aria-label="A 주문 키오스크"
+      ></article>
+      <article
+        id="kioskB"
+        class="terminal terminal-modern"
+        aria-label="B 주문 키오스크"
+      ></article>
+    </main>
+  </body>
+</html>

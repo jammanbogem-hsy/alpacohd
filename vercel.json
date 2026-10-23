@@ -5,6 +5,10 @@
     {
       "source": "/bias",
       "destination": "/bias.html"
+    },
+    {
+      "source": "/balance",
+      "destination": "/balance.html"
     }
   ]
 }

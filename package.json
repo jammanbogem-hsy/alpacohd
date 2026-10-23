@@ -4,6 +4,7 @@
   "private": true,
   "description": "초등학생을 위한 배리어프리 키오스크 체험 웹앱",
   "scripts": {
+    "dev": "node scripts/dev-static.mjs",
     "check": "node scripts/check-static.mjs"
   }
 }
