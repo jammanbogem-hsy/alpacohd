@@ -1,6 +1,7 @@
 const HARD_TIMER_SECONDS = 1.8;
 const EXTREME_TIMER_SECONDS = 1.6;
 const INSANE_TIMER_SECONDS = 1.4;
+const HELL_TIMER_SECONDS = 1.2;
 
 const stations = [
   {
@@ -22,7 +23,10 @@ const stations = [
     extremeMission: "더블패티버거, 버팔로윙, 제로환타(L), 얼음 많이, 모바일 상품권 결제까지 완료해 보세요.",
     insaneLabel: `극악 모드 (${INSANE_TIMER_SECONDS}초)`,
     insaneTitle: `${INSANE_TIMER_SECONDS}초 극악 주문 키오스크`,
-    insaneMission: "매콤치킨버거(토마토 추가·피클 빼기), 닭강정, 제로사이다(L), 얼음 적게, 코코아페이 결제, 영수증 출력까지 완료해 보세요."
+    insaneMission: "매콤치킨버거(토마토 추가·피클 빼기), 닭강정, 제로사이다(L), 얼음 적게, 코코아페이 결제, 영수증 출력까지 완료해 보세요.",
+    hellLabel: `헬 모드 (${HELL_TIMER_SECONDS}초)`,
+    hellTitle: `${HELL_TIMER_SECONDS}초 헬 주문 키오스크`,
+    hellMission: "콰트로치즈버거(브리오슈 번·갈릭 소스·치즈 추가·베이컨 추가·양파 빼기·피클 빼기), 치즈볼, 제로레몬에이드(L), 얼음 반만, 모두멤버십 적립, 사성페이 일시불, 영수증 출력까지 완료해 보세요."
   },
   {
     id: "alien",
@@ -238,7 +242,7 @@ function renderStation() {
   if (!station) return;
 
   els.stationKicker.textContent = station.kicker;
-  const tier = ["insane", "extreme", "hard"].find((name) => state.mode === name && station[`${name}Title`]) || "";
+  const tier = ["hell", "insane", "extreme", "hard"].find((name) => state.mode === name && station[`${name}Title`]) || "";
   els.stationTitle.textContent = tier ? station[`${tier}Title`] : station.title;
   els.stationMission.textContent = tier
     ? station[`${tier}Mission`]
@@ -315,11 +319,12 @@ function celebrationParticles() {
   }).join("");
 }
 
-// 일반(challenge) → 어려운(hard) → 더 어려운(extreme) 순서로, 스테이션에 정의된 단계까지만 이어집니다.
+// 일반(challenge) → 어려운(hard) → 더 어려운(extreme) → 극악(insane) → 헬(hell) 순서로, 스테이션에 정의된 단계까지만 이어집니다.
 function nextHarderMode(station, mode) {
   if (mode === "challenge" && station.hardTitle) return "hard";
   if (mode === "hard" && station.extremeTitle) return "extreme";
   if (mode === "extreme" && station.insaneTitle) return "insane";
+  if (mode === "insane" && station.hellTitle) return "hell";
   return null;
 }
 
@@ -461,7 +466,10 @@ const productImages = {
   "ice-normal": "assets/menu/ice-normal.png",
   "ice-more": "assets/menu/ice-more.png",
   "ice-extra": "assets/menu/ice-more.png",
-  "ice-half": "assets/menu/ice-less.png",
+  "ice-half": "assets/menu/ice-half.png",
+  "ice-little": "assets/menu/ice-little.png",
+  "ice-much": "assets/menu/ice-much.png",
+  "ice-full": "assets/menu/ice-full.png",
   "spicy-chicken": "assets/menu/spicy-chicken-burger.png",
   "avocado-burger": "assets/menu/avocado-burger.png",
   "opt-tomato": "assets/menu/topping-tomato.png",
@@ -519,7 +527,46 @@ const productImages = {
   "payment-card-hand": "assets/menu/card.png",
   "hardware-card-slot": "assets/menu/card-slot.png",
   "hardware-receipt": "assets/menu/receipt.png",
-  "hardware-barcode": "assets/menu/barcode-scanner.png"
+  "hardware-barcode": "assets/menu/barcode-scanner.png",
+  // 헬 모드: 버거·빵·소스·재료·사이드·음료·컵·결제
+  "quattro-cheese": "assets/menu/quattro-cheese-burger.png",
+  "wasabi-shrimp": "assets/menu/wasabi-shrimp-burger.png",
+  buldak: "assets/menu/buldak-burger.png",
+  pineapple: "assets/menu/pineapple-burger.png",
+  vegan: "assets/menu/vegan-burger.png",
+  "egg-burger": "assets/menu/egg-burger.png",
+  "bun-basic": "assets/menu/bun-basic.png",
+  "bun-brioche": "assets/menu/bun-brioche.png",
+  "bun-wheat": "assets/menu/bun-wheat.png",
+  "bun-squid-ink": "assets/menu/bun-squid-ink.png",
+  "sauce-basic": "assets/menu/topping-sauce.png",
+  "sauce-garlic": "assets/menu/sauce-garlic.png",
+  "sauce-chili": "assets/menu/sauce-chili.png",
+  "sauce-mayo": "assets/menu/sauce-mayo.png",
+  "sauce-mustard": "assets/menu/sauce-mustard.png",
+  "sauce-bbq": "assets/menu/sauce-bbq.png",
+  "opt-no-tomato": "assets/menu/topping-tomato.png",
+  "opt-lettuce": "assets/menu/topping-lettuce.png",
+  "opt-bacon": "assets/menu/topping-bacon.png",
+  "opt-egg": "assets/menu/topping-egg.png",
+  "opt-avocado": "assets/menu/topping-avocado.png",
+  "opt-mushroom": "assets/menu/topping-mushroom.png",
+  "cheese-ball": "assets/menu/cheese-ball.png",
+  "sweet-potato-fries": "assets/menu/sweet-potato-fries.png",
+  "potato-wedge": "assets/menu/potato-wedge.png",
+  "chili-fries": "assets/menu/chili-fries.png",
+  "corn-cheese": "assets/menu/corn-cheese.png",
+  "shrimp-nugget": "assets/menu/shrimp-nugget.png",
+  "zero-ade": "assets/menu/zero-lemonade.png",
+  "grape-ade": "assets/menu/green-grape-ade.png",
+  "orange-juice": "assets/menu/orange-juice.png",
+  americano: "assets/menu/iced-americano.png",
+  milkshake: "assets/menu/milkshake.png",
+  water: "assets/menu/water.png",
+  "cup-xlarge": "assets/menu/cup-xlarge.png",
+  "pay-transit": "assets/menu/pay-transit.png",
+  "pay-qr": "assets/menu/pay-qr.png",
+  "pay-corporate": "assets/menu/pay-corporate.png"
 };
 
 function productImageMarkup(src, className = "") {
@@ -1017,6 +1064,7 @@ function fxTimeoutNotice(root) {
 }
 
 const HALL_OF_FAME_KEY = "alpaco-hall-of-fame";
+const HELL_HALL_OF_FAME_KEY = "alpaco-hall-of-fame-hell";
 
 function readHallOfFame(key = HALL_OF_FAME_KEY) {
   try {
@@ -1255,7 +1303,8 @@ function showHallOfFame({
   subtitle = `${INSANE_TIMER_SECONDS}초 극악 모드 정복!`,
   label = `${INSANE_TIMER_SECONDS}초 극악 모드 정복`,
   theme = "",
-  receipt = null
+  receipt = null,
+  next = null
 }) {
   document.querySelector(".hof-overlay")?.remove();
   const prize = drawPrize();
@@ -1287,7 +1336,10 @@ function showHallOfFame({
         <button type="submit">이름 올리기</button>
       </form>
       <ol class="hof-list" data-hof-list="true">${hallOfFameRows(readHallOfFame(storageKey))}</ol>
-      <button class="hof-close" type="button" data-hof-close="true">키오스크 선택으로</button>
+      <div class="hof-actions">
+        <button class="hof-close" type="button" data-hof-close="true">키오스크 선택으로</button>
+        ${next ? `<button class="hof-next" type="button" data-hof-next="true">${next.label} 도전</button>` : ""}
+      </div>
       </div>
       ${prizeCardMarkup(prize, theme, receipt)}
     </section>
@@ -1327,7 +1379,171 @@ function showHallOfFame({
     overlay.remove();
     returnHome();
   });
+  overlay.querySelector("[data-hof-next]")?.addEventListener("click", () => {
+    overlay.remove();
+    next.start();
+  });
   overlay.querySelector("[data-hof-name]").focus();
+}
+
+// 헬 모드: 극악 모드 단계에 비슷한 선택지를 더하고 빵·소스·할인·할부 단계를 끼워 넣습니다.
+function addHellSteps(steps, target) {
+  const find = (key) => steps.find((item) => item.key === key);
+  const insertAfter = (key, ...added) => steps.splice(steps.indexOf(find(key)) + 1, 0, ...added);
+
+  // 메뉴 20개: 비슷한 이름(치즈버거·콰트로치즈버거, 새우버거·와사비새우버거)을 섞어 둡니다.
+  const menu = find("menu");
+  const extraBurgers = {
+    "cheese-set": { id: "quattro-cheese", label: "콰트로치즈버거", desc: "치즈 네 가지", price: 7600 },
+    shrimp: { id: "wasabi-shrimp", label: "와사비새우버거", desc: "알싸한 와사비", price: 6800 },
+    "spicy-chicken": { id: "buldak", label: "불닭버거", desc: "아주 매운 맛", price: 6900 },
+    teriyaki: { id: "pineapple", label: "파인애플버거", desc: "구운 파인애플", price: 6700 },
+    "rice-burger": { id: "vegan", label: "비건버거", desc: "식물성 패티", price: 7100 },
+    bulgogi: { id: "egg-burger", label: "에그버거", desc: "계란 프라이", price: 5600 }
+  };
+  menu.items = menu.items.flatMap((item) => (extraBurgers[item.id] ? [item, extraBurgers[item.id]] : [item]));
+
+  insertAfter(
+    "menu",
+    {
+      label: "빵",
+      key: "bun",
+      title: "빵을 골라 주세요",
+      subtitle: `${target.bunLabel}을 고릅니다.`,
+      correct: target.bun,
+      items: [
+        { id: "bun-basic", label: "기본 번", desc: "참깨 번", price: 0 },
+        { id: "bun-wheat", label: "통밀 번", desc: "+300원", price: 300 },
+        { id: "bun-brioche", label: "브리오슈 번", desc: "+500원", price: 500 },
+        { id: "bun-squid-ink", label: "오징어먹물 번", desc: "+700원", price: 700 },
+        { id: "bun-none", label: "번 없이", desc: "양상추로 감싸기", price: 0, mark: "없" }
+      ]
+    },
+    {
+      label: "소스",
+      key: "sauce",
+      title: "소스를 골라 주세요",
+      subtitle: `${target.sauceLabel}를 고릅니다.`,
+      correct: target.sauce,
+      items: [
+        { id: "sauce-basic", label: "기본 소스", desc: "버거 소스", price: 0 },
+        { id: "sauce-mayo", label: "마요 소스", desc: "고소한 마요", price: 0 },
+        { id: "sauce-garlic", label: "갈릭 소스", desc: "+300원", price: 300 },
+        { id: "sauce-chili", label: "칠리 소스", desc: "+300원", price: 300 },
+        { id: "sauce-mustard", label: "머스터드 소스", desc: "+300원", price: 300 },
+        { id: "sauce-bbq", label: "바비큐 소스", desc: "+300원", price: 300 },
+        { id: "sauce-none", label: "소스 빼기", desc: "0원", price: 0, mark: "빼" }
+      ]
+    }
+  );
+
+  // 재료 옵션 16개: 같은 재료의 '추가'와 '빼기'를 나란히 둡니다.
+  const options = find("options");
+  options.correct = target.options;
+  options.subtitle = `${target.optionsLabel}를 모두 고른 뒤 선택 완료를 누릅니다.`;
+  options.items = [
+    { id: "opt-cheese", label: "치즈 추가", desc: "+500원", price: 500, mark: "치" },
+    { id: "opt-bacon", label: "베이컨 추가", desc: "+900원", price: 900, mark: "베" },
+    { id: "opt-onion", label: "양파 추가", desc: "+300원", price: 300, mark: "양" },
+    { id: "opt-no-onion", label: "양파 빼기", desc: "0원", price: 0, mark: "양" },
+    { id: "opt-pickle", label: "피클 추가", desc: "+200원", price: 200, mark: "피" },
+    { id: "opt-no-pickle", label: "피클 빼기", desc: "0원", price: 0, mark: "피" },
+    { id: "opt-tomato", label: "토마토 추가", desc: "+300원", price: 300, mark: "토" },
+    { id: "opt-no-tomato", label: "토마토 빼기", desc: "0원", price: 0, mark: "토" },
+    { id: "opt-lettuce", label: "양상추 추가", desc: "+200원", price: 200, mark: "상" },
+    { id: "opt-no-lettuce", label: "양상추 빼기", desc: "0원", price: 0, mark: "상" },
+    { id: "opt-egg", label: "계란 추가", desc: "+700원", price: 700, mark: "계" },
+    { id: "opt-avocado", label: "아보카도 추가", desc: "+1,200원", price: 1200, mark: "아" },
+    { id: "opt-mushroom", label: "버섯 추가", desc: "+600원", price: 600, mark: "버" },
+    { id: "opt-jalapeno", label: "할라피뇨 추가", desc: "+300원", price: 300, mark: "할" },
+    { id: "opt-patty", label: "패티 추가", desc: "+1,500원", price: 1500, mark: "패" },
+    { id: "opt-done", label: "선택 완료", desc: "다음 단계", price: 0, mark: "✓" }
+  ];
+
+  const side = find("side");
+  side.items = [
+    ...side.items,
+    { id: "cheese-ball", label: "치즈볼", desc: "쭉 늘어나는 치즈", price: 1200 },
+    { id: "sweet-potato-fries", label: "고구마튀김", desc: "달콤한 고구마", price: 900 },
+    { id: "potato-wedge", label: "웨지감자", desc: "두툼한 감자", price: 700 },
+    { id: "chili-fries", label: "칠리프라이", desc: "칠리 소스 감자", price: 1300 },
+    { id: "corn-cheese", label: "콘치즈", desc: "치즈 옥수수", price: 1000 },
+    { id: "shrimp-nugget", label: "새우너겟", desc: "한입 새우", price: 1100 }
+  ];
+
+  const drink = find("drink");
+  drink.items = [
+    ...drink.items,
+    { id: "zero-ade", label: "제로레몬에이드", desc: "당류 0g · 추가 700원", price: 700 },
+    { id: "grape-ade", label: "청포도에이드", desc: "추가 900원", price: 900 },
+    { id: "orange-juice", label: "오렌지주스", desc: "추가 800원", price: 800 },
+    { id: "americano", label: "아이스아메리카노", desc: "추가 500원", price: 500 },
+    { id: "milkshake", label: "밀크셰이크", desc: "추가 1,500원", price: 1500 },
+    { id: "water", label: "생수", desc: "500mL", price: 0 }
+  ];
+
+  find("size").items.push({ id: "cup-xlarge", label: "XL 사이즈", desc: "추가 900원", price: 900, mark: "XL" });
+
+  // 얼음 8단계: 이름이 비슷한 양을 촘촘하게 나눕니다.
+  const ice = find("ice");
+  ice.correct = target.ice;
+  ice.subtitle = `${target.drinkLabel}(${target.sizeLabel})에 넣을 ${target.iceLabel}을 고릅니다.`;
+  ice.items = [
+    { id: "ice-none", label: "얼음 없음", desc: "얼음을 넣지 않음", price: 0, mark: "없" },
+    { id: "ice-little", label: "얼음 아주 조금", desc: "몇 조각만", price: 0, mark: "조" },
+    { id: "ice-less", label: "얼음 적게", desc: "조금만 넣기", price: 0, mark: "적" },
+    { id: "ice-half", label: "얼음 반만", desc: "기본의 절반", price: 0, mark: "반" },
+    { id: "ice-normal", label: "얼음 중간", desc: "기본 양", price: 0, mark: "중" },
+    { id: "ice-much", label: "얼음 조금 많이", desc: "기본보다 조금 더", price: 0, mark: "더" },
+    { id: "ice-more", label: "얼음 많이", desc: "많이 넣기", price: 0, mark: "많" },
+    { id: "ice-full", label: "얼음 가득", desc: "컵 가득 채우기", price: 0, mark: "가" }
+  ];
+
+  const payment = find("payment");
+  payment.subtitle = `${target.paymentLabel}를 고릅니다.`;
+  payment.items = [
+    ...payment.items,
+    { id: "pay-transit", label: "교통카드", desc: "카드를 대기", price: 0, mark: "교" },
+    { id: "pay-qr", label: "QR 결제", desc: "휴대폰 QR 스캔", price: 0, mark: "Q" },
+    { id: "pay-corporate", label: "법인카드", desc: "회사 카드", price: 0, mark: "법" }
+  ];
+  steps.splice(steps.indexOf(payment), 0, {
+    label: "할인",
+    key: "discount",
+    title: "할인·적립을 선택해 주세요",
+    subtitle: `${target.discountLabel}을 고릅니다.`,
+    correct: target.discount,
+    items: [
+      { id: "disc-none", label: "할인 없음", desc: "바로 결제", price: 0, mark: "없" },
+      { id: "disc-telecom", label: "통신사 할인", desc: "멤버십 바코드", price: 0, mark: "통" },
+      { id: "disc-membership", label: "모두멤버십 적립", desc: "포인트 쌓기", price: 0, mark: "적" },
+      { id: "disc-point", label: "모두멤버십 사용", desc: "포인트 쓰기", price: 0, mark: "사" },
+      { id: "disc-coupon", label: "쿠폰 번호 입력", desc: "12자리 번호", price: 0, mark: "쿠" },
+      { id: "disc-birthday", label: "생일 쿠폰", desc: "생일 당일만", price: 0, mark: "생" }
+    ]
+  });
+  insertAfter("payment", {
+    label: "할부",
+    key: "installment",
+    title: "할부 기간을 선택해 주세요",
+    subtitle: `${target.installmentLabel}을 고릅니다.`,
+    correct: target.installment,
+    items: [
+      { id: "inst-none", label: "일시불", desc: "한 번에 결제", price: 0, mark: "일" },
+      { id: "inst-2", label: "2개월", desc: "무이자", price: 0, mark: "2" },
+      { id: "inst-3", label: "3개월", desc: "무이자", price: 0, mark: "3" },
+      { id: "inst-6", label: "6개월", desc: "부분 무이자", price: 0, mark: "6" },
+      { id: "inst-12", label: "12개월", desc: "이자 있음", price: 0, mark: "12" },
+      { id: "inst-later", label: "나중에 결제", desc: "후불 결제", price: 0, mark: "후" }
+    ]
+  });
+
+  const receipt = find("receipt");
+  receipt.items = [
+    ...receipt.items,
+    { id: "receipt-both", label: "영수증+번호표", desc: "두 장 출력", price: 0, mark: "둘" },
+    { id: "receipt-email", label: "이메일 영수증", desc: "메일로 받기", price: 0, mark: "메" }
+  ];
 }
 
 function renderTimerStation(root, mode) {
@@ -1335,10 +1551,40 @@ function renderTimerStation(root, mode) {
   const isHard = mode === "hard";
   const isExtreme = mode === "extreme";
   const isInsane = mode === "insane";
+  const isHell = mode === "hell";
   // 극악 모드는 더 어려운 모드의 큰 메뉴판을 바탕으로 메뉴·옵션·영수증 단계를 더합니다.
-  const isMega = isExtreme || isInsane;
-  const timeLimit = isInsane ? INSANE_TIMER_SECONDS : isExtreme ? EXTREME_TIMER_SECONDS : isHard ? HARD_TIMER_SECONDS : 3;
-  const target = isInsane
+  // 헬 모드는 극악 모드 위에 빵·소스·할인·할부 단계와 더 많은 선택지를 더합니다.
+  const isMega = isExtreme || isInsane || isHell;
+  const hasOptions = isInsane || isHell;
+  const timeLimit = isHell ? HELL_TIMER_SECONDS : isInsane ? INSANE_TIMER_SECONDS : isExtreme ? EXTREME_TIMER_SECONDS : isHard ? HARD_TIMER_SECONDS : 3;
+  const target = isHell
+    ? {
+        menu: "quattro-cheese",
+        bun: "bun-brioche",
+        sauce: "sauce-garlic",
+        options: ["opt-cheese", "opt-bacon", "opt-no-onion", "opt-no-pickle"],
+        side: "cheese-ball",
+        drink: "zero-ade",
+        size: "cup-large",
+        ice: "ice-half",
+        discount: "disc-membership",
+        payment: "pay-saseong",
+        installment: "inst-none",
+        receipt: "receipt-print",
+        menuLabel: "콰트로치즈버거",
+        bunLabel: "브리오슈 번",
+        sauceLabel: "갈릭 소스",
+        optionsLabel: "치즈 추가·베이컨 추가·양파 빼기·피클 빼기",
+        sideLabel: "치즈볼",
+        drinkLabel: "제로레몬에이드",
+        sizeLabel: "L",
+        iceLabel: "얼음 반만",
+        discountLabel: "모두멤버십 적립",
+        paymentLabel: "사성페이",
+        installmentLabel: "일시불",
+        receiptLabel: "영수증 출력"
+      }
+    : isInsane
     ? {
         menu: "spicy-chicken",
         options: ["opt-tomato", "opt-no-pickle"],
@@ -1398,7 +1644,9 @@ function renderTimerStation(root, mode) {
           paymentLabel: "카드 결제"
         };
   const drinkSummary = target.sizeLabel ? `${target.drinkLabel}(${target.sizeLabel})` : target.drinkLabel;
-  const targetSummary = isInsane
+  const targetSummary = isHell
+    ? `${target.menuLabel}(${target.bunLabel}·${target.sauceLabel}·${target.optionsLabel}), ${target.sideLabel}, ${drinkSummary}, ${target.iceLabel}, ${target.discountLabel}, ${target.paymentLabel} ${target.installmentLabel}, ${target.receiptLabel}`
+    : isInsane
     ? `${target.menuLabel}(${target.optionsLabel}), ${target.sideLabel}, ${drinkSummary}, ${target.iceLabel}, ${target.paymentLabel}, ${target.receiptLabel}`
     : `${target.menuLabel}, ${target.sideLabel}, ${drinkSummary}, ${target.iceLabel}, ${target.paymentLabel}`;
   const timeLabel = `${timeLimit}초`;
@@ -1590,7 +1838,7 @@ function renderTimerStation(root, mode) {
     });
   }
 
-  if (isInsane) {
+  if (hasOptions) {
     const menuStep = steps.find((item) => item.key === "menu");
     menuStep.items = [
       ...menuStep.items.slice(0, 6),
@@ -1634,6 +1882,8 @@ function renderTimerStation(root, mode) {
     steps.splice(1, 0, optionStep);
     steps.push(receiptStep);
   }
+
+  if (isHell) addHellSteps(steps, target);
 
   // 극악 모드 기록: 첫 화면부터 영수증을 받을 때까지 걸린 시간과 실수 횟수
   const insaneStartedAt = performance.now();
@@ -1718,12 +1968,12 @@ function renderTimerStation(root, mode) {
             label: `옵션: ${picked.map((item) => item.label).join("·")}`,
             price: picked.reduce((sum, item) => sum + (item.price || 0), 0)
           };
-        } else if (current.key !== "receipt") {
+        } else if (current.key !== "receipt" && current.key !== "installment") {
           order[current.key] = selected;
         }
         window.clearInterval(timer);
         if (step === steps.length - 1) {
-          if (isInsane) {
+          if (isInsane || isHell) {
             finishInsane();
           } else if (isExtreme) {
             completeStation(`더 어려운 ${timeLabel} 미션까지 완료했습니다.`);
@@ -1811,6 +2061,7 @@ function renderTimerStation(root, mode) {
     const items = Object.values(order).map((item) => ({ label: item.label, price: item.price || 0 }));
     const total = items.reduce((sum, item) => sum + item.price, 0);
     const printer = root.querySelector(".hw-receipt-printer");
+    const tierName = isHell ? "헬" : "극악";
     if (typeof window.KioskFX?.printReceipt === "function") {
       try {
         await window.KioskFX.printReceipt(printer, {
@@ -1818,19 +2069,38 @@ function renderTimerStation(root, mode) {
           title: "영수증",
           items,
           discounts: [],
-          payments: [{ label: "코코아페이", amount: total }],
+          payments: [{ label: isHell ? `${target.paymentLabel}(${target.installmentLabel})` : target.paymentLabel.replace(/ 결제$/, ""), amount: total }],
           total,
           approval: String(Math.floor(10000000 + Math.random() * 89999999)),
           time: new Date().toLocaleString("ko-KR"),
-          footer: "극악 모드 정복을 축하합니다!"
+          footer: `${tierName} 모드 정복을 축하합니다!`
         });
       } catch {
         // 영수증 효과가 실패해도 명예의 전당은 보여 줍니다.
       }
     }
     if (disposed) return;
-    completeStation(`${INSANE_TIMER_SECONDS}초 극악 모드까지 정복했습니다.`);
-    showHallOfFame({ seconds, mistakes });
+    completeStation(`${timeLabel} ${tierName} 모드까지 정복했습니다.`);
+    // 극악 모드 기록판에서 바로 헬 모드로 이어 도전할 수 있습니다. 헬 모드 기록은 따로 모읍니다.
+    const station = currentStation();
+    showHallOfFame(
+      isHell
+        ? { seconds, mistakes, storageKey: HELL_HALL_OF_FAME_KEY, subtitle: `${timeLabel} 헬 모드 정복!`, label: `${timeLabel} 헬 모드 정복` }
+        : {
+            seconds,
+            mistakes,
+            next: station?.hellTitle
+              ? {
+                  label: station.hellLabel,
+                  start: () => {
+                    state.mode = "hell";
+                    state.kioskStarted = true;
+                    renderStation();
+                  }
+                }
+              : null
+          }
+    );
   }
 
   draw();
@@ -5274,3 +5544,11 @@ if ("requestIdleCallback" in window) {
 
 renderCards();
 renderProgress();
+
+// 로컬 개발 서버에서만 ?preview=hell 로 헬 모드를 바로 엽니다. 배포 사이트에서는 무시합니다.
+if (["localhost", "127.0.0.1"].includes(location.hostname) && new URLSearchParams(location.search).get("preview") === "hell") {
+  openStation("timer");
+  state.mode = "hell";
+  state.kioskStarted = true;
+  renderStation();
+}

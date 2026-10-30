@@ -978,3 +978,23 @@
   font-size: 0.6rem;
   font-weight: 700;
 }
+
+/* 극악 모드 기록판에서 헬 모드로 바로 이어 가는 버튼 */
+.hof-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hof-next {
+  padding: 8px 14px;
+  border: 3px solid #25293a;
+  border-radius: 8px;
+  background: #b3261e;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 900;
+  box-shadow: 3px 3px 0 #25293a;
+  cursor: pointer;
+}
