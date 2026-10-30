@@ -1,0 +1,152 @@
+/* AI 관상 체험: bias.css 위에 따뜻한 색과 동물 결과 카드를 더합니다. */
+:root {
+  --cyan: #ffd36e;
+  --blue: #ff9f6e;
+  --green: #8be28b;
+  --amber: #ffd36e;
+  --line: rgba(255, 211, 110, 0.36);
+  --line-hot: rgba(255, 211, 110, 0.86);
+}
+
+.gwansang-app {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 159, 110, 0.22), transparent 36%),
+    linear-gradient(180deg, #241232 0%, #0d0614 100%);
+}
+
+.gwansang-app .reveal-button,
+.gwansang-app .restart-button {
+  background: linear-gradient(135deg, #ffd36e, #ff9f6e);
+  color: #2a1408;
+}
+
+.animal-card {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid rgba(255, 211, 110, 0.58);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 211, 110, 0.16), rgba(255, 159, 110, 0.08));
+}
+
+.animal-image {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: #fff6df;
+  object-fit: contain;
+  animation: animal-pop 0.5s ease-out;
+}
+
+@keyframes animal-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  70% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.animal-emoji {
+  font-size: 1.3rem;
+}
+
+.animal-card strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--amber);
+  font-size: clamp(1.5rem, 3.4vw, 2.2rem);
+  line-height: 1.15;
+  word-break: keep-all;
+}
+
+.animal-card p {
+  margin: 6px 0 0;
+  color: #fff3df;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  font-weight: 800;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
+.reading-box {
+  display: grid;
+  gap: 8px;
+}
+
+.reading-box h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.reading-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reading-list li {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff8ee;
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.45;
+  word-break: keep-all;
+}
+
+.reading-list li::before {
+  content: "✨ ";
+}
+
+.fortune-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fortune-row span {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 211, 110, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 211, 110, 0.08);
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.fortune-row b {
+  color: #fff8ee;
+  font-size: 1rem;
+  word-break: keep-all;
+}
+
+.gwansang-app .factor-list li {
+  font-size: 0.92rem;
+}
+
+.reveal-try {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(255, 211, 110, 0.12);
+  color: #fff3df;
+}
+
+@media (max-width: 760px) {
+  .animal-card {
+    grid-template-columns: 84px minmax(0, 1fr);
+  }
+
+  .animal-image {
+    width: 84px;
+    height: 84px;
+  }
+
+  .fortune-row {
+    grid-template-columns: 1fr;
+  }
+}

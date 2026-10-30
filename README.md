@@ -16,6 +16,7 @@ Vercel에서는 별도 경로 `/bias`에 알파코 : 블랙박스 체험 앱도 
 ## 별도 웹앱
 
 - `/bias`: 카메라 기반 인공지능 얼굴 분석처럼 보이는 알파코 : 블랙박스 편향 체험 시뮬레이터
+- `/bias/gs`: 초등 4~6학년용 AI 동물 관상 체험. 얼굴 상자와 눈·코·입 위치에서 잰 숫자 몇 개로 동물 관상과 칭찬 풀이를 보여 준 뒤, 관상이 과학이 아니라는 비밀을 공개합니다. 외부 API를 쓰지 않고 영상도 저장하지 않습니다.
 - `/balance`: 3차시 AI 윤리 밸런스 게임. 흰색 주문기 두 대에서 메뉴 선택, 수량·얼음 옵션, 장바구니, 카드 결제와 영수증까지 체험하며 1단계 다양성 vs 정확성, 2단계 심미성 vs 접근성, 3단계 공정성 vs 비용을 비교합니다.
 
 ## 로컬 확인
@@ -26,7 +27,7 @@ npm run dev
 ```
 
 브라우저에서 `http://localhost:3100` 또는 `http://localhost:3100/balance`를 열면 됩니다.
-로컬 서버는 `vercel.json`의 `/bias`, `/balance` 경로와 `cleanUrls`를 반영합니다. 다른 포트는 `npm run dev -- --port 3101`로 지정합니다.
+로컬 서버는 `vercel.json`의 `/bias`, `/bias/gs`, `/balance` 경로와 `cleanUrls`를 반영합니다. 다른 포트는 `npm run dev -- --port 3101`로 지정합니다.
 
 `/balance`는 단계마다 비밀번호로 열립니다. 처음 접속하면 1단계 비밀번호 창이 뜨고, 화면 위 단계 버튼에서 잠긴 단계를 누르면 해당 비밀번호를 묻습니다(띄어쓰기 무시). 비밀번호는 저장소에 공개되지 않도록 문서에 적지 않고, `balance.js`의 `STAGES[n].keys`(단계마다 여러 개 허용)에 `passKey()` 해시로만 둡니다. 연 단계는 같은 탭의 세션 동안 유지되고 새 탭이나 브라우저를 닫으면 다시 잠깁니다. 수업 진행용 잠금일 뿐 보안 장치는 아닙니다. 단계 설정과 2·3단계 동작은 `balance.js`, 단계 탭·비밀번호 창·역할 전환·음성 안내 자막은 `balance-stages.css`, 2단계 디자인은 `balance-themes.css`가 담당합니다.
 
@@ -53,4 +54,4 @@ npm run dev
 ## Vercel 배포
 
 정적 HTML/CSS/JS 앱이므로 Vercel에서 GitHub 저장소를 연결하면 바로 배포할 수 있습니다.
-`vercel.json`에는 확장자 없는 URL을 위한 `cleanUrls`와 `/bias`, `/balance` rewrite를 포함했습니다.
+`vercel.json`에는 확장자 없는 URL을 위한 `cleanUrls`와 `/bias`, `/bias/gs`, `/balance` rewrite를 포함했습니다.

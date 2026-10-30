@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="웹캠으로 얼굴을 추적해 동물 관상을 알려 주는 것처럼 보이는 초등학생용 알파코 블랙박스 편향 체험"
+    />
+    <title>알파코 : 블랙박스 | AI 관상 체험</title>
+    <link rel="stylesheet" href="/bias.css?v=20260512-fun-type" />
+    <link rel="stylesheet" href="/gwansang.css?v=20261030" />
+  </head>
+  <body>
+    <main class="face-app gwansang-app" data-phase="camera">
+      <video id="webcam" autoplay muted playsinline></video>
+      <div id="cameraFallback" class="camera-fallback">
+        <strong>카메라 준비 중</strong>
+        <span>카메라 권한을 기다리고 있어요.</span>
+        <button id="reconnectCameraButton" class="reconnect-camera-button" type="button">
+          카메라 다시 연결
+        </button>
+      </div>
+
+      <div class="camera-shade" aria-hidden="true"></div>
+      <div class="scan-noise" aria-hidden="true"></div>
+      <div class="scan-line" aria-hidden="true"></div>
+      <div class="face-reticle" aria-hidden="true">
+        <span class="corner corner-a"></span>
+        <span class="corner corner-b"></span>
+        <span class="corner corner-c"></span>
+        <span class="corner corner-d"></span>
+      </div>
+      <div id="trackingBox" class="tracking-box" aria-hidden="true">
+        <span class="tracking-label">관상 읽는 중</span>
+      </div>
+      <div id="landmarkLayer" class="landmark-layer" aria-hidden="true"></div>
+
+      <header class="top-hud">
+        <div class="brand">
+          <span>알파코 : 블랙박스</span>
+          <strong>AI 동물 관상 분석기</strong>
+        </div>
+        <div class="system-chips" aria-label="시스템 상태">
+          <span id="cameraStatus">카메라 준비</span>
+          <span>사진 저장 안 함</span>
+          <span>재미로 보는 관상</span>
+        </div>
+      </header>
+
+      <section id="cameraPanel" class="phase-panel camera-panel is-active" aria-labelledby="cameraTitle">
+        <p class="eyebrow">AI 관상 분석기</p>
+        <h1 id="cameraTitle">얼굴을 네모 안에 맞춰 주세요</h1>
+        <p class="panel-copy">AI가 이마, 눈, 코, 입을 살펴보고 나와 닮은 동물 관상을 알려 줄 거예요.</p>
+        <div class="camera-metrics" aria-label="입력 상태">
+          <span>얼굴 <b id="faceMetric">찾는 중</b></span>
+          <span>밝기 <b id="lightMetric">--%</b></span>
+          <span>움직임 <b id="motionMetric">--%</b></span>
+        </div>
+        <div class="calibration-list" aria-label="촬영 전 준비 상태">
+          <span id="calibrationFace"><b>•</b><em>얼굴 찾는 중</em></span>
+          <span id="calibrationLight"><b>•</b><em>밝기 확인 중</em></span>
+          <span id="calibrationGaze"><b>•</b><em>정면 보기 확인 중</em></span>
+          <span id="calibrationQuality"><b>•</b><em>준비 상태 확인 중</em></span>
+        </div>
+        <button id="captureButton" class="capture-button" type="button">
+          <span></span>
+          관상 보기
+        </button>
+      </section>
+
+      <section id="scanPanel" class="phase-panel scan-panel" aria-labelledby="scanTitle">
+        <p class="eyebrow">관상 읽는 중...</p>
+        <h2 id="scanTitle">얼굴을 살펴보고 있어요</h2>
+        <div class="scan-progress" aria-label="분석 진행률">
+          <strong id="scanPercent">0%</strong>
+          <div class="progress-track">
+            <span id="scanProgressBar"></span>
+          </div>
+        </div>
+        <div id="scanLogs" class="scan-logs" aria-live="polite"></div>
+        <div id="scanChecklist" class="scan-checklist" aria-label="분석 체크리스트">
+          <span>얼굴 찾기 완료</span>
+          <span>이마·눈썹 살펴보기 완료</span>
+          <span>눈매 읽기 완료</span>
+          <span>코·입 위치 재기 완료</span>
+          <span>닮은 동물 찾기 완료</span>
+        </div>
+        <div class="confidence-pill">
+          정확도 <strong id="scanConfidence">--%</strong>
+        </div>
+      </section>
+
+      <section id="resultPanel" class="phase-panel result-panel" aria-labelledby="resultTitle">
+        <div class="result-heading">
+          <p class="eyebrow">AI 관상 결과</p>
+          <h2 id="resultTitle">나의 동물 관상</h2>
+          <strong id="resultConfidence">정확도: --%</strong>
+        </div>
+        <div id="animalCard" class="animal-card">
+          <img id="animalImage" class="animal-image" alt="" width="512" height="512" />
+          <div>
+            <span id="animalEmoji" class="animal-emoji" aria-hidden="true"></span>
+            <strong id="animalTitle">관상을 준비하고 있어요</strong>
+            <p id="animalHeadline"></p>
+          </div>
+        </div>
+        <div class="reading-box">
+          <h3>AI의 관상 풀이</h3>
+          <ul id="readingList" class="reading-list" aria-live="polite"></ul>
+        </div>
+        <div class="fortune-row">
+          <span>잘 어울리는 꿈 <b id="fortuneDream">--</b></span>
+          <span>행운의 물건 <b id="fortuneLucky">--</b></span>
+        </div>
+        <div class="factor-box">
+          <h3>AI가 잰 숫자</h3>
+          <ul id="resultFactors" class="factor-list"></ul>
+        </div>
+        <button id="showRevealButton" class="reveal-button" type="button">관상의 비밀 보기</button>
+      </section>
+
+      <section id="revealPanel" class="phase-panel reveal-panel" aria-labelledby="revealTitle">
+        <div class="reveal-card">
+          <p class="eyebrow">비밀 공개</p>
+          <h2 id="revealTitle">
+            <span>사실 이 관상은</span>
+            <span>진짜가 아니에요!</span>
+          </h2>
+          <p>
+            AI는 얼굴의 크기, 모양, 밝기 같은 숫자 몇 개만 재고, 그 숫자에 동물 이름과 좋은 말을
+            붙였을 뿐이에요.
+          </p>
+          <p>
+            얼굴만 보고 그 사람의 성격이나 미래를 알 수는 없어요. 관상은 과학이 아니라 재미로 보는
+            놀이예요.
+          </p>
+          <p>
+            그런데 "AI가 분석했어요", "정확도 97%" 같은 말을 보면 진짜처럼 믿고 싶어지죠? 진짜
+            AI도 얼굴만 보고 사람을 판단하면 잘못된 생각(편견)을 만들 수 있어요.
+          </p>
+          <p class="reveal-try">
+            한 번 더 해 보세요. 고개를 살짝 돌리거나, 카메라에 가까이 가거나, 불빛을 바꾸면 다른
+            동물이 나올지도 몰라요. 내 성격은 그대로인데 말이에요!
+          </p>
+          <button id="restartButton" class="restart-button" type="button">다시 해 보기</button>
+        </div>
+      </section>
+
+      <p class="safety-note">
+        ※ 재미로 보는 관상이에요. 진짜로 성격이나 미래를 알아내지 않아요. 카메라 영상은 저장되거나
+        다른 곳으로 보내지지 않아요.
+      </p>
+    </main>
+
+    <canvas id="analysisCanvas" width="96" height="72" aria-hidden="true"></canvas>
+    <script src="/gwansang.js?v=20261030" defer></script>
+  </body>
+</html>
