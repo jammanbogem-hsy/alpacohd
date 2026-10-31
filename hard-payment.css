@@ -1164,3 +1164,338 @@
   from { box-shadow: 0 0 0 0 rgba(255, 93, 125, 0.7); }
   to { box-shadow: 0 0 0 6px rgba(255, 93, 125, 0); }
 }
+
+/* ---------- 헬 결제: 문자 인증·약관·포인트·카드 방향·카드 빼기·영수증 확인·광고 ---------- */
+.verify-timer {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.verify-timer b {
+  color: var(--ink);
+  font-size: 1.2rem;
+}
+
+.verify-timer.is-low b {
+  color: #d62f4c;
+}
+
+.verify-resend-button {
+  min-height: 34px;
+  padding: 4px 8px;
+  border: 1px solid #c4c8d2;
+  border-radius: 6px;
+  background: #f4f5f8;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hell-consent-panel,
+.hell-hold-panel,
+.hell-receipt-check {
+  display: grid;
+  width: min(100%, 420px);
+  gap: 12px;
+  padding: 18px;
+  border: 4px solid var(--line);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 8px 8px 0 rgba(37, 41, 58, 0.2);
+}
+
+.hell-consent-panel h4,
+.hell-consent-panel p,
+.hell-hold-panel h4,
+.hell-hold-panel p,
+.hell-receipt-check h4,
+.hell-receipt-check p,
+.hell-points-panel h4 {
+  margin: 0;
+}
+
+.hell-consent-panel p,
+.hell-receipt-check p {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.hell-consent-list {
+  display: grid;
+  gap: 2px;
+}
+
+/* 선택 항목은 작고 흐린 글씨로, 이미 체크된 채 나옵니다. */
+.hell-consent-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #8a8f9c;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.hell-consent-row input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+}
+
+.hell-consent-row.is-required {
+  color: var(--ink);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.hell-consent-submit,
+.hell-receipt-ok {
+  min-height: 56px;
+  border: 3px solid var(--line);
+  border-radius: 10px;
+  background: var(--coral);
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.hell-points-info {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.hell-points-info b {
+  color: var(--ink);
+}
+
+.hell-points-all {
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  background: #ffe48a;
+  color: var(--ink);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+/* 카드 방향: 거꾸로 든 카드는 IC칩이 오른쪽 아래로 갑니다. */
+.payment-card-hand img {
+  transition: transform 0.35s ease;
+}
+
+.payment-card-hand.is-reversed img {
+  transform: rotate(180deg);
+}
+
+.card-drag-zone {
+  position: relative;
+}
+
+.card-flip-button {
+  display: block;
+  margin: 8px auto 0;
+  min-height: 40px;
+  padding: 6px 16px;
+  border: 3px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ink);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.hell-hold-panel {
+  justify-items: center;
+  text-align: center;
+}
+
+.hell-hold-panel h4 {
+  font-size: 1.4rem;
+}
+
+.hell-hold-panel.is-holding p {
+  color: #d62f4c;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.hell-hold-panel.is-remove p {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.hell-hold-spinner {
+  width: 46px;
+  height: 46px;
+  border: 6px solid #e2e5ec;
+  border-top-color: var(--coral);
+  border-radius: 50%;
+  animation: hell-spin 0.9s linear infinite;
+}
+
+@keyframes hell-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hell-card-pull {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border: 3px dashed #9aa0ad;
+  border-radius: 10px;
+  background: #f6f7fa;
+  color: var(--ink);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.hell-card-pull img {
+  width: 120px;
+  height: auto;
+}
+
+.hell-hold-panel.is-remove .hell-card-pull {
+  border-style: solid;
+  border-color: var(--coral);
+  background: #fff1f4;
+}
+
+.hell-receipt-lines {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 2px dashed #c4c8d2;
+  border-radius: 8px;
+  background: #fffdf6;
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.hell-receipt-line,
+.hell-receipt-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+}
+
+.hell-receipt-line {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.hell-receipt-line:hover,
+.hell-receipt-line:focus-visible {
+  border-color: var(--coral);
+  background: #fff1f4;
+}
+
+.hell-receipt-total {
+  border-top: 2px solid #25293a;
+  font-weight: 900;
+}
+
+/* 화면 광고: 보이는 영역을 모두 덮고, 닫기 버튼은 작고 흐리게 구석에 둡니다. */
+.kiosk-device-screen {
+  position: relative;
+}
+
+.hell-ad-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: rgba(20, 22, 32, 0.72);
+}
+
+.hell-ad-card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(100%, 440px);
+  padding: 26px 20px 22px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #ffe0ec, #fff6c9);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  text-align: center;
+  cursor: pointer;
+}
+
+.hell-ad-card img {
+  width: min(100%, 300px);
+  height: auto;
+}
+
+.hell-ad-card strong {
+  color: #c2185b;
+  font-size: 1.5rem;
+  font-weight: 950;
+}
+
+.hell-ad-action {
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: #e91e63;
+  color: #ffffff;
+  font-weight: 900;
+}
+
+.hell-ad-badge {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.hell-ad-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.12);
+  color: rgba(0, 0, 0, 0.35);
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.kiosk-device-screen:has(.hell-ad-overlay) {
+  overflow: hidden;
+}
+
+/* 좁은 화면에서는 문자 화면 위, 입력 키패드 아래로 쌓습니다. */
+@media (max-width: 560px) {
+  .verify-entry-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .verify-entry-panel .coupon-phone-mock .phone-screen {
+    min-height: 0;
+  }
+}

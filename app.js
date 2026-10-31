@@ -62,7 +62,10 @@ const stations = [
     extremeMission: "문자로 받은 쿠폰 번호를 입력하고 휴대폰 번호 010-2580-1379로 적립하세요. 추가 주문은 모두 거절하고 모바일 상품권으로 결제한 뒤, 모자란 금액은 카드로 내고 영수증을 받으세요. 카드 비밀번호는 1234입니다.",
     insaneLabel: "극악 모드",
     insaneTitle: "극악 결제 키오스크",
-    insaneMission: "더 어려운 모드와 같은 결제를 결제 대기 시간 안에 끝내세요. 시간 연장 안내를 놓치지 말고, 카드 오류가 나면 다시 꽂고, 비밀번호(1234) 뒤에 서명까지 하세요."
+    insaneMission: "더 어려운 모드와 같은 결제를 결제 대기 시간 안에 끝내세요. 시간 연장 안내를 놓치지 말고, 카드 오류가 나면 다시 꽂고, 비밀번호(1234) 뒤에 서명까지 하세요.",
+    hellLabel: "헬 모드",
+    hellTitle: "헬 결제 키오스크",
+    hellMission: "치즈버거 세트와 치즈스틱을 결제하세요. 쿠폰 번호를 넣고 010-2580-1379로 적립한 뒤 문자로 온 인증번호까지 입력하세요. 추가 주문은 모두 거절하고, 미리 체크된 '선택' 동의는 모두 해제하세요. 모바일 상품권과 포인트 1,500P를 쓰고 남은 금액은 카드로 내세요. 카드 방향을 확인해 넣고, 비밀번호(1234)와 서명 뒤 '카드를 빼 주세요'가 나올 때까지 기다리세요. 마지막으로 영수증을 확인해 잘못 찍힌 메뉴는 취소를 요청하세요. 화면을 가리는 광고는 작은 ×로 닫아야 합니다."
   }
 ];
 
@@ -525,6 +528,8 @@ const productImages = {
   "calendar-app": "assets/menu/calendar-app.png",
   "music-app": "assets/menu/music-app.png",
   "payment-card-hand": "assets/menu/card.png",
+  "ad-icecream": "assets/menu/ad-icecream.png",
+  "ad-game": "assets/menu/ad-game.png",
   "hardware-card-slot": "assets/menu/card-slot.png",
   "hardware-receipt": "assets/menu/receipt.png",
   "hardware-barcode": "assets/menu/barcode-scanner.png",
@@ -1125,7 +1130,7 @@ function prizeCardMarkup(prize, theme = "", receipt = null) {
             <b>HALL OF FAME</b>
           </div>
           <div class="prize-face prize-front prize-tone-${prize.tone}" aria-label="선물 카드 앞면">
-            <small>${isPay ? "MODU PAY · 극악 결제 선물 카드" : "명예의 전당 선물 카드"}</small>
+            <small>${isPay ? `MODU PAY · ${receipt?.tier || "극악"} 결제 선물 카드` : "명예의 전당 선물 카드"}</small>
             <em class="prize-rank">${prize.rank}</em>
             <div class="prize-art">
               <img src="${prize.image}" alt="" onerror="this.remove()">
@@ -1242,7 +1247,7 @@ async function savePrizeCardPng(prize, record, theme = "", receipt = null) {
   ctx.fillText(isPay ? "MODU PAY · HALL OF FAME" : "HALL OF FAME", 300, 82);
   ctx.fillStyle = "#25293a";
   ctx.font = font(34);
-  ctx.fillText(isPay ? "극악 결제 선물 카드" : "명예의 전당 선물 카드", 300, 128);
+  ctx.fillText(isPay ? `${receipt?.tier || "극악"} 결제 선물 카드` : "명예의 전당 선물 카드", 300, 128);
 
   ctx.fillStyle = "#25293a";
   roundRectPath(ctx, 230, 150, 140, 46, 23);
@@ -2151,6 +2156,12 @@ function shuffledPinKeys() {
 const TINY_REWARD_PHONE = "01025801379";
 const TINY_COUPON_DISCOUNT = 1000;
 const TINY_COUPON_LENGTH = 12;
+// 카드 결제 헬 모드: 포인트 나눠 결제·문자 인증번호·영수증 중복 메뉴
+const HELL_PAY_POINT_BALANCE = 2000;
+const HELL_PAY_POINT_USE = 1500;
+const HELL_PAY_VERIFY_SECONDS = 30;
+const HELL_PAY_EXTRA_ITEM = { label: "치즈스틱", price: 2400 };
+const HELL_PAY_HALL_OF_FAME_KEY = "alpaco-hall-of-fame-pay-hell";
 
 // 문자 쿠폰 번호. 어려운 모드는 O/0, I/1, S/5, B/8, Z/2처럼 닮은 글자를 일부러 섞고, 개선 모드는 닮은 글자를 빼고 만듭니다.
 function randomCouponCode(friendly = false) {
@@ -3273,10 +3284,12 @@ function renderLegacyPayStation(root, mode) {
 function renderTinyStation(root, mode) {
   const isKind = mode === "kind";
   // 단계 구성: hard = 쿠폰·적립 기본 흐름, extreme = 함정(추가 주문·상품권·비밀번호), insane = 함정 + 대기 시간·카드 오류·서명
-  const isHard = mode === "extreme" || mode === "insane";
-  const isInsane = mode === "insane";
+  // hell = insane + 문자 인증번호·미리 체크된 동의·포인트 나눠 결제·카드 방향·카드 일찍 뽑기·영수증 확인·화면 광고
+  const isHell = mode === "hell";
+  const isHard = mode === "extreme" || mode === "insane" || isHell;
+  const isInsane = mode === "insane" || isHell;
   const insane = {
-    secondsLeft: 90,
+    secondsLeft: isHell ? 150 : 90,
     warned: false,
     cardRetried: false,
     signing: false,
@@ -3284,6 +3297,25 @@ function renderTinyStation(root, mode) {
     startedAt: performance.now(),
     barrierStart: state.barriers.length
   };
+  const hell = {
+    verifyOpen: false,
+    verifyDone: false,
+    verifyCodes: [],
+    verifySentAt: 0,
+    verifyValue: "",
+    consentOpen: false,
+    consentDone: false,
+    consents: { marketing: true, app: true, share: true },
+    pointsStage: "none",
+    pointsValue: "",
+    cardReversed: true,
+    holdStage: "none",
+    cancelDone: false,
+    adOpen: false,
+    adCount: 0,
+    lastTouch: performance.now()
+  };
+  let holdTimer = 0;
   const picks = {};
   const hardPay = {
     upsellIndex: -1,
@@ -3327,7 +3359,7 @@ function renderTinyStation(root, mode) {
   let freshCart = null;
   let busy = false;
   let disposed = false;
-  const baseOrder = [{ label: "치즈버거 세트", price: 7200 }];
+  const baseOrder = isHell ? [{ label: "치즈버거 세트", price: 7200 }, { ...HELL_PAY_EXTRA_ITEM }] : [{ label: "치즈버거 세트", price: 7200 }];
   const phoneApps = [
     { id: "photos", label: "사진", desc: "앨범", initial: "P", imageKey: "photo-app" },
     { id: "map", label: "지도", desc: "길찾기", initial: "길", imageKey: "map-app" },
@@ -3618,9 +3650,10 @@ function renderTinyStation(root, mode) {
           cardDragActive
             ? `
               <div class="card-drag-zone">
-                <div class="payment-card-hand" data-draggable-card="true" data-card-anchor-x="0.5" data-card-anchor-y="0.5" aria-label="결제 카드를 카드 넣는 곳으로 끌어다 놓기">
+                <div class="payment-card-hand ${isHell && hell.cardReversed ? "is-reversed" : ""}" data-draggable-card="true" data-card-anchor-x="0.5" data-card-anchor-y="0.5" aria-label="결제 카드를 카드 넣는 곳으로 끌어다 놓기">
                   <img src="${productImages["payment-card-hand"]}" alt="" draggable="false">
                 </div>
+                ${isHell ? `<button class="card-flip-button" type="button" data-card-flip="true">카드 뒤집기</button>` : ""}
               </div>
             `
             : ""
@@ -3750,6 +3783,256 @@ function renderTinyStation(root, mode) {
     `;
   }
 
+  // ---------- 헬 모드 전용 화면 ----------
+
+  // ② 문자 인증번호: 30초가 지나면 만료되어 '다시 받기'로 새 번호를 받아야 합니다.
+  function sendVerifyCode() {
+    hell.verifyCodes.push(String(Math.floor(100000 + Math.random() * 900000)));
+    hell.verifySentAt = performance.now();
+    hell.verifyValue = "";
+  }
+
+  function verifySecondsLeft() {
+    return Math.max(0, HELL_PAY_VERIFY_SECONDS - Math.floor((performance.now() - hell.verifySentAt) / 1000));
+  }
+
+  function verifyPanel() {
+    const latest = hell.verifyCodes.length - 1;
+    const left = verifySecondsLeft();
+    const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "back"];
+    const keyLabel = { clear: "전체 지움", back: "지움" };
+    return `
+      <div class="coupon-focus-flow">
+        <section class="coupon-entry-panel verify-entry-panel" aria-label="휴대폰 인증번호 입력">
+          <div class="coupon-phone-side">
+            <p class="coupon-step-copy">휴대폰 문자로 온 인증번호 6자리를 입력하세요.</p>
+            <div class="phone-mock coupon-phone-mock" aria-label="스마트폰 화면">
+              <div class="phone-speaker" aria-hidden="true"></div>
+              <div class="phone-screen">
+                <span class="phone-title">메시지</span>
+                <div class="sms-thread">
+                  ${hell.verifyCodes
+                    .map(
+                      (code, index) => `
+                        <div class="sms-bubble is-coupon ${index < latest ? "is-expired" : ""}">
+                          <span class="sms-sender"><b>모두페이</b><small>${index === latest ? "방금" : "조금 전"}</small></span>
+                          <p>[Web발신] 모두페이 적립 인증번호는 [${code}] 입니다. 다른 사람에게 알려 주지 마세요.</p>
+                        </div>
+                      `
+                    )
+                    .join("")}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="coupon-kiosk-side">
+            <h4>인증번호 입력</h4>
+            <p class="verify-timer ${left <= 10 ? "is-low" : ""}">남은 시간 <b data-verify-left>${left}</b>초</p>
+            <output class="phone-number-display" data-verify-display="true">${hell.verifyValue.padEnd(6, "_").split("").join(" ")}</output>
+            <div class="phone-keypad">
+              ${keys
+                .map((key) => `<button class="phone-key ${keyLabel[key] ? "phone-key-sub" : ""}" type="button" data-verify-key="${key}">${keyLabel[key] || key}</button>`)
+                .join("")}
+            </div>
+            <div class="coupon-actions">
+              <button class="verify-resend-button" type="button" data-verify-resend="true">인증번호 다시 받기</button>
+              <button class="phone-primary-button" type="button" data-verify-submit="true">확인</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  // ① 결제 전 약관: '선택' 항목이 미리 체크되어 있어 직접 해제해야 합니다.
+  const hellConsentItems = [
+    { key: "required", label: "(필수) 전자금융거래 이용약관에 동의합니다", required: true },
+    { key: "marketing", label: "(선택) 할인·이벤트 광고 문자를 받겠습니다" },
+    { key: "app", label: "(선택) 모두페이 앱 설치 안내를 받겠습니다" },
+    { key: "share", label: "(선택) 개인정보를 제휴사에 제공하는 데 동의합니다" }
+  ];
+
+  function consentPanel() {
+    return `
+      <div class="pin-focus-flow">
+        <section class="hell-consent-panel" aria-label="결제 전 약관 동의">
+          <h4>결제 전 약관 동의</h4>
+          <p>결제를 계속하려면 약관에 동의해 주세요.</p>
+          <div class="hell-consent-list">
+            ${hellConsentItems
+              .map(
+                (item) => `
+                  <label class="hell-consent-row ${item.required ? "is-required" : ""}">
+                    <input type="checkbox" ${item.required || hell.consents[item.key] ? "checked" : ""} ${item.required ? "disabled" : `data-hell-consent="${item.key}"`} />
+                    <span>${item.label}</span>
+                  </label>
+                `
+              )
+              .join("")}
+          </div>
+          <button class="hell-consent-submit" type="button" data-hell-consent-submit="true">동의하고 결제하기</button>
+        </section>
+      </div>
+    `;
+  }
+
+  // ⑤ 포인트 나눠 결제: 보유 포인트 중 미션에 나온 만큼만 직접 입력합니다.
+  function pointsPanel() {
+    const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "back"];
+    const keyLabel = { clear: "전체 지움", back: "지움" };
+    return `
+      <div class="pin-focus-flow">
+        <section class="pin-pad-panel hell-points-panel" aria-label="포인트 사용">
+          <h4>포인트 사용</h4>
+          <p class="hell-points-info">보유 포인트 <b>${HELL_PAY_POINT_BALANCE.toLocaleString("ko-KR")}P</b> · 남은 결제 금액 <b>${formatWon(remainderAmount())}</b></p>
+          <output class="phone-number-display" data-points-display="true">${hell.pointsValue || "0"} P</output>
+          <div class="phone-keypad">
+            ${keys
+              .map((key) => `<button class="phone-key ${keyLabel[key] ? "phone-key-sub" : ""}" type="button" data-points-key="${key}">${keyLabel[key] || key}</button>`)
+              .join("")}
+          </div>
+          <div class="coupon-actions">
+            <button class="hell-points-all" type="button" data-points-all="true">전액 사용</button>
+            <button class="phone-primary-button" type="button" data-points-submit="true">포인트 사용</button>
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  // ⑦ 결제 중 카드 빼기: '카드를 빼 주세요'가 나오기 전에 빼면 결제가 취소됩니다.
+  function holdPanel() {
+    const holding = hell.holdStage === "holding";
+    return `
+      <div class="pin-focus-flow">
+        <section class="hell-hold-panel ${holding ? "is-holding" : "is-remove"}" aria-live="assertive">
+          ${holding ? `<span class="hell-hold-spinner" aria-hidden="true"></span>` : `<span class="receipt-choice-check" aria-hidden="true">✓</span>`}
+          <h4>${holding ? "결제 중입니다" : "카드를 빼 주세요"}</h4>
+          <p>${holding ? "카드를 빼지 마세요" : "결제가 끝났어요. 카드를 가져가세요."}</p>
+          <button class="hell-card-pull" type="button" data-card-pull="true">
+            <img src="${productImages["payment-card-hand"]}" alt="" draggable="false">
+            <b>카드 빼기</b>
+          </button>
+        </section>
+      </div>
+    `;
+  }
+
+  function startCardHold() {
+    hell.holdStage = "holding";
+    draw();
+    fx("readerState", cardReader(), "busy");
+    window.clearTimeout(holdTimer);
+    holdTimer = window.setTimeout(() => {
+      if (disposed || hell.holdStage !== "holding") return;
+      hell.holdStage = "remove";
+      fx("sound", "beep");
+      draw();
+      fx("readerState", cardReader(), "ok");
+    }, 4500);
+  }
+
+  function pullCard() {
+    if (hell.holdStage === "holding") {
+      window.clearTimeout(holdTimer);
+      failWith("결제가 끝나기 전에 카드를 빼서 결제가 취소되었습니다. '카드를 빼 주세요'가 나올 때까지 기다려야 합니다.");
+      fx("readerState", cardReader(), "error");
+      hell.holdStage = "none";
+      hardware.card = false;
+      hardPay.pinDone = false;
+      hardPay.pinValue = "";
+      insane.signing = false;
+      insane.signLength = 0;
+      openModal("결제가 취소되었습니다", "결제 중에 카드를 빼면 결제가 취소돼요.", "다음: 카드를 다시 넣고 비밀번호와 서명을 다시 하세요.");
+      draw();
+      return;
+    }
+    if (hell.holdStage !== "remove") return;
+    hell.holdStage = "done";
+    runBusy(approveCardPayment);
+  }
+
+  // ⑥ 영수증 확인: 치즈스틱이 두 번 찍혀 있어 잘못된 줄을 눌러 취소를 요청해야 합니다.
+  function receiptCheckPanel() {
+    const lines = receiptItems();
+    return `
+      <div class="pin-focus-flow">
+        <section class="hell-receipt-check" aria-label="영수증 확인">
+          <h4>영수증을 확인해 주세요</h4>
+          <p>주문한 것과 다르게 찍힌 줄이 있으면 그 줄을 눌러 취소를 요청하세요.</p>
+          <div class="hell-receipt-lines">
+            ${lines
+              .map(
+                (item, index) => `
+                  <button class="hell-receipt-line" type="button" data-receipt-line="${index}">
+                    <span>${item.label}</span><b>${formatWon(item.price)}</b>
+                  </button>
+                `
+              )
+              .join("")}
+            <div class="hell-receipt-total"><span>카드 결제</span><b>${formatWon(paidCardAmount())}</b></div>
+          </div>
+          <button class="hell-receipt-ok" type="button" data-receipt-ok="true">이상 없어요</button>
+        </section>
+      </div>
+    `;
+  }
+
+  // ⑨ 화면 광고: 잠시 손을 멈추면 광고가 화면을 덮고, 구석의 작은 ×로만 닫힙니다.
+  const hellAds = [
+    { imageKey: "ad-icecream", title: "오늘만! 아이스크림 1+1", action: "지금 바로 주문하기 ▶" },
+    { imageKey: "ad-game", title: "새 게임 출시! 무료로 받기", action: "앱 설치하고 선물 받기 ▶" }
+  ];
+
+  function mountAd() {
+    root.querySelector(".hell-ad-overlay")?.remove();
+    const ad = hellAds[hell.adCount % hellAds.length];
+    kioskScreen().insertAdjacentHTML(
+      "beforeend",
+      `
+        <div class="hell-ad-overlay" role="dialog" aria-label="광고">
+          <div class="hell-ad-card" data-ad-body="true">
+            <button class="hell-ad-close" type="button" data-ad-close="true" aria-label="광고 닫기">×</button>
+            <span class="hell-ad-badge">AD</span>
+            <img src="${productImages[ad.imageKey]}" alt="" draggable="false">
+            <strong>${ad.title}</strong>
+            <span class="hell-ad-action">${ad.action}</span>
+          </div>
+        </div>
+      `
+    );
+    const overlay = root.querySelector(".hell-ad-overlay");
+    // 키오스크 화면은 스크롤되므로, 지금 보이는 영역을 정확히 덮도록 위치를 맞춥니다.
+    const screen = kioskScreen();
+    overlay.style.top = `${screen.scrollTop}px`;
+    overlay.style.height = `${screen.clientHeight}px`;
+    overlay.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (event.target.closest("[data-ad-close]")) {
+        hell.adOpen = false;
+        hell.lastTouch = performance.now();
+        overlay.remove();
+        fx("sound", "key");
+        return;
+      }
+      fx("shake", overlay.querySelector(".hell-ad-card"));
+      recordBarrier("광고를 눌러 버렸습니다. 광고를 닫으려면 구석의 작은 × 버튼을 찾아야 합니다.");
+    });
+  }
+
+  function adBlocked() {
+    return (
+      disposed ||
+      busy ||
+      hell.adOpen ||
+      pay.stage !== "none" ||
+      hell.holdStage !== "none" ||
+      flowModalMessage ||
+      (insane.signing && !hardPay.pinDone) ||
+      document.querySelector(".pay-timeout-overlay, .kfx-cinema")
+    );
+  }
+
   function stepModal() {
     return `
       <div class="flow-modal-backdrop" role="dialog" aria-modal="true" aria-label="${flowModalMessage}">
@@ -3775,11 +4058,16 @@ function renderTinyStation(root, mode) {
   }
 
   function remainderAmount() {
-    return orderSubtotal() - HARD_GIFT_BALANCE;
+    return orderSubtotal() - HARD_GIFT_BALANCE - (isHell && hell.pointsStage === "done" ? HELL_PAY_POINT_USE : 0);
+  }
+
+  // 헬 모드는 영수증 확인 전까지 치즈스틱이 한 번 더 결제된 상태입니다.
+  function wrongCharge() {
+    return isHell && !hell.cancelDone ? HELL_PAY_EXTRA_ITEM.price : 0;
   }
 
   function paidCardAmount() {
-    return isHard ? remainderAmount() : orderSubtotal();
+    return (isHard ? remainderAmount() : orderSubtotal()) + wrongCharge();
   }
 
   // KioskFX(kiosk-effects.js)가 없거나 일부 기능만 있어도 흐름이 멈추지 않도록 항상 감싸서 부릅니다.
@@ -3825,8 +4113,9 @@ function renderTinyStation(root, mode) {
     openModal(
       "상품권 잔액이 부족합니다",
       `상품권 ${formatWon(HARD_GIFT_BALANCE)}을 사용했어요. 남은 ${formatWon(remainderAmount())}은 다른 결제수단으로 이어서 결제해 주세요.`,
-      "다음: STEP 4에서 남은 금액을 낼 카드 결제를 고르세요."
+      isHell ? `다음: 포인트 ${HELL_PAY_POINT_USE.toLocaleString("ko-KR")}P를 먼저 사용하세요.` : "다음: STEP 4에서 남은 금액을 낼 카드 결제를 고르세요."
     );
+    if (isHell) hell.pointsStage = "open";
     draw();
   }
 
@@ -3927,6 +4216,14 @@ function renderTinyStation(root, mode) {
         failWith("작은 글씨의 '개인정보 수집·이용 동의(필수)'에 체크해야 적립할 수 있습니다.", root.querySelector(".consent-row"));
         return;
       }
+      if (isHell && !hell.verifyDone) {
+        await fx("processing", kioskScreen(), { title: "인증번호 보내는 중", detail: "휴대폰으로 문자를 보내고 있어요", ms: 900 });
+        if (disposed) return;
+        hell.verifyOpen = true;
+        sendVerifyCode();
+        draw();
+        return;
+      }
       await fx("processing", kioskScreen(), { title: "포인트 적립 중", detail: "회원 정보를 확인하고 있어요", ms: isKind ? 700 : 1000 });
       if (disposed) return;
       fx("sound", "beep");
@@ -3936,8 +4233,14 @@ function renderTinyStation(root, mode) {
 
   // 카드 승인(어려운 모드는 비밀번호 확인 뒤) → 영수증 출력 여부 선택 화면
   async function approveCardPayment() {
-    await fx("processing", kioskScreen(), { title: "결제 중입니다", detail: "카드를 빼지 마세요", ms: isKind ? 1200 : 1600 });
-    if (disposed) return;
+    if (isHell && hell.holdStage !== "done") {
+      startCardHold();
+      return;
+    }
+    if (!isHell) {
+      await fx("processing", kioskScreen(), { title: "결제 중입니다", detail: "카드를 빼지 마세요", ms: isKind ? 1200 : 1600 });
+      if (disposed) return;
+    }
     await fx("approve", kioskScreen(), { title: "승인되었습니다", detail: `카드 ${formatWon(paidCardAmount())} 결제 완료` });
     if (disposed) return;
     hardware.card = true;
@@ -3954,23 +4257,47 @@ function renderTinyStation(root, mode) {
     return {
       store: "모두페이",
       title: "영수증",
-      items: baseOrder.map((item) => ({ label: item.label, price: item.price })),
+      items: receiptItems().map((item) => ({ label: item.label, price: item.price })),
       discounts: discountAmount ? [{ label: picks.discount.label, amount: discountAmount }] : [],
       payments: isHard
         ? [
             { label: "모바일 상품권", amount: HARD_GIFT_BALANCE },
-            { label: cardLabel, amount: remainderAmount() }
-          ]
+            isHell ? { label: "포인트 사용", amount: HELL_PAY_POINT_USE } : null,
+            { label: cardLabel, amount: paidCardAmount() }
+          ].filter(Boolean)
         : [{ label: cardLabel, amount: orderSubtotal() }],
-      total: orderSubtotal(),
+      total: orderSubtotal() + wrongCharge(),
       approval: pay.approval,
       time: pay.time || receiptTimestamp(),
       footer: `포인트 적립 +${phoneReward.points}P (010-****-${TINY_REWARD_PHONE.slice(7)})\n이용해 주셔서 감사합니다`
     };
   }
 
+  function receiptItems() {
+    return wrongCharge() ? [...baseOrder, { ...HELL_PAY_EXTRA_ITEM }] : baseOrder;
+  }
+
   function finishPayment() {
     hardware.receipt = true;
+    if (isHell) {
+      window.clearInterval(insaneTimer);
+      document.querySelector(".pay-timeout-overlay")?.remove();
+      const seconds = (performance.now() - insane.startedAt) / 1000;
+      const mistakes = state.barriers
+        .slice(0, state.barriers.length - insane.barrierStart)
+        .filter((entry) => !entry.success).length;
+      completeStation("문자 인증, 미리 체크된 동의, 나눠 결제, 카드 방향, 카드 일찍 뽑기, 영수증 확인, 화면 광고까지 헬 결제를 끝냈습니다.");
+      showHallOfFame({
+        seconds,
+        mistakes,
+        storageKey: HELL_PAY_HALL_OF_FAME_KEY,
+        subtitle: "헬 결제 키오스크 정복!",
+        label: "헬 결제 정복",
+        theme: "pay",
+        receipt: { approval: pay.approval, time: (pay.time || receiptTimestamp()).slice(-8, -3) || pay.time, tier: "헬" }
+      });
+      return;
+    }
     if (isInsane) {
       window.clearInterval(insaneTimer);
       document.querySelector(".pay-timeout-overlay")?.remove();
@@ -3986,7 +4313,17 @@ function renderTinyStation(root, mode) {
         subtitle: "극악 결제 키오스크 정복!",
         label: "극악 결제 정복",
         theme: "pay",
-        receipt: { approval: pay.approval, time: (pay.time || receiptTimestamp()).slice(-8, -3) || pay.time }
+        receipt: { approval: pay.approval, time: (pay.time || receiptTimestamp()).slice(-8, -3) || pay.time },
+        next: currentStation()?.hellTitle
+          ? {
+              label: currentStation().hellLabel,
+              start() {
+                state.mode = "hell";
+                state.kioskStarted = true;
+                renderStation();
+              }
+            }
+          : null
       });
       return;
     }
@@ -4015,6 +4352,11 @@ function renderTinyStation(root, mode) {
     draw();
     await fx("printReceipt", root.querySelector(".hw-receipt-printer"), receiptData());
     if (disposed || pay.stage !== "printing") return;
+    if (isHell && !hell.cancelDone) {
+      pay.stage = "checking";
+      draw();
+      return;
+    }
     finishPayment();
   }
 
@@ -4170,10 +4512,21 @@ function renderTinyStation(root, mode) {
         runBusy(async () => {
           // 화면 맨 위 레이어에 카드 리더기 확대 장면을 띄워 카드가 들어가는 모습을 보여 줍니다.
           // 극악 모드: 첫 번째 투입은 IC 칩 인식 오류가 나서 카드가 다시 나오고, 다시 꽂아야 합니다.
-          const failFirst = isInsane && !insane.cardRetried;
+          // 헬 모드: 우연한 오류 대신, 카드를 거꾸로 들고 넣으면 오류가 납니다.
+          const reversed = isHell && hell.cardReversed;
+          const failFirst = reversed || (isInsane && !isHell && !insane.cardRetried);
           await fx("cardCinematic", { outcome: failFirst ? "error" : "ok" });
           if (disposed) return;
           fx("readerState", cardReader(), failFirst ? "error" : "busy");
+          if (reversed) {
+            failWith("카드를 반대로 넣었습니다. IC칩이 있는 쪽을 확인해 카드를 뒤집어 넣어야 합니다.");
+            flowModalMessage = "카드를 반대로 넣으셨어요";
+            flowModalNote = "IC칩이 왼쪽 위에 오도록 카드를 뒤집어서 다시 넣어 주세요.";
+            flowModalNext = "다음: '카드 뒤집기'를 누른 뒤 카드를 다시 넣으세요.";
+            focusGroupAfterModal = "";
+            draw();
+            return;
+          }
           if (failFirst) {
             insane.cardRetried = true;
             flowModalMessage = "IC 칩을 인식하지 못했습니다";
@@ -4337,18 +4690,204 @@ function renderTinyStation(root, mode) {
     addCleanup(() => window.clearInterval(insaneTimer));
   }
 
+  function bindHellControls() {
+    const verifyDisplay = root.querySelector("[data-verify-display]");
+    root.querySelectorAll("[data-verify-key]").forEach((button) => {
+      button.addEventListener("click", () => {
+        fx("pressKey", button);
+        const key = button.dataset.verifyKey;
+        if (key === "clear") hell.verifyValue = "";
+        else if (key === "back") hell.verifyValue = hell.verifyValue.slice(0, -1);
+        else if (hell.verifyValue.length < 6) hell.verifyValue += key;
+        if (verifyDisplay) verifyDisplay.textContent = hell.verifyValue.padEnd(6, "_").split("").join(" ");
+      });
+    });
+    root.querySelector("[data-verify-resend]")?.addEventListener("click", () => {
+      runBusy(async () => {
+        await fx("processing", kioskScreen(), { title: "인증번호 다시 보내는 중", detail: "새 문자를 보내고 있어요", ms: 800 });
+        if (disposed) return;
+        sendVerifyCode();
+        draw();
+      });
+    });
+    root.querySelector("[data-verify-submit]")?.addEventListener("click", () => {
+      const panel = root.querySelector(".verify-entry-panel");
+      const latest = hell.verifyCodes[hell.verifyCodes.length - 1];
+      if (verifySecondsLeft() <= 0) {
+        failWith("인증번호 유효 시간(30초)이 지났습니다. '인증번호 다시 받기'를 눌러 새 번호를 받아야 합니다.", panel);
+        return;
+      }
+      if (hell.verifyValue.length < 6) {
+        failWith("인증번호 6자리를 모두 입력해야 합니다.", panel);
+        return;
+      }
+      if (hell.verifyValue !== latest) {
+        failWith(
+          hell.verifyCodes.includes(hell.verifyValue)
+            ? "예전에 받은 인증번호입니다. 가장 최근에 온 문자의 번호를 입력해야 합니다."
+            : "인증번호가 맞지 않습니다. 휴대폰 문자를 다시 확인해 보세요.",
+          panel
+        );
+        return;
+      }
+      runBusy(async () => {
+        await fx("processing", kioskScreen(), { title: "인증 확인 중", detail: "회원 정보를 확인하고 있어요", ms: 900 });
+        if (disposed) return;
+        hell.verifyDone = true;
+        hell.verifyOpen = false;
+        fx("sound", "beep");
+        applyPhoneReward();
+      });
+    });
+
+    root.querySelectorAll("[data-hell-consent]").forEach((box) => {
+      box.addEventListener("change", () => {
+        hell.consents[box.dataset.hellConsent] = box.checked;
+        fx("sound", "key");
+      });
+    });
+    root.querySelector("[data-hell-consent-submit]")?.addEventListener("click", (event) => {
+      fx("pressKey", event.currentTarget);
+      if (Object.values(hell.consents).some(Boolean)) {
+        failWith("'선택' 동의가 미리 체크되어 있었습니다. 원하지 않는 선택 항목은 직접 체크를 해제해야 합니다.", root.querySelector(".hell-consent-panel"));
+        return;
+      }
+      hell.consentOpen = false;
+      hell.consentDone = true;
+      const paymentGroup = groups.find((item) => item.key === "payment");
+      picks.payment = paymentGroup.items.find((item) => item.id === "gift-card");
+      hardPay.giftStage = "scan";
+      draw();
+    });
+
+    const pointsDisplay = root.querySelector("[data-points-display]");
+    const showPoints = () => {
+      if (pointsDisplay) pointsDisplay.textContent = `${Number(hell.pointsValue || 0).toLocaleString("ko-KR")} P`;
+    };
+    root.querySelectorAll("[data-points-key]").forEach((button) => {
+      button.addEventListener("click", () => {
+        fx("pressKey", button);
+        const key = button.dataset.pointsKey;
+        if (key === "clear") hell.pointsValue = "";
+        else if (key === "back") hell.pointsValue = hell.pointsValue.slice(0, -1);
+        else if (hell.pointsValue.length < 5) hell.pointsValue = String(Number(`${hell.pointsValue}${key}`));
+        showPoints();
+      });
+    });
+    root.querySelector("[data-points-all]")?.addEventListener("click", (event) => {
+      fx("pressKey", event.currentTarget);
+      hell.pointsValue = String(HELL_PAY_POINT_BALANCE);
+      showPoints();
+    });
+    root.querySelector("[data-points-submit]")?.addEventListener("click", () => {
+      const panel = root.querySelector(".hell-points-panel");
+      const value = Number(hell.pointsValue || 0);
+      if (value !== HELL_PAY_POINT_USE) {
+        failWith(`미션에 나온 대로 포인트 ${HELL_PAY_POINT_USE.toLocaleString("ko-KR")}P만 사용해야 합니다. '전액 사용'을 누르면 포인트가 모두 빠져요.`, panel);
+        return;
+      }
+      runBusy(async () => {
+        await fx("processing", kioskScreen(), { title: "포인트 사용 중", detail: "포인트를 차감하고 있어요", ms: 900 });
+        if (disposed) return;
+        hell.pointsStage = "done";
+        freshCart = { label: "포인트 사용", chip: `-${HELL_PAY_POINT_USE.toLocaleString("ko-KR")}P`, tone: "discount" };
+        openModal(
+          "포인트를 사용했어요",
+          `포인트 ${HELL_PAY_POINT_USE.toLocaleString("ko-KR")}P를 썼어요. 남은 ${formatWon(remainderAmount())}은 카드로 결제해 주세요.`,
+          "다음: STEP 4에서 남은 금액을 낼 카드 결제를 고르세요."
+        );
+        draw();
+      });
+    });
+
+    root.querySelector("[data-card-flip]")?.addEventListener("click", (event) => {
+      fx("pressKey", event.currentTarget);
+      hell.cardReversed = !hell.cardReversed;
+      root.querySelector("[data-draggable-card]")?.classList.toggle("is-reversed", hell.cardReversed);
+    });
+
+    root.querySelector("[data-card-pull]")?.addEventListener("click", pullCard);
+
+    root.querySelectorAll("[data-receipt-line]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const item = receiptItems()[Number(button.dataset.receiptLine)];
+        if (item?.label !== HELL_PAY_EXTRA_ITEM.label) {
+          failWith("그 줄은 주문한 대로 맞게 찍혀 있습니다. 같은 메뉴가 두 번 찍힌 줄을 찾아보세요.", button);
+          return;
+        }
+        runBusy(async () => {
+          await fx("processing", kioskScreen(), { title: "부분 취소 중", detail: `잘못 결제된 ${formatWon(HELL_PAY_EXTRA_ITEM.price)}을 돌려드리고 있어요`, ms: 1200 });
+          if (disposed) return;
+          hell.cancelDone = true;
+          pay.stage = "approved";
+          openModal(
+            `치즈스틱 ${formatWon(HELL_PAY_EXTRA_ITEM.price)}이 취소되었어요`,
+            "한 번 더 찍힌 치즈스틱 값이 카드로 돌아가요.",
+            "다음: '영수증 출력'을 눌러 바른 영수증을 다시 받으세요."
+          );
+          draw();
+        });
+      });
+    });
+    root.querySelector("[data-receipt-ok]")?.addEventListener("click", () => {
+      failWith("영수증을 다시 보세요. 주문하지 않은 메뉴가 하나 더 찍혀 있어 돈이 더 나갔습니다.", root.querySelector(".hell-receipt-check"));
+    });
+  }
+
+  if (isHell) {
+    const markTouch = () => {
+      hell.lastTouch = performance.now();
+    };
+    root.addEventListener("pointerdown", markTouch, true);
+    const hellTicker = window.setInterval(() => {
+      if (disposed) return;
+      const verifyLeft = root.querySelector("[data-verify-left]");
+      if (verifyLeft) {
+        const left = verifySecondsLeft();
+        verifyLeft.textContent = String(left);
+        verifyLeft.parentElement.classList.toggle("is-low", left <= 10);
+      }
+      if (adBlocked()) return;
+      if (performance.now() - hell.lastTouch > 9000) {
+        hell.adOpen = true;
+        hell.adCount += 1;
+        fx("sound", "error");
+        mountAd();
+      }
+    }, 1000);
+    addCleanup(() => {
+      window.clearInterval(hellTicker);
+      window.clearTimeout(holdTimer);
+      root.removeEventListener("pointerdown", markTouch, true);
+    });
+  }
+
   function draw(options = {}) {
     const scrollState = options.preserveScroll ? captureKioskScroll(root) : null;
     const selectedOptions = selectedCartItems(picks);
     const giftUsed = isHard && ["short", "done"].includes(hardPay.giftStage);
     const hardCartItems = [
       giftUsed ? { label: "모바일 상품권 사용", price: -HARD_GIFT_BALANCE } : null,
+      isHell && hell.pointsStage === "done" ? { label: "포인트 사용", price: -HELL_PAY_POINT_USE } : null,
       hardPay.remainder ? { label: `남은 금액 ${hardPay.remainder.label}`, price: 0 } : null
     ].filter(Boolean);
     const cartItems = [...baseOrder, ...selectedOptions, ...hardCartItems];
     const optionReady = selectedOptions.length === groups.length;
     const readyForCard = optionReady && (!isHard || hardPay.giftStage === "done");
-    const doneCount = isHard
+    const doneCount = isHell
+      ? [
+          picks.discount,
+          hell.verifyOpen || hell.verifyDone,
+          hell.verifyDone,
+          hell.consentDone,
+          giftUsed,
+          hell.pointsStage === "done",
+          hardware.card,
+          insane.signing || hardPay.pinDone,
+          hardPay.pinDone,
+          hardware.receipt
+        ].filter(Boolean).length
+      : isHard
       ? (picks.discount ? 1 : 0) +
         (picks.reward ? 1 : 0) +
         (giftUsed ? 1 : 0) +
@@ -4357,7 +4896,9 @@ function renderTinyStation(root, mode) {
         (hardPay.pinDone ? 1 : 0) +
         (hardware.receipt ? 1 : 0)
       : selectedOptions.length + (hardware.card ? 1 : 0) + (hardware.receipt ? 1 : 0);
-    const paymentSteps = isInsane
+    const paymentSteps = isHell
+      ? ["할인", "적립", "인증", "동의", "상품권", "포인트", "카드", "비밀번호", "서명", "영수증"]
+      : isInsane
       ? ["할인", "적립", "상품권", "카드", "비밀번호", "서명", "영수증"]
       : isHard
         ? ["할인", "적립", "상품권", "카드", "비밀번호", "영수증"]
@@ -4368,11 +4909,17 @@ function renderTinyStation(root, mode) {
     const rewardFocus = phoneReward.open && !phoneReward.done;
     const upsellFocus = isHard && hardPay.upsellIndex >= 0;
     const giftScanFocus = isHard && optionReady && hardPay.giftStage === "scan";
-    const remainderFocus = isHard && optionReady && hardPay.giftStage === "short";
-    const signatureFocus = isInsane && insane.signing && !hardPay.pinDone;
-    const pinFocus = isHard && hardware.card && !hardPay.pinDone && !signatureFocus;
+    const verifyFocus = rewardFocus && isHell && hell.verifyOpen;
+    const consentFocus = isHell && hell.consentOpen;
+    const pointsFocus = isHell && optionReady && hardPay.giftStage === "short" && hell.pointsStage === "open";
+    const remainderFocus = isHard && optionReady && hardPay.giftStage === "short" && !pointsFocus;
+    const holdFocus = isHell && ["holding", "remove"].includes(hell.holdStage);
+    const signatureFocus = isInsane && insane.signing && !hardPay.pinDone && !holdFocus;
+    const pinFocus = isHard && hardware.card && !hardPay.pinDone && !signatureFocus && !holdFocus;
+    const receiptCheckFocus = pay.stage === "checking";
     const receiptFocus = ["approved", "printing"].includes(pay.stage);
-    const hardwareFocus = receiptFocus || (isHard ? readyForCard && !pinFocus : picks.payment?.id === "card" && optionReady);
+    const hardwareFocus =
+      !receiptCheckFocus && !holdFocus && (receiptFocus || (isHard ? readyForCard && !pinFocus : picks.payment?.id === "card" && optionReady));
     const kioskClassName = [
       isKind ? "friendly-kiosk payment-kiosk" : "busy-payment-kiosk payment-kiosk",
       isHard ? "hard-payment-kiosk" : "",
@@ -4381,18 +4928,28 @@ function renderTinyStation(root, mode) {
       hardwareFocus ? "hardware-focus-kiosk" : "",
       receiptFocus ? "receipt-focus-kiosk" : "",
       upsellFocus ? "upsell-focus-kiosk" : "",
-      pinFocus || signatureFocus ? "pin-focus-kiosk" : ""
+      pinFocus || signatureFocus || consentFocus || pointsFocus || holdFocus || receiptCheckFocus ? "pin-focus-kiosk" : ""
     ].filter(Boolean).join(" ");
     const paymentBodyContent = couponFocus
       ? couponPanel()
+      : verifyFocus
+        ? verifyPanel()
       : rewardFocus
         ? phoneRewardPanel()
           : upsellFocus
             ? upsellPanel()
+          : consentFocus
+            ? consentPanel()
           : giftScanFocus
             ? giftScanPanel()
+          : pointsFocus
+            ? pointsPanel()
           : remainderFocus
             ? remainderPanel()
+          : holdFocus
+            ? holdPanel()
+          : receiptCheckFocus
+            ? receiptCheckPanel()
           : signatureFocus
             ? signaturePanel()
           : pinFocus
@@ -4428,7 +4985,7 @@ function renderTinyStation(root, mode) {
     const paymentBody = `${isKind ? kindChecklist() : ""}${paymentBodyContent}${flowModalMessage ? stepModal() : ""}`;
     root.innerHTML = kioskShell({
       brand: "모두페이",
-      title: isKind ? "차근차근 결제하기" : isInsane ? "극악 결제 화면" : isHard ? "함정이 숨은 결제 화면" : "복잡한 결제 화면",
+      title: isKind ? "차근차근 결제하기" : isHell ? "헬 결제 화면" : isInsane ? "극악 결제 화면" : isHard ? "함정이 숨은 결제 화면" : "복잡한 결제 화면",
       subtitle: "",
       mode,
       status: `${doneCount} / ${paymentSteps.length} 완료`,
@@ -4448,6 +5005,8 @@ function renderTinyStation(root, mode) {
     setupBarcodeDrag();
     setupCardDrag();
     highlightCart();
+    if (isHell && hell.adOpen) mountAd();
+    if (isHell) bindHellControls();
 
     const focusGroup = options.focusGroup || "";
     if (focusGroup) {
@@ -4621,9 +5180,14 @@ function renderTinyStation(root, mode) {
           draw();
           return;
         }
+        hardPay.upsellIndex = -1;
+        if (isHell && !hell.consentDone) {
+          hell.consentOpen = true;
+          draw();
+          return;
+        }
         const paymentGroup = groups.find((item) => item.key === "payment");
         picks.payment = paymentGroup.items.find((item) => item.id === "gift-card");
-        hardPay.upsellIndex = -1;
         hardPay.giftStage = "scan";
         draw();
       });
@@ -5545,9 +6109,10 @@ if ("requestIdleCallback" in window) {
 renderCards();
 renderProgress();
 
-// 로컬 개발 서버에서만 ?preview=hell 로 헬 모드를 바로 엽니다. 배포 사이트에서는 무시합니다.
-if (["localhost", "127.0.0.1"].includes(location.hostname) && new URLSearchParams(location.search).get("preview") === "hell") {
-  openStation("timer");
+// 로컬 개발 서버에서만 ?preview=hell(주문) / ?preview=pay-hell(카드 결제)로 헬 모드를 바로 엽니다. 배포 사이트에서는 무시합니다.
+const previewStation = { hell: "timer", "pay-hell": "tiny" }[new URLSearchParams(location.search).get("preview")];
+if (["localhost", "127.0.0.1"].includes(location.hostname) && previewStation) {
+  openStation(previewStation);
   state.mode = "hell";
   state.kioskStarted = true;
   renderStation();
