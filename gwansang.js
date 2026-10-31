@@ -10,7 +10,7 @@ const scanLines = [
 
 const scanChecklistThresholds = [14, 30, 48, 66, 86];
 
-// 동물 관상 8가지. 풀이는 모두 칭찬만 담고, 아이가 상처받을 수 있는 표현은 쓰지 않습니다.
+// 동물 관상 16가지. 풀이는 모두 칭찬만 담고, 아이가 상처받을 수 있는 표현은 쓰지 않습니다.
 const animalTypes = {
   puppy: {
     emoji: "🐶",
@@ -107,7 +107,123 @@ const animalTypes = {
     ],
     dream: "신기한 발명품을 만드는 발명가",
     lucky: "도토리 열쇠고리"
+  },
+  panda: {
+    emoji: "🐼",
+    title: "느긋한 판다상",
+    headline: "보고만 있어도 웃음이 나는 귀여운 얼굴이에요!",
+    readings: [
+      "눈 주변이 또렷하고 얼굴이 동그래서 한번 보면 기억에 남아요.",
+      "급할 때도 \"괜찮아, 천천히 하자\" 하고 친구들을 편하게 해 줘요.",
+      "좋아하는 것을 오래오래 아끼는 따뜻한 마음이 보여요."
+    ],
+    dream: "동물원을 지키는 사육사",
+    lucky: "초록색 대나무 자"
+  },
+  tiger: {
+    emoji: "🐯",
+    title: "씩씩한 호랑이상",
+    headline: "눈빛에 힘이 넘치는 멋진 얼굴이에요!",
+    readings: [
+      "눈빛이 또렷해서 무엇이든 해낼 것 같은 힘이 느껴져요.",
+      "하고 싶은 일이 생기면 끝까지 밀고 나가는 용기가 보여요.",
+      "운동이나 몸으로 하는 놀이에서 반짝반짝 빛날 얼굴이에요."
+    ],
+    dream: "금메달을 따는 운동선수",
+    lucky: "주황색 머리띠"
+  },
+  deer: {
+    emoji: "🦌",
+    title: "맑은 사슴상",
+    headline: "맑은 눈망울이 반짝이는 얼굴이에요!",
+    readings: [
+      "눈망울이 크고 맑아서 이야기를 귀 기울여 들어 줄 것 같아요.",
+      "다른 사람의 마음을 잘 알아채는 섬세함이 보여요.",
+      "그림이나 음악처럼 아름다운 것을 좋아하는 마음이 있어요."
+    ],
+    dream: "마음을 그리는 화가",
+    lucky: "하늘색 스케치북"
+  },
+  hamster: {
+    emoji: "🐹",
+    title: "볼빵빵 햄스터상",
+    headline: "통통한 볼에 귀여움이 가득한 얼굴이에요!",
+    readings: [
+      "볼이 동글동글해서 웃을 때 더 사랑스러워 보여요.",
+      "작은 일도 열심히, 쉬지 않고 해내는 성실함이 보여요.",
+      "맛있는 것을 친구와 나눠 먹으면 더 행복해하는 마음이 있어요."
+    ],
+    dream: "맛있는 요리를 만드는 셰프",
+    lucky: "해바라기씨 모양 지우개"
+  },
+  penguin: {
+    emoji: "🐧",
+    title: "의리파 펭귄상",
+    headline: "친구들과 함께할 때 더 빛나는 얼굴이에요!",
+    readings: [
+      "얼굴이 반듯하고 단정해서 믿음직한 느낌을 줘요.",
+      "친구가 넘어지면 꼭 기다려 주는 의리가 보여요.",
+      "추운 날에도 씩씩하게 버티는 참을성이 있어요."
+    ],
+    dream: "남극을 탐험하는 연구원",
+    lucky: "털모자"
+  },
+  koala: {
+    emoji: "🐨",
+    title: "평화로운 코알라상",
+    headline: "느긋하고 편안한 기운이 가득한 얼굴이에요!",
+    readings: [
+      "눈매가 순하고 얼굴이 둥글어서 마음이 편해지는 얼굴이에요.",
+      "친구들이 다툴 때 \"우리 같이 하자\" 하고 화해시키는 힘이 보여요.",
+      "쉴 때는 푹 쉬고, 할 때는 집중하는 멋진 균형이 있어요."
+    ],
+    dream: "마음을 돌보는 상담 선생님",
+    lucky: "말랑말랑 쿠션"
+  },
+  otter: {
+    emoji: "🦦",
+    title: "장난꾸러기 수달상",
+    headline: "밝은 웃음이 퐁퐁 솟아나는 얼굴이에요!",
+    readings: [
+      "입가가 밝아 보여서 같이 놀면 시간이 금방 갈 것 같아요.",
+      "새로운 놀이를 척척 만들어 내는 재주가 보여요.",
+      "물놀이처럼 신나는 활동을 할 때 가장 빛나는 얼굴이에요."
+    ],
+    dream: "바다를 지키는 해양 생물학자",
+    lucky: "반짝이는 조약돌"
+  },
+  fox: {
+    emoji: "🦊",
+    title: "재치 만점 여우상",
+    headline: "반짝이는 아이디어가 톡톡 튀는 얼굴이에요!",
+    readings: [
+      "얼굴선이 날렵해서 똑똑하고 재치 있어 보여요.",
+      "어려운 문제도 새로운 방법으로 척척 풀어내는 힘이 보여요.",
+      "재미있는 말로 친구들을 웃게 만드는 재주가 있어요."
+    ],
+    dream: "게임을 만드는 개발자",
+    lucky: "주황색 펜"
   }
+};
+
+// 동물마다 잘 나오는 얼굴 숫자 방향 (+1: 클수록, -1: 작을수록)
+const animalLooks = {
+  bear: { round: 1 },
+  cat: { round: -1 },
+  owl: { eyes: 1 },
+  squirrel: { eyes: -1 },
+  fox: { mouth: 1 },
+  dolphin: { mouth: -1 },
+  rabbit: { bright: 1 },
+  panda: { bright: -1 },
+  lion: { close: 1 },
+  penguin: { close: -1 },
+  puppy: { center: 1 },
+  otter: { center: -1 },
+  tiger: { close: 1, round: -1 },
+  deer: { eyes: 1, round: -1 },
+  hamster: { round: 1, eyes: -1 },
+  koala: { eyes: 1, round: 1 }
 };
 
 const state = {
@@ -598,18 +714,20 @@ function showResults() {
 function createFinalResult() {
   const features = state.capturedFeatures || captureFeatures();
   const face = measureFace(features);
-  const scores = {
-    bear: (face.ratio - 0.86) * 10,
-    cat: (0.8 - face.ratio) * 10,
-    lion: (features.faceSize - 1300) / 450,
-    owl: (face.eyeGap - 0.46) * 22,
-    squirrel: (0.4 - face.eyeGap) * 22,
-    rabbit: (features.faceBrightness - 62) / 10,
-    dolphin: (0.2 - face.mouthDrop) * 16,
-    puppy: (12 - features.centerOffset) / 12
+  // 숫자마다 범위가 달라 한쪽으로 쏠리지 않도록, 모두 -1.5 ~ 1.5 크기로 맞춥니다.
+  const level = {
+    round: clamp((face.ratio - 0.86) / 0.1, -1.5, 1.5),
+    eyes: clamp((face.eyeGap - 0.44) / 0.05, -1.5, 1.5),
+    mouth: clamp((face.mouthDrop - 0.2) / 0.04, -1.5, 1.5),
+    bright: clamp((features.faceBrightness - 60) / 15, -1.5, 1.5),
+    close: clamp((features.faceSize - 1400) / 560, -1.5, 1.5),
+    center: clamp((7 - features.centerOffset) / 6, -1.5, 1.5)
   };
-  Object.keys(scores).forEach((id) => {
-    scores[id] += Math.random() * 1.4;
+  const scores = {};
+  Object.entries(animalLooks).forEach(([id, look]) => {
+    const keys = Object.keys(look);
+    const fit = keys.reduce((sum, key) => sum + look[key] * level[key], 0) / Math.sqrt(keys.length);
+    scores[id] = fit + Math.random() * 1.1;
   });
   const animalId = Object.keys(scores).reduce((best, id) => (scores[id] > scores[best] ? id : best));
 
